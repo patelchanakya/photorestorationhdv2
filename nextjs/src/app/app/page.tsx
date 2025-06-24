@@ -32,7 +32,7 @@ export default function DashboardContent() {
                     <CardTitle>Welcome, {user?.email?.split('@')[0]}! 👋</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4" />
-                        Member for {daysSinceRegistration} days
+                        You have been restoring photos for {daysSinceRegistration} days!
                     </CardDescription>
                 </CardHeader>
             </Card>

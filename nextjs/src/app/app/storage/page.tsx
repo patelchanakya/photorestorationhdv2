@@ -5,13 +5,24 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy } from 'lucide-react';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2 } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
+
+type ProcessingJob = {
+    id: string;
+    image_path: string;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    result_url?: string;
+    error_message?: string;
+    created_at: string;
+    completed_at?: string;
+};
 
 export default function FileManagementPage() {
     const { user } = useGlobal();
     const [files, setFiles] = useState<FileObject[]>([]);
+    const [processingJobs, setProcessingJobs] = useState<ProcessingJob[]>([]);
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -22,10 +33,12 @@ export default function FileManagementPage() {
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (user?.id) {
             loadFiles();
+            loadProcessingJobs();
         }
     }, [user]);
 
@@ -43,6 +56,20 @@ export default function FileManagementPage() {
             console.error('Error loading files:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadProcessingJobs = async () => {
+        try {
+            // For now, we'll fetch via API route since we need server-side access
+            const response = await fetch(`/api/processing-jobs?user_id=${user!.id}`);
+            if (response.ok) {
+                const result = await response.json();
+                setProcessingJobs(result.data || []);
+            }
+        } catch (err) {
+            console.error('Error loading processing jobs:', err);
+            // Don't set error state for this - it's supplementary data
         }
     };
 
@@ -170,6 +197,44 @@ export default function FileManagementPage() {
         }
     };
 
+    const handleRestorePhoto = async (filename: string) => {
+        try {
+            setRestoringFiles(prev => new Set([...prev, filename]));
+            setError('');
+
+            const response = await fetch('/api/restore-photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: user!.id,
+                    image_path: `${user!.id}/${filename}`, // Construct full path: user_id/filename
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to start restoration');
+            }
+
+            const result = await response.json();
+            console.log('Restoration started:', result);
+            
+            setSuccess('Photo restoration started! Check the restoration jobs section below.');
+            await loadProcessingJobs(); // Refresh the jobs list to show the new job
+        } catch (err) {
+            console.error('Error starting restoration:', err);
+            setError(err instanceof Error ? err.message : 'Failed to start photo restoration');
+        } finally {
+            setRestoringFiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(filename);
+                return newSet;
+            });
+        }
+    };
+
 
     return (
         <div className="space-y-6 p-6">
@@ -242,6 +307,18 @@ export default function FileManagementPage() {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <button
+                                            onClick={() => handleRestorePhoto(file.name)}
+                                            disabled={restoringFiles.has(file.name)}
+                                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Restore Photo"
+                                        >
+                                            {restoringFiles.has(file.name) ? (
+                                                <Loader2 className="h-5 w-5 animate-spin"/>
+                                            ) : (
+                                                <Wand2 className="h-5 w-5"/>
+                                            )}
+                                        </button>
+                                        <button
                                             onClick={() => handleDownload(file.name)}
                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                                             title="Download"
@@ -269,6 +346,57 @@ export default function FileManagementPage() {
                                 </div>
                             ))
                         )}
+                    </div>
+
+                    {/* Processing Jobs Section */}
+                    <div className="mt-8">
+                        <h3 className="text-lg font-semibold mb-4">Photo Restoration Jobs</h3>
+                        <div className="space-y-4">
+                            {processingJobs.length === 0 ? (
+                                <p className="text-center text-gray-500">No restoration jobs yet</p>
+                            ) : (
+                                processingJobs.map((job) => (
+                                    <div
+                                        key={job.id}
+                                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <FileIcon className="h-6 w-6 text-gray-400"/>
+                                            <div>
+                                                <span className="font-medium">{job.image_path.split('/').pop()}</span>
+                                                <div className="text-sm text-gray-500">
+                                                    Created: {new Date(job.created_at).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                                job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                'bg-red-100 text-red-800'
+                                            }`}>
+                                                {job.status}
+                                            </div>
+                                            {job.status === 'completed' && job.result_url && (
+                                                <button
+                                                    onClick={() => window.open(job.result_url, '_blank')}
+                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                                                    title="View Restored Image"
+                                                >
+                                                    <Download className="h-5 w-5"/>
+                                                </button>
+                                            )}
+                                            {job.status === 'failed' && job.error_message && (
+                                                <div title={job.error_message}>
+                                                    <AlertCircle className="h-5 w-5 text-red-500"/>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
 
                     {/* Share Dialog */}
