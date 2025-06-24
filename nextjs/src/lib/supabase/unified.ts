@@ -52,9 +52,17 @@ export class SassClient {
     }
 
     async uploadFile(myId: string, filename: string, file: File) {
-        filename = filename.replace(/[^0-9a-zA-Z!\-_.*'()]/g, '_');
-        filename = myId + "/" + filename
-        return this.client.storage.from('files').upload(filename, file);
+        // Clean the original filename
+        const cleanedFilename = filename.replace(/[^0-9a-zA-Z!\-_.*'()]/g, '_');
+        
+        // Add timestamp to prevent overwrites
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+        const fileExtension = cleanedFilename.split('.').pop();
+        const nameWithoutExtension = cleanedFilename.replace(`.${fileExtension}`, '');
+        const uniqueFilename = `${nameWithoutExtension}_${timestamp}.${fileExtension}`;
+        
+        const fullPath = myId + "/" + uniqueFilename;
+        return this.client.storage.from('files').upload(fullPath, file);
     }
 
     async getFiles(myId: string) {
@@ -72,6 +80,12 @@ export class SassClient {
             download: forDownload
         });
 
+    }
+
+    async shareRestoredImage(filePath: string, timeInSec: number, forDownload: boolean = false) {
+        return this.client.storage.from('restored-images').createSignedUrl(filePath, timeInSec, {
+            download: forDownload
+        });
     }
 
     async getMyTodoList(page: number = 1, pageSize: number = 100, order: string = 'created_at', done: boolean | null = false) {

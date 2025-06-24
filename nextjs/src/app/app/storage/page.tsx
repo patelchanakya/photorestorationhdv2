@@ -235,6 +235,18 @@ export default function FileManagementPage() {
         }
     };
 
+    const handleViewRestoredImage = async (job: ProcessingJob) => {
+        try {
+            if (!job.result_url) return;
+            
+            // result_url now always contains a complete URL (either our public URL or external Replicate URL)
+            window.open(job.result_url, '_blank');
+        } catch (err) {
+            console.error('Error viewing restored image:', err);
+            setError('Failed to view restored image');
+        }
+    };
+
 
     return (
         <div className="space-y-6 p-6">
@@ -380,7 +392,7 @@ export default function FileManagementPage() {
                                             </div>
                                             {job.status === 'completed' && job.result_url && (
                                                 <button
-                                                    onClick={() => window.open(job.result_url, '_blank')}
+                                                    onClick={() => handleViewRestoredImage(job)}
                                                     className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
                                                     title="View Restored Image"
                                                 >

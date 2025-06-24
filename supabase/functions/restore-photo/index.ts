@@ -8,6 +8,22 @@ const MODELS = {
 };
 const CURRENT_MODEL = MODELS.test;
 
+// URL configuration for easy environment switching
+const URL_CONFIG = {
+  development: {
+    internal: 'kong:8000',
+    external: 'localhost:54321'
+  },
+  production: {
+    internal: 'kong:8000', 
+    external: 'your-production-domain.com' // Replace with your actual domain
+  }
+};
+
+// Determine current environment (you can also use Deno.env.get('ENVIRONMENT') if set)
+const CURRENT_ENV = 'development'; // Change to 'production' when deploying
+const currentUrlConfig = URL_CONFIG[CURRENT_ENV];
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -75,8 +91,62 @@ serve(async (req) => {
       if (webhook.status === 'succeeded') {
         updateData.status = 'completed';
         updateData.completed_at = new Date().toISOString();
-        // According to schema, output is a single string URI
-        updateData.result_url = webhook.output;
+        
+        // Download restored image from Replicate and store in our bucket
+        try {
+          console.log('Downloading restored image from:', webhook.output);
+          const imageResponse = await fetch(webhook.output);
+          if (!imageResponse.ok) {
+            throw new Error(`Failed to download image: ${imageResponse.status}`);
+          }
+          
+          // Get the original filename without extension and add unique timestamp + _restored.png
+          const originalPath = job.image_path; // e.g., "user_id/filename.jpg"
+          const pathParts = originalPath.split('/');
+          const filename = pathParts[pathParts.length - 1];
+          const nameWithoutExt = filename.split('.')[0];
+          
+          // Add timestamp to make each restoration unique
+          const restorationTimestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+          const restoredFilename = `${nameWithoutExt}_restored_${restorationTimestamp}.png`;
+          const restoredPath = `${job.user_id}/${restoredFilename}`;
+          
+          console.log('Generating unique restored filename:', restoredFilename);
+          
+          // Upload to restored-images bucket
+          const imageBlob = await imageResponse.blob();
+          const { error: uploadError } = await supabaseClient.storage
+            .from('restored-images')
+            .upload(restoredPath, imageBlob, {
+              contentType: 'image/png',
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error('Error uploading restored image:', uploadError);
+            throw uploadError;
+          }
+          
+          console.log('Restored image uploaded to:', restoredPath);
+          
+          // Get the public URL for the uploaded image
+          const { data: publicUrlData } = supabaseClient.storage
+            .from('restored-images')
+            .getPublicUrl(restoredPath);
+          
+          // Fix public URL hostname for current environment
+          let publicUrl = publicUrlData.publicUrl;
+          if (publicUrl.includes(currentUrlConfig.internal)) {
+            publicUrl = publicUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
+            console.log('Fixed public URL for environment access:', publicUrl);
+          }
+          
+          updateData.result_url = publicUrl; // Store complete public URL with correct hostname
+        } catch (error) {
+          console.error('Error processing restored image:', error);
+          // Fallback to external URL if our upload fails
+          updateData.result_url = webhook.output;
+        }
       } else if (webhook.status === 'failed') {
         updateData.status = 'failed';
         updateData.error_message = webhook.error || 'Processing failed';
@@ -115,16 +185,16 @@ serve(async (req) => {
         return new Response('Error accessing image', { status: 400, headers: corsHeaders });
       }
 
-      // Fix signed URL for local development - replace internal hostnames with ngrok URL
+      // Fix signed URL for external access (Replicate needs to access this)
       let publicUrl = signedUrlData.signedUrl;
-      const ngrokHost = Deno.env.get('WEBHOOK_BASE_URL')?.replace('https://', '') || 'localhost:54321';
+      const ngrokHost = Deno.env.get('WEBHOOK_BASE_URL')?.replace('https://', '') || currentUrlConfig.external;
       
-      if (publicUrl.includes('kong:8000')) {
-        publicUrl = publicUrl.replace('kong:8000', ngrokHost);
-        console.log('Fixed signed URL for external access (kong):', publicUrl);
-      } else if (publicUrl.includes('localhost:54321')) {
-        publicUrl = publicUrl.replace('localhost:54321', ngrokHost);
-        console.log('Fixed signed URL for external access (localhost):', publicUrl);
+      if (publicUrl.includes(currentUrlConfig.internal)) {
+        publicUrl = publicUrl.replace(currentUrlConfig.internal, ngrokHost);
+        console.log('Fixed signed URL for external access:', publicUrl);
+      } else if (publicUrl.includes(currentUrlConfig.external)) {
+        publicUrl = publicUrl.replace(currentUrlConfig.external, ngrokHost);
+        console.log('Fixed signed URL for external access:', publicUrl);
       }
 
       // Create processing job record
