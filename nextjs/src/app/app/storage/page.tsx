@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,7 +35,7 @@ export default function FileManagementPage() {
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
-    const [realtimeChannel, setRealtimeChannel] = useState<any>(null);
+    const realtimeChannelRef = useRef<any>(null);
 
     useEffect(() => {
         if (user?.id) {
@@ -46,8 +46,18 @@ export default function FileManagementPage() {
         
         // Cleanup subscription on unmount
         return () => {
-            if (realtimeChannel) {
-                realtimeChannel.unsubscribe();
+            if (realtimeChannelRef.current) {
+                const cleanup = async () => {
+                    try {
+                        const supabase = await createSPASassClient();
+                        supabase.getSupabaseClient().removeChannel(realtimeChannelRef.current);
+                        realtimeChannelRef.current = null;
+                        console.log('Realtime channel removed successfully');
+                    } catch (err) {
+                        console.error('Error removing realtime channel:', err);
+                    }
+                };
+                cleanup();
             }
         };
     }, [user]);
@@ -85,8 +95,8 @@ export default function FileManagementPage() {
 
     const setupRealtimeSubscription = async () => {
         try {
-            // Check if subscription already exists
-            if (realtimeChannel) {
+            // Skip if already subscribed
+            if (realtimeChannelRef.current) {
                 console.log('Realtime subscription already exists, skipping setup');
                 return;
             }
@@ -96,6 +106,7 @@ export default function FileManagementPage() {
             // Use unique channel name to avoid conflicts
             const channelName = `processing-jobs-updates-${user!.id}-${Date.now()}`;
             
+            // Create and immediately subscribe to channel
             const channel = supabase.getSupabaseClient()
                 .channel(channelName)
                 .on(
@@ -108,17 +119,14 @@ export default function FileManagementPage() {
                     },
                     handleJobUpdate
                 )
-                .on('subscribe', (status) => {
-                    console.log('Realtime subscription status:', status);
-                })
-                .on('error', (error) => {
-                    console.error('Realtime subscription error:', error);
-                })
-                .subscribe((status) => {
+                .subscribe((status: any) => {
                     console.log('Realtime channel subscribe status:', status);
+                    if (status === 'SUBSCRIBED') {
+                        console.log('Successfully subscribed to realtime updates');
+                    }
                 });
             
-            setRealtimeChannel(channel);
+            realtimeChannelRef.current = channel;
             console.log('Realtime subscription setup for processing_jobs, user_id:', user!.id);
         } catch (err) {
             console.error('Error setting up realtime subscription:', err);
@@ -462,7 +470,7 @@ export default function FileManagementPage() {
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Photo Restoration Jobs</h3>
-                            {realtimeChannel && (
+                            {realtimeChannelRef.current && (
                                 <div className="flex items-center space-x-2 text-sm text-green-600">
                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                     <span>Real-time updates enabled</span>
