@@ -29,6 +29,7 @@ export default function FileManagementPage() {
     const [success, setSuccess] = useState('');
     const [shareUrl, setShareUrl] = useState('');
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
+    const [selectedJob, setSelectedJob] = useState<ProcessingJob | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
@@ -319,6 +320,38 @@ export default function FileManagementPage() {
         }
     };
 
+    const handleShareRestoredImage = async (job: ProcessingJob) => {
+        try {
+            if (!job.result_url) return;
+            
+            setError('');
+            
+            // Extract the file path from the public URL to create a signed URL for sharing
+            if (job.result_url.includes('/storage/v1/object/public/restored-images/')) {
+                // Our bucket - create signed URL for sharing
+                const pathPart = job.result_url.split('/storage/v1/object/public/restored-images/')[1];
+                
+                console.log('Extracted path for sharing:', pathPart);
+                console.log('Full result_url:', job.result_url);
+                
+                const supabase = await createSPASassClient();
+                const { data, error } = await supabase.shareRestoredImage(pathPart, 24 * 60 * 60); // 24 hours
+                
+                if (error) throw error;
+                
+                setShareUrl(data.signedUrl);
+                setSelectedJob(job);
+            } else {
+                // External URL - use directly (though this is less common now)
+                setShareUrl(job.result_url);
+                setSelectedJob(job);
+            }
+        } catch (err) {
+            console.error('Error sharing restored image:', err);
+            setError('Failed to generate share link');
+        }
+    };
+
 
     return (
         <div className="space-y-6 p-6">
@@ -410,13 +443,6 @@ export default function FileManagementPage() {
                                             <Download className="h-5 w-5"/>
                                         </button>
                                         <button
-                                            onClick={() => handleShare(file.name)}
-                                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                                            title="Share"
-                                        >
-                                            <Share2 className="h-5 w-5"/>
-                                        </button>
-                                        <button
                                             onClick={() => {
                                                 setFileToDelete(file.name);
                                                 setShowDeleteDialog(true);
@@ -474,13 +500,22 @@ export default function FileManagementPage() {
                                                 <span>{job.status}</span>
                                             </div>
                                             {job.status === 'completed' && job.result_url && (
-                                                <button
-                                                    onClick={() => handleViewRestoredImage(job)}
-                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                                                    title="View Restored Image"
-                                                >
-                                                    <Download className="h-5 w-5"/>
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => handleViewRestoredImage(job)}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                                        title="View Restored Image"
+                                                    >
+                                                        <Download className="h-5 w-5"/>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleShareRestoredImage(job)}
+                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                                                        title="Share Restored Image"
+                                                    >
+                                                        <Share2 className="h-5 w-5"/>
+                                                    </button>
+                                                </>
                                             )}
                                             {job.status === 'failed' && job.error_message && (
                                                 <div title={job.error_message}>
@@ -498,33 +533,51 @@ export default function FileManagementPage() {
                     <Dialog open={Boolean(shareUrl)} onOpenChange={() => {
                         setShareUrl('');
                         setSelectedFile(null);
+                        setSelectedJob(null);
                     }}>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Share {selectedFile?.split('/').pop()}</DialogTitle>
+                                <DialogTitle className="text-lg">
+                                    {selectedJob ? 'Share Restored Image' : 'Share Image'}
+                                </DialogTitle>
                                 <DialogDescription>
-                                    Copy the link below to share your file. This link will expire in 24 hours.
+                                    Copy the link below to share your {selectedJob ? 'restored' : ''} image. This link will expire in 24 hours.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="text"
-                                    value={shareUrl}
-                                    readOnly
-                                    className="flex-1 p-2 border rounded bg-gray-50"
-                                />
-                                <button
-                                    onClick={() => copyToClipboard(shareUrl)}
-                                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-full transition-colors relative"
-                                >
-                                    <Copy className="h-5 w-5"/>
-                                    {showCopiedMessage && (
-                                        <span
-                                            className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded">
-                                            Copied!
-                                        </span>
-                                    )}
-                                </button>
+                            <div className="space-y-4">
+                                <div className="flex items-start space-x-2">
+                                    <div className="flex-1">
+                                        <textarea
+                                            value={shareUrl}
+                                            readOnly
+                                            rows={3}
+                                            className="w-full p-3 border rounded-lg bg-gray-50 text-sm font-mono cursor-pointer resize-none overflow-y-auto"
+                                            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                                            style={{ height: '80px' }}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => copyToClipboard(shareUrl)}
+                                        className="p-3 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors relative flex-shrink-0"
+                                        title="Copy to clipboard"
+                                    >
+                                        <Copy className="h-4 w-4"/>
+                                        {showCopiedMessage && (
+                                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                                Copied!
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+                                {selectedJob && (
+                                    <p className="text-sm text-gray-600">
+                                        Original: {(() => {
+                                            const filename = selectedJob.image_path.split('/').pop() || '';
+                                            // Remove the timestamp suffix (format: _YYYY-MM-DD_HH-MM-SS)
+                                            return filename.replace(/_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.[^.]+$/, '');
+                                        })()}
+                                    </p>
+                                )}
                             </div>
                         </DialogContent>
                     </Dialog>
