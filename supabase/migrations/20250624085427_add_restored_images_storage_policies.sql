@@ -1,6 +1,6 @@
 -- Create restored-images bucket if it doesn't exist
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('restored-images', 'restored-images', false)
+VALUES ('restored-images', 'restored-images', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create storage policies for restored-images bucket (similar to files bucket)
