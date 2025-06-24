@@ -34,12 +34,21 @@ export default function FileManagementPage() {
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
+    const [realtimeChannel, setRealtimeChannel] = useState<any>(null);
 
     useEffect(() => {
         if (user?.id) {
             loadFiles();
             loadProcessingJobs();
+            setupRealtimeSubscription();
         }
+        
+        // Cleanup subscription on unmount
+        return () => {
+            if (realtimeChannel) {
+                realtimeChannel.unsubscribe();
+            }
+        };
     }, [user]);
 
     const loadFiles = async () => {
@@ -70,6 +79,69 @@ export default function FileManagementPage() {
         } catch (err) {
             console.error('Error loading processing jobs:', err);
             // Don't set error state for this - it's supplementary data
+        }
+    };
+
+    const setupRealtimeSubscription = async () => {
+        try {
+            // Check if subscription already exists
+            if (realtimeChannel) {
+                console.log('Realtime subscription already exists, skipping setup');
+                return;
+            }
+
+            const supabase = await createSPASassClient();
+            
+            // Use unique channel name to avoid conflicts
+            const channelName = `processing-jobs-updates-${user!.id}-${Date.now()}`;
+            
+            const channel = supabase.getSupabaseClient()
+                .channel(channelName)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'processing_jobs',
+                        filter: `user_id=eq.${user!.id}`
+                    },
+                    handleJobUpdate
+                )
+                .on('subscribe', (status) => {
+                    console.log('Realtime subscription status:', status);
+                })
+                .on('error', (error) => {
+                    console.error('Realtime subscription error:', error);
+                })
+                .subscribe((status) => {
+                    console.log('Realtime channel subscribe status:', status);
+                });
+            
+            setRealtimeChannel(channel);
+            console.log('Realtime subscription setup for processing_jobs, user_id:', user!.id);
+        } catch (err) {
+            console.error('Error setting up realtime subscription:', err);
+        }
+    };
+
+    const handleJobUpdate = (payload: any) => {
+        console.log('Received job update:', payload);
+        const updatedJob = payload.new;
+        
+        console.log('Processing job update for current user:', updatedJob);
+        
+        // Update the processing jobs state with the new data
+        setProcessingJobs(prevJobs => 
+            prevJobs.map(job => 
+                job.id === updatedJob.id ? { ...job, ...updatedJob } : job
+            )
+        );
+        
+        // Show success message when restoration completes
+        if (updatedJob.status === 'completed') {
+            setSuccess('Photo restoration completed! Your restored image is ready.');
+        } else if (updatedJob.status === 'failed') {
+            setError(`Restoration failed: ${updatedJob.error_message || 'Unknown error'}`);
         }
     };
 
@@ -221,8 +293,8 @@ export default function FileManagementPage() {
             const result = await response.json();
             console.log('Restoration started:', result);
             
-            setSuccess('Photo restoration started! Check the restoration jobs section below.');
-            await loadProcessingJobs(); // Refresh the jobs list to show the new job
+            setSuccess('Photo restoration started! The result will appear automatically when ready.');
+            await loadProcessingJobs(); // Load the new job once, then real-time updates take over
         } catch (err) {
             console.error('Error starting restoration:', err);
             setError(err instanceof Error ? err.message : 'Failed to start photo restoration');
@@ -362,7 +434,15 @@ export default function FileManagementPage() {
 
                     {/* Processing Jobs Section */}
                     <div className="mt-8">
-                        <h3 className="text-lg font-semibold mb-4">Photo Restoration Jobs</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Photo Restoration Jobs</h3>
+                            {realtimeChannel && (
+                                <div className="flex items-center space-x-2 text-sm text-green-600">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span>Real-time updates enabled</span>
+                                </div>
+                            )}
+                        </div>
                         <div className="space-y-4">
                             {processingJobs.length === 0 ? (
                                 <p className="text-center text-gray-500">No restoration jobs yet</p>
@@ -382,13 +462,16 @@ export default function FileManagementPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-3">
-                                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                            <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2 ${
                                                 job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                                 job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                                                 job.status === 'completed' ? 'bg-green-100 text-green-800' :
                                                 'bg-red-100 text-red-800'
                                             }`}>
-                                                {job.status}
+                                                {job.status === 'processing' && (
+                                                    <Loader2 className="h-3 w-3 animate-spin"/>
+                                                )}
+                                                <span>{job.status}</span>
                                             </div>
                                             {job.status === 'completed' && job.result_url && (
                                                 <button
