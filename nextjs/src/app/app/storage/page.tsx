@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2 } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
+import { RealtimeChannel, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 type ProcessingJob = {
     id: string;
@@ -28,46 +29,22 @@ export default function FileManagementPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [shareUrl, setShareUrl] = useState('');
-    const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<ProcessingJob | null>(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
-    const realtimeChannelRef = useRef<any>(null);
-
-    useEffect(() => {
-        if (user?.id) {
-            loadFiles();
-            loadProcessingJobs();
-            setupRealtimeSubscription();
-        }
-        
-        // Cleanup subscription on unmount
-        return () => {
-            if (realtimeChannelRef.current) {
-                const cleanup = async () => {
-                    try {
-                        const supabase = await createSPASassClient();
-                        supabase.getSupabaseClient().removeChannel(realtimeChannelRef.current);
-                        realtimeChannelRef.current = null;
-                        console.log('Realtime channel removed successfully');
-                    } catch (err) {
-                        console.error('Error removing realtime channel:', err);
-                    }
-                };
-                cleanup();
-            }
-        };
-    }, [user]);
+    const [realtimeConnected, setRealtimeConnected] = useState(false);
+    const channelRef = useRef<RealtimeChannel | null>(null);
 
     const loadFiles = async () => {
+        if (!user?.id) return;
         try {
             setLoading(true);
             setError('');
             const supabase = await createSPASassClient();
-            const { data, error } = await supabase.getFiles(user!.id);
+            const { data, error } = await supabase.getFiles(user.id);
 
             if (error) throw error;
             setFiles(data || []);
@@ -80,73 +57,28 @@ export default function FileManagementPage() {
     };
 
     const loadProcessingJobs = async () => {
+        if (!user?.id) return;
         try {
-            // For now, we'll fetch via API route since we need server-side access
-            const response = await fetch(`/api/processing-jobs?user_id=${user!.id}`);
+            const response = await fetch(`/api/processing-jobs?user_id=${user.id}`);
             if (response.ok) {
                 const result = await response.json();
                 setProcessingJobs(result.data || []);
             }
         } catch (err) {
             console.error('Error loading processing jobs:', err);
-            // Don't set error state for this - it's supplementary data
         }
     };
 
-    const setupRealtimeSubscription = async () => {
-        try {
-            // Skip if already subscribed
-            if (realtimeChannelRef.current) {
-                console.log('Realtime subscription already exists, skipping setup');
-                return;
-            }
-
-            const supabase = await createSPASassClient();
-            
-            // Use unique channel name to avoid conflicts
-            const channelName = `processing-jobs-updates-${user!.id}-${Date.now()}`;
-            
-            // Create and immediately subscribe to channel
-            const channel = supabase.getSupabaseClient()
-                .channel(channelName)
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'processing_jobs',
-                        filter: `user_id=eq.${user!.id}`
-                    },
-                    handleJobUpdate
-                )
-                .subscribe((status: any) => {
-                    console.log('Realtime channel subscribe status:', status);
-                    if (status === 'SUBSCRIBED') {
-                        console.log('Successfully subscribed to realtime updates');
-                    }
-                });
-            
-            realtimeChannelRef.current = channel;
-            console.log('Realtime subscription setup for processing_jobs, user_id:', user!.id);
-        } catch (err) {
-            console.error('Error setting up realtime subscription:', err);
-        }
-    };
-
-    const handleJobUpdate = (payload: any) => {
+    const handleJobUpdate = (payload: { new: ProcessingJob }) => {
         console.log('Received job update:', payload);
         const updatedJob = payload.new;
         
-        console.log('Processing job update for current user:', updatedJob);
-        
-        // Update the processing jobs state with the new data
         setProcessingJobs(prevJobs => 
             prevJobs.map(job => 
                 job.id === updatedJob.id ? { ...job, ...updatedJob } : job
             )
         );
         
-        // Show success message when restoration completes
         if (updatedJob.status === 'completed') {
             setSuccess('Photo restoration completed! Your restored image is ready.');
         } else if (updatedJob.status === 'failed') {
@@ -154,15 +86,60 @@ export default function FileManagementPage() {
         }
     };
 
-    const handleFileUpload = async (file: File) => {
+    useEffect(() => {
+        if (user?.id) {
+            loadFiles();
+            loadProcessingJobs();
+        }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const setupSubscription = async () => {
+            // Clean up any existing subscription first
+            if (channelRef.current) {
+                channelRef.current.unsubscribe();
+                channelRef.current = null;
+            }
+
+            const supabase = await createSPASassClient();
+            
+            const channel = supabase.getSupabaseClient()
+                .channel(`processing-jobs-${user.id}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'processing_jobs',
+                    filter: `user_id=eq.${user.id}`
+                }, handleJobUpdate)
+                .subscribe((status: REALTIME_SUBSCRIBE_STATES) => {
+                    console.log('Realtime subscription status:', status);
+                    setRealtimeConnected(status === 'SUBSCRIBED');
+                });
+
+            channelRef.current = channel;
+        };
+
+        setupSubscription();
+
+        return () => {
+            if (channelRef.current) {
+                channelRef.current.unsubscribe();
+                channelRef.current = null;
+            }
+            setRealtimeConnected(false);
+        };
+    }, [user?.id]);
+
+    const handleFileUpload = useCallback(async (file: File) => {
+        if (!user?.id) return;
         try {
             setUploading(true);
             setError('');
 
-            console.log(user)
-
             const supabase = await createSPASassClient();
-            const { error } = await supabase.uploadFile(user!.id!, file.name, file);
+            const { error } = await supabase.uploadFile(user.id, file.name, file);
 
             if (error) throw error;
 
@@ -174,7 +151,7 @@ export default function FileManagementPage() {
         } finally {
             setUploading(false);
         }
-    };
+    }, [user, loadFiles]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,7 +171,7 @@ export default function FileManagementPage() {
         if (files.length > 0) {
             handleFileUpload(files[0]);
         }
-    }, []);
+    }, [handleFileUpload]);
 
 
     const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -230,21 +207,6 @@ export default function FileManagementPage() {
         }
     };
 
-    const handleShare = async (filename: string) => {
-        try {
-            setError('');
-            const supabase = await createSPASassClient();
-            const { data, error } = await supabase.shareFile(user!.id!, filename, 24 * 60 * 60);
-
-            if (error) throw error;
-
-            setShareUrl(data.signedUrl);
-            setSelectedFile(filename);
-        } catch (err) {
-            setError('Failed to generate share link');
-            console.error('Error sharing file:', err);
-        }
-    };
 
     const handleDelete = async () => {
         if (!fileToDelete) return;
@@ -470,7 +432,7 @@ export default function FileManagementPage() {
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold">Photo Restoration Jobs</h3>
-                            {realtimeChannelRef.current && (
+                            {realtimeConnected && channelRef.current && (
                                 <div className="flex items-center space-x-2 text-sm text-green-600">
                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                     <span>Real-time updates enabled</span>
@@ -540,7 +502,6 @@ export default function FileManagementPage() {
                     {/* Share Dialog */}
                     <Dialog open={Boolean(shareUrl)} onOpenChange={() => {
                         setShareUrl('');
-                        setSelectedFile(null);
                         setSelectedJob(null);
                     }}>
                         <DialogContent className="sm:max-w-md">
