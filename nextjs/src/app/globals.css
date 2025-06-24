@@ -260,6 +260,44 @@
     --color-accent-900: #78350f;
 }
 
+.theme-orange {
+    /* Primary colors - Orange spectrum */
+    --color-primary-50: #fff7ed;
+    --color-primary-100: #ffedd5;
+    --color-primary-200: #fed7aa;
+    --color-primary-300: #fdba74;
+    --color-primary-400: #fb923c;
+    --color-primary-500: #f97316;
+    --color-primary-600: #ea580c;
+    --color-primary-700: #c2410c;
+    --color-primary-800: #9a3412;
+    --color-primary-900: #7c2d12;
+
+    /* Secondary colors - Warm gray neutrals */
+    --color-secondary-50: #fafaf9;
+    --color-secondary-100: #f5f5f4;
+    --color-secondary-200: #e7e5e4;
+    --color-secondary-300: #d6d3d1;
+    --color-secondary-400: #a8a29e;
+    --color-secondary-500: #78716c;
+    --color-secondary-600: #57534e;
+    --color-secondary-700: #44403c;
+    --color-secondary-800: #292524;
+    --color-secondary-900: #1c1917;
+
+    /* Accent colors - Complementary blue */
+    --color-accent-50: #eff6ff;
+    --color-accent-100: #dbeafe;
+    --color-accent-200: #bfdbfe;
+    --color-accent-300: #93c5fd;
+    --color-accent-400: #60a5fa;
+    --color-accent-500: #3b82f6;
+    --color-accent-600: #2563eb;
+    --color-accent-700: #1d4ed8;
+    --color-accent-800: #1e40af;
+    --color-accent-900: #1e3a8a;
+}
+
 
 @layer components {
     .btn-primary {
