@@ -38,7 +38,7 @@ export default function FileManagementPage() {
     const [realtimeConnected, setRealtimeConnected] = useState(false);
     const channelRef = useRef<RealtimeChannel | null>(null);
 
-    const loadFiles = async () => {
+    const loadFiles = useCallback(async () => {
         if (!user?.id) return;
         try {
             setLoading(true);
@@ -54,9 +54,9 @@ export default function FileManagementPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id]);
 
-    const loadProcessingJobs = async () => {
+    const loadProcessingJobs = useCallback(async () => {
         if (!user?.id) return;
         try {
             const response = await fetch(`/api/processing-jobs?user_id=${user.id}`);
@@ -67,9 +67,9 @@ export default function FileManagementPage() {
         } catch (err) {
             console.error('Error loading processing jobs:', err);
         }
-    };
+    }, [user?.id]);
 
-    const handleJobUpdate = (payload: { new: ProcessingJob }) => {
+    const handleJobUpdate = useCallback((payload: { new: ProcessingJob }) => {
         console.log('Received job update:', payload);
         const updatedJob = payload.new;
         
@@ -84,14 +84,14 @@ export default function FileManagementPage() {
         } else if (updatedJob.status === 'failed') {
             setError(`Restoration failed: ${updatedJob.error_message || 'Unknown error'}`);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (user?.id) {
             loadFiles();
             loadProcessingJobs();
         }
-    }, [user?.id]);
+    }, [user?.id, loadFiles, loadProcessingJobs]);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -130,7 +130,7 @@ export default function FileManagementPage() {
             }
             setRealtimeConnected(false);
         };
-    }, [user?.id]);
+    }, [user?.id, handleJobUpdate]);
 
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
@@ -151,7 +151,7 @@ export default function FileManagementPage() {
         } finally {
             setUploading(false);
         }
-    }, [user, loadFiles]);
+    }, [user?.id, loadFiles]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
