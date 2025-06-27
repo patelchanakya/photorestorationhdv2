@@ -303,6 +303,13 @@ export default function FileManagementPage() {
         }
     };
 
+    // Check if a job can be cancelled (must be at least 10 seconds old)
+    const isJobCancellable = (job: ProcessingJob): boolean => {
+        if (!job.started_at) return false;
+        const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
+        return new Date(job.started_at) < tenSecondsAgo;
+    };
+
     const handleCancelJob = async (job: ProcessingJob) => {
         try {
             setCancellingJobs(prev => new Set([...prev, job.id]));
@@ -496,7 +503,7 @@ export default function FileManagementPage() {
                                                 )}
                                                 <span>{job.status}</span>
                                             </div>
-                                            {(job.status === 'pending' || job.status === 'processing') && (
+                                            {(job.status === 'pending' || job.status === 'processing') && isJobCancellable(job) && (
                                                 <button
                                                     onClick={() => handleCancelJob(job)}
                                                     disabled={cancellingJobs.has(job.id)}
