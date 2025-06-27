@@ -23,11 +23,8 @@ FOR UPDATE
 TO PUBLIC
 USING (auth.uid() = user_id);
 
--- Grant necessary permissions for realtime
+-- Grant necessary permissions for API access
 GRANT SELECT ON "public"."processing_jobs" TO "anon";
 GRANT SELECT ON "public"."processing_jobs" TO "authenticated";
 GRANT INSERT ON "public"."processing_jobs" TO "authenticated";
 GRANT UPDATE ON "public"."processing_jobs" TO "authenticated";
-
--- Enable realtime for processing_jobs table
-ALTER PUBLICATION supabase_realtime ADD TABLE "public"."processing_jobs";

@@ -192,3 +192,56 @@ My socials:
 - [Supabase](https://supabase.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
++
+
+
+
+eady to code?                                             │
+│                                                            │
+│ Here is Claude's plan:                                     │
+│ ╭────────────────────────────────────────────────────────╮ │
+│ │ Plan to Fix "HD Image Restoration" Display Names       │ │
+│ │                                                        │ │
+│ │ Issue Analysis                                         │ │
+│ │                                                        │ │
+│ │ - All images show "HD Image Restoration" because this  │ │
+│ │ hardcoded value is stored in the prompt field of       │ │
+│ │ saved_images table                                     │ │
+│ │ - No automated system exists to transfer completed     │ │
+│ │ processing jobs to saved_images                        │ │
+│ │ - The UI displays image.prompt as the image title      │ │
+│ │                                                        │ │
+│ │ Proposed Solution                                      │ │
+│ │                                                        │ │
+│ │ 1. Create automated job-to-image conversion system:    │ │
+│ │   - Add logic to automatically create saved_images     │ │
+│ │ records when processing jobs complete                  │ │
+│ │   - Generate meaningful prompts/titles based on        │ │
+│ │ original filename or user input                        │ │
+│ │   - Handle the transfer in the Edge Function webhook   │ │
+│ │ when jobs complete successfully                        │ │
+│ │ 2. Improve prompt generation:                          │ │
+│ │   - Use original filename (cleaned up) as the default  │ │
+│ │ prompt                                                 │ │
+│ │   - Allow users to optionally specify custom titles    │ │
+│ │ during upload                                          │ │
+│ │   - Remove timestamp suffixes for cleaner display      │ │
+│ │ names                                                  │ │
+│ │ 3. Database cleanup:                                   │ │
+│ │   - Update existing records with better prompt values  │ │
+│ │ derived from their original URLs                       │ │
+│ │   - Ensure all future records have meaningful prompts  │ │
+│ │                                                        │ │
+│ │ Implementation Steps                                   │ │
+│ │                                                        │ │
+│ │ 1. Update Edge Function to create saved_images records │ │
+│ │  on job completion                                     │ │
+│ │ 2. Add logic to generate clean, meaningful prompts     │ │
+│ │ from filenames                                         │ │
+│ │ 3. Update existing database records with better        │ │
+│ │ prompts                                                │ │
+│ │ 4. Test the full flow from upload to history display   │ │
+│ │                                                        │ │
+│ │ This will ensure users see meaningful, recognizable    │ │
+│ │ names for their restored photos instead of the generic │ │
+│ │  "HD Image Restoration" text.   

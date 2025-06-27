@@ -197,7 +197,10 @@ serve(async (req) => {
         console.log('Fixed signed URL for external access:', publicUrl);
       }
 
-      // Create processing job record
+      // Create processing job record with timeout
+      const timeoutMinutes = 10; // 10 minute timeout
+      const timeoutAt = new Date(Date.now() + timeoutMinutes * 60 * 1000).toISOString();
+      
       const { data: job, error: jobError } = await supabaseClient
         .from('processing_jobs')
         .insert({
@@ -206,6 +209,7 @@ serve(async (req) => {
           status: 'processing',
           prediction_id: '', // Will be updated after Replicate call
           started_at: new Date().toISOString(),
+          timeout_at: timeoutAt,
         })
         .select()
         .single();

@@ -1,24 +1,20 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2 } from 'lucide-react';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, X, ExternalLink } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
-import { RealtimeChannel, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
-type ProcessingJob = {
-    id: string;
-    image_path: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    result_url?: string;
-    error_message?: string;
-    created_at: string;
-    completed_at?: string;
-};
+import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
+
+// Polling configuration
+const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
+const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 
 export default function FileManagementPage() {
     const { user } = useGlobal();
@@ -35,8 +31,8 @@ export default function FileManagementPage() {
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
-    const [realtimeConnected, setRealtimeConnected] = useState(false);
-    const channelRef = useRef<RealtimeChannel | null>(null);
+    const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
+    const previousJobsRef = useRef<ProcessingJob[]>([]);
 
     const loadFiles = useCallback(async () => {
         if (!user?.id) return;
@@ -56,81 +52,66 @@ export default function FileManagementPage() {
         }
     }, [user?.id]);
 
-    const loadProcessingJobs = useCallback(async () => {
+    const refreshJobs = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const response = await fetch(`/api/processing-jobs?user_id=${user.id}`);
-            if (response.ok) {
-                const result = await response.json();
-                setProcessingJobs(result.data || []);
+            const jobs = await getProcessingJobs(user.id);
+            
+            // Check for status changes and show notifications
+            if (previousJobsRef.current.length > 0) {
+                jobs.forEach(currentJob => {
+                    const previousJob = previousJobsRef.current.find(j => j.id === currentJob.id);
+                    if (previousJob && previousJob.status !== currentJob.status) {
+                        if (currentJob.status === 'completed') {
+                            setSuccess('Photo restoration completed! Your restored image is ready.');
+                        } else if (currentJob.status === 'failed') {
+                            setError(`Restoration failed: ${currentJob.error_message || 'Unknown error'}`);
+                        }
+                    }
+                });
             }
+            
+            previousJobsRef.current = jobs;
+            setProcessingJobs(jobs);
         } catch (err) {
             console.error('Error loading processing jobs:', err);
         }
     }, [user?.id]);
 
-    const handleJobUpdate = useCallback((payload: { new: ProcessingJob }) => {
-        console.log('Received job update:', payload);
-        const updatedJob = payload.new;
-        
-        setProcessingJobs(prevJobs => 
-            prevJobs.map(job => 
-                job.id === updatedJob.id ? { ...job, ...updatedJob } : job
-            )
-        );
-        
-        if (updatedJob.status === 'completed') {
-            setSuccess('Photo restoration completed! Your restored image is ready.');
-        } else if (updatedJob.status === 'failed') {
-            setError(`Restoration failed: ${updatedJob.error_message || 'Unknown error'}`);
-        }
-    }, []);
 
     useEffect(() => {
         if (user?.id) {
             loadFiles();
-            loadProcessingJobs();
+            refreshJobs();
         }
-    }, [user?.id, loadFiles, loadProcessingJobs]);
+    }, [user?.id, loadFiles, refreshJobs]);
 
+    // Smart polling: only when active jobs exist
     useEffect(() => {
         if (!user?.id) return;
 
-        const setupSubscription = async () => {
-            // Clean up any existing subscription first
-            if (channelRef.current) {
-                channelRef.current.unsubscribe();
-                channelRef.current = null;
-            }
+        const hasActiveJobs = processingJobs.some(job => 
+            job.status === 'pending' || job.status === 'processing'
+        );
+        
+        if (!hasActiveJobs) {
+            if (POLLING_DEBUG) console.log('No active jobs, no polling needed');
+            return;
+        }
 
-            const supabase = await createSPASassClient();
-            
-            const channel = supabase.getSupabaseClient()
-                .channel(`processing-jobs-${user.id}`)
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'processing_jobs',
-                    filter: `user_id=eq.${user.id}`
-                }, handleJobUpdate)
-                .subscribe((status: REALTIME_SUBSCRIBE_STATES) => {
-                    console.log('Realtime subscription status:', status);
-                    setRealtimeConnected(status === 'SUBSCRIBED');
-                });
-
-            channelRef.current = channel;
-        };
-
-        setupSubscription();
+        const activeJobCount = processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+        if (POLLING_DEBUG) console.log(`Starting smart polling for ${activeJobCount} active jobs (interval: ${POLLING_INTERVAL}ms)`);
+        
+        const interval = setInterval(() => {
+            if (POLLING_DEBUG) console.log('Polling for job updates...');
+            refreshJobs();
+        }, POLLING_INTERVAL);
 
         return () => {
-            if (channelRef.current) {
-                channelRef.current.unsubscribe();
-                channelRef.current = null;
-            }
-            setRealtimeConnected(false);
+            if (POLLING_DEBUG) console.log('Stopping polling - cleanup');
+            clearInterval(interval);
         };
-    }, [user?.id, handleJobUpdate]);
+    }, [processingJobs.some(job => job.status === 'pending' || job.status === 'processing'), user?.id, refreshJobs]);
 
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
@@ -265,7 +246,7 @@ export default function FileManagementPage() {
             console.log('Restoration started:', result);
             
             setSuccess('Photo restoration started! The result will appear automatically when ready.');
-            await loadProcessingJobs(); // Load the new job once, then real-time updates take over
+            await refreshJobs(); // Load the new job once, then polling takes over
         } catch (err) {
             console.error('Error starting restoration:', err);
             setError(err instanceof Error ? err.message : 'Failed to start photo restoration');
@@ -322,13 +303,48 @@ export default function FileManagementPage() {
         }
     };
 
+    const handleCancelJob = async (job: ProcessingJob) => {
+        try {
+            setCancellingJobs(prev => new Set([...prev, job.id]));
+            setError('');
+
+            const response = await fetch('/api/cancel-job', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    job_id: job.id,
+                    user_id: user!.id,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to cancel job');
+            }
+
+            setSuccess('Job cancelled successfully');
+            await refreshJobs();
+        } catch (err) {
+            console.error('Error cancelling job:', err);
+            setError(err instanceof Error ? err.message : 'Failed to cancel job');
+        } finally {
+            setCancellingJobs(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(job.id);
+                return newSet;
+            });
+        }
+    };
+
 
     return (
         <div className="space-y-6 p-6">
             <Card>
                 <CardHeader>
                     <CardTitle>File Management</CardTitle>
-                    <CardDescription>Upload, download, and share your files</CardDescription>
+                    <CardDescription>Upload, generate, download, and share your restorations.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {error && (
@@ -431,13 +447,23 @@ export default function FileManagementPage() {
                     {/* Processing Jobs Section */}
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Photo Restoration Jobs</h3>
-                            {realtimeConnected && channelRef.current && (
-                                <div className="flex items-center space-x-2 text-sm text-green-600">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span>Real-time updates enabled</span>
-                                </div>
-                            )}
+                            <h3 className="text-lg font-semibold">Photo Restoration History</h3>
+                            <div className="flex items-center space-x-4">
+                                <Link 
+                                    href="/app/history" 
+                                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                >
+                                    View All Photos
+                                    <ExternalLink className="ml-1 h-4 w-4" />
+                                </Link>
+                                {POLLING_DEBUG && (
+                                    <div className="text-xs text-gray-500 space-y-1">
+                                        <div>Debug Mode: ON</div>
+                                        <div>Polling Interval: {POLLING_INTERVAL}ms</div>
+                                        <div>Active Jobs: {processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length}</div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-4">
                             {processingJobs.length === 0 ? (
@@ -462,6 +488,7 @@ export default function FileManagementPage() {
                                                 job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                                 job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                                                 job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                job.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                                                 'bg-red-100 text-red-800'
                                             }`}>
                                                 {job.status === 'processing' && (
@@ -469,6 +496,20 @@ export default function FileManagementPage() {
                                                 )}
                                                 <span>{job.status}</span>
                                             </div>
+                                            {(job.status === 'pending' || job.status === 'processing') && (
+                                                <button
+                                                    onClick={() => handleCancelJob(job)}
+                                                    disabled={cancellingJobs.has(job.id)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Cancel Job"
+                                                >
+                                                    {cancellingJobs.has(job.id) ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin"/>
+                                                    ) : (
+                                                        <X className="h-4 w-4"/>
+                                                    )}
+                                                </button>
+                                            )}
                                             {job.status === 'completed' && job.result_url && (
                                                 <>
                                                     <button

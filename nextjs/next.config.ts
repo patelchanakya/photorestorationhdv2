@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   images: {
     formats: ['image/webp', 'image/avif'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
   experimental: {
     webpackMemoryOptimizations: true,
