@@ -81,7 +81,7 @@ export function ImageModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0">
+            <DialogContent className="max-w-sm sm:max-w-4xl w-full max-h-[90vh] p-0">
                 <DialogTitle className="sr-only">
                     {showOriginal ? 'Original Photo' : 'Restored Photo'}: {image.prompt}
                 </DialogTitle>
@@ -93,7 +93,7 @@ export function ImageModal({
                     <div className="flex items-center justify-between p-4 border-b bg-background">
                         <div className="flex items-center space-x-3">
                             <div className="space-y-1">
-                                <h3 className="font-medium line-clamp-1">{image.prompt}</h3>
+                                <h3 className="font-medium line-clamp-2 sm:line-clamp-3 break-words">{image.prompt}</h3>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <Calendar className="h-3 w-3 mr-1" />
                                     {image.created_at && formatDistanceToNow(new Date(image.created_at), { addSuffix: true })}
@@ -107,25 +107,35 @@ export function ImageModal({
                             </div>
                         </div>
                         
-                        <div className="flex items-center space-x-2 pr-12">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setShowOriginal(!showOriginal)}
+                                className="hidden sm:flex"
                             >
                                 {showOriginal ? 'Show Restored' : 'Show Original'}
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => setShowOriginal(!showOriginal)}
+                                className="sm:hidden"
+                            >
+                                {showOriginal ? 'Restored' : 'Original'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => openInNewTab(showOriginal ? image.original_url : image.edited_url)}
+                                title="Open in new tab"
                             >
                                 <ExternalLink className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={onDownload}>
+                            <Button variant="outline" size="sm" onClick={onDownload} title="Download">
                                 <Download className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={onShare}>
+                            <Button variant="outline" size="sm" onClick={onShare} title="Share" className="hidden sm:flex">
                                 <Share2 className="h-4 w-4" />
                             </Button>
                             <Button 
@@ -133,6 +143,7 @@ export function ImageModal({
                                 size="sm" 
                                 onClick={onDelete}
                                 className="text-destructive hover:text-destructive"
+                                title="Delete"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -141,7 +152,7 @@ export function ImageModal({
                     
                     {/* Image Content */}
                     <div className="flex-1 relative bg-muted/30 flex items-center justify-center p-4">
-                        <div className="relative w-full h-[60vh] max-w-4xl">
+                        <div className="relative w-full h-[50vh] sm:h-[60vh] max-w-4xl">
                             <Image
                                 src={showOriginal ? image.original_url : image.edited_url}
                                 alt={image.prompt}

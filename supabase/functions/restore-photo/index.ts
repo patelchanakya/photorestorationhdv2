@@ -163,6 +163,49 @@ serve(async (req) => {
         return new Response('Error updating job', { status: 500, headers: corsHeaders });
       }
 
+      // Save completed jobs to saved_images table
+      if (webhook.status === 'succeeded' && updateData.result_url) {
+        console.log('Saving completed job to saved_images table');
+        
+        // Get the original file URL from storage
+        const { data: originalUrlData } = supabaseClient.storage
+          .from('files')
+          .getPublicUrl(job.image_path);
+        
+        // Fix original URL hostname for external access
+        let originalUrl = originalUrlData.publicUrl;
+        if (originalUrl.includes(currentUrlConfig.internal)) {
+          originalUrl = originalUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
+          console.log('Fixed original URL for environment access:', originalUrl);
+        }
+        
+        // Create basic prompt from filename
+        const filename = job.image_path.split('/').pop() || '';
+        const basicPrompt = `Restored photo: ${filename}`;
+        
+        const savedImageData = {
+          user_id: job.user_id,
+          original_url: originalUrl,
+          edited_url: updateData.result_url,
+          prompt: basicPrompt,
+          is_hd: true, // Currently all restorations are HD
+          prediction_id: job.prediction_id,
+          tags: [], // Empty tags array for now
+          thumbnail_url: null // Will be generated later if needed
+        };
+        
+        const { error: saveError } = await supabaseClient
+          .from('saved_images')
+          .insert(savedImageData);
+        
+        if (saveError) {
+          console.error('Error saving to saved_images:', saveError);
+          // Don't fail the webhook if saving to saved_images fails
+        } else {
+          console.log('Successfully saved completed job to saved_images table');
+        }
+      }
+
       console.log(`Job ${job.id} updated to status: ${updateData.status}`);
       return new Response('Webhook processed', { headers: corsHeaders });
 
