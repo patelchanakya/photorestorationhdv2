@@ -17,7 +17,7 @@ const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS ||
 const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 
 export default function FileManagementPage() {
-    const { user } = useGlobal();
+    const { user, deductCreditsOptimistic, optimisticCredits } = useGlobal();
     const [files, setFiles] = useState<FileObject[]>([]);
     const [processingJobs, setProcessingJobs] = useState<ProcessingJob[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -226,6 +226,12 @@ export default function FileManagementPage() {
             setRestoringFiles(prev => new Set([...prev, filename]));
             setError('');
 
+            // Deduct credit optimistically for instant UI feedback
+            const creditDeductionSuccess = await deductCreditsOptimistic(1);
+            if (!creditDeductionSuccess) {
+                throw new Error('You don\'t have enough credits to restore this photo. Please purchase more credits to continue.');
+            }
+
             const response = await fetch('/api/restore-photo', {
                 method: 'POST',
                 headers: {
@@ -418,9 +424,15 @@ export default function FileManagementPage() {
                                     <div className="flex items-center space-x-2">
                                         <button
                                             onClick={() => handleRestorePhoto(file.name)}
-                                            disabled={restoringFiles.has(file.name)}
+                                            disabled={restoringFiles.has(file.name) || (optimisticCredits ?? 0) <= 0}
                                             className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            title="Restore Photo"
+                                            title={
+                                                (optimisticCredits ?? 0) <= 0 
+                                                    ? "You need 1 credit to restore this photo. Please purchase more credits."
+                                                    : restoringFiles.has(file.name) 
+                                                        ? "Restoring in progress..." 
+                                                        : "Restore Photo (1 credit)"
+                                            }
                                         >
                                             {restoringFiles.has(file.name) ? (
                                                 <Loader2 className="h-5 w-5 animate-spin"/>

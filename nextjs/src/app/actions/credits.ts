@@ -48,7 +48,10 @@ export async function deductCredits(userId: string, amount: number): Promise<Cre
     
     const currentCredits = currentData.credits
     if (currentCredits < amount) {
-      return { success: false, error: 'Insufficient credits' }
+      return { 
+        success: false, 
+        error: `You need ${amount} credit${amount > 1 ? 's' : ''} but only have ${currentCredits}. Please purchase more credits to continue.`
+      }
     }
     
     // Deduct credits

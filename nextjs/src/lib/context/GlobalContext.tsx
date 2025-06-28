@@ -93,7 +93,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     } else {
                         // Rollback optimistic update on failure
                         updateOptimisticCredits({ type: 'refund', amount });
-                        console.error('Error deducting credits:', result.error);
+                        // Only log non-insufficient credit errors to avoid console spam
+                        if (!result.error?.includes('You need') && !result.error?.includes('Insufficient')) {
+                            console.error('Error deducting credits:', result.error);
+                        }
                         resolve(false);
                     }
                 } catch (error) {
