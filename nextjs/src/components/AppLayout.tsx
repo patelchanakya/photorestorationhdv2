@@ -9,7 +9,7 @@ import {
     X,
     ChevronDown,
     LogOut,
-    Key, Files, LucideListTodo,
+    Key, Files, LucideListTodo, Coins,
 } from 'lucide-react';
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
 
-    const { user } = useGlobal();
+    const { user, credits, optimisticCredits, creditsLoading, isPending } = useGlobal();
 
     const handleLogout = async () => {
         try {
@@ -112,7 +112,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <Menu className="h-6 w-6"/>
                     </button>
 
-                    <div className="relative ml-auto">
+                    {/* Credits Display */}
+                    <div className="flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-lg">
+                        <Coins className={`h-4 w-4 text-primary-600 ${isPending ? 'animate-spin' : ''}`} />
+                        <span className="text-sm font-medium text-primary-700">
+                            {creditsLoading ? (
+                                <span className="animate-pulse">Loading...</span>
+                            ) : (
+                                <span className={isPending ? 'opacity-75' : ''}>
+                                    {optimisticCredits ?? credits ?? 0} credits
+                                </span>
+                            )}
+                        </span>
+                        {(optimisticCredits !== null && optimisticCredits <= 1) && (
+                            <span className="ml-1 text-xs text-amber-600 font-medium">
+                                Low!
+                            </span>
+                        )}
+                        {isPending && (
+                            <span className="ml-1 text-xs text-blue-600 font-medium">
+                                Updating...
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="relative">
                         <button
                             onClick={() => setUserDropdownOpen(!isUserDropdownOpen)}
                             className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"

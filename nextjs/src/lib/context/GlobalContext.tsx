@@ -1,8 +1,9 @@
 // src/lib/context/GlobalContext.tsx
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useOptimistic, useTransition } from 'react';
 import { createSPASassClient } from '@/lib/supabase/client';
+import { getCredits, deductCredits, refundCredits } from '@/app/actions/credits';
 
 
 type User = {
@@ -11,16 +12,134 @@ type User = {
     registered_at: Date;
 };
 
+type CreditAction = 
+  | { type: 'deduct'; amount: number }
+  | { type: 'refund'; amount: number }
+  | { type: 'set'; amount: number };
+
 interface GlobalContextType {
     loading: boolean;
-    user: User | null;  // Add this
+    user: User | null;
+    credits: number | null;
+    optimisticCredits: number | null;
+    creditsLoading: boolean;
+    refetchCredits: () => Promise<void>;
+    deductCreditsOptimistic: (amount: number) => Promise<boolean>;
+    refundCreditsOptimistic: (amount: number) => Promise<boolean>;
+    isPending: boolean;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
 
 export function GlobalProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<User | null>(null);  // Add this
+    const [user, setUser] = useState<User | null>(null);
+    const [credits, setCredits] = useState<number | null>(null);
+    const [creditsLoading, setCreditsLoading] = useState(false);
+    const [isPending, startTransition] = useTransition();
+
+    // Optimistic credits for instant UI updates
+    const [optimisticCredits, updateOptimisticCredits] = useOptimistic(
+        credits,
+        (currentCredits: number | null, action: CreditAction): number | null => {
+            if (currentCredits === null) return null;
+            
+            switch (action.type) {
+                case 'deduct':
+                    return Math.max(0, currentCredits - action.amount);
+                case 'refund':
+                    return currentCredits + action.amount;
+                case 'set':
+                    return action.amount;
+                default:
+                    return currentCredits;
+            }
+        }
+    );
+
+    const fetchCredits = async (userId: string) => {
+        try {
+            setCreditsLoading(true);
+            const result = await getCredits(userId);
+            
+            if (result.success && result.credits !== undefined) {
+                setCredits(result.credits);
+                startTransition(() => {
+                    updateOptimisticCredits({ type: 'set', amount: result.credits });
+                });
+            } else {
+                console.error('Error fetching credits:', result.error);
+            }
+        } catch (error) {
+            console.error('Credits fetch error:', error);
+        } finally {
+            setCreditsLoading(false);
+        }
+    };
+
+    const deductCreditsOptimistic = async (amount: number): Promise<boolean> => {
+        if (!user?.id) return false;
+        
+        return new Promise((resolve) => {
+            startTransition(async () => {
+                try {
+                    // Optimistic update inside transition
+                    updateOptimisticCredits({ type: 'deduct', amount });
+                    
+                    const result = await deductCredits(user.id, amount);
+                    if (result.success && result.credits !== undefined) {
+                        setCredits(result.credits);
+                        resolve(true);
+                    } else {
+                        // Rollback optimistic update on failure
+                        updateOptimisticCredits({ type: 'refund', amount });
+                        console.error('Error deducting credits:', result.error);
+                        resolve(false);
+                    }
+                } catch (error) {
+                    // Rollback optimistic update on error
+                    updateOptimisticCredits({ type: 'refund', amount });
+                    console.error('Credits deduction error:', error);
+                    resolve(false);
+                }
+            });
+        });
+    };
+
+    const refundCreditsOptimistic = async (amount: number): Promise<boolean> => {
+        if (!user?.id) return false;
+        
+        return new Promise((resolve) => {
+            startTransition(async () => {
+                try {
+                    // Optimistic update inside transition
+                    updateOptimisticCredits({ type: 'refund', amount });
+                    
+                    const result = await refundCredits(user.id, amount);
+                    if (result.success && result.credits !== undefined) {
+                        setCredits(result.credits);
+                        resolve(true);
+                    } else {
+                        // Rollback optimistic update on failure
+                        updateOptimisticCredits({ type: 'deduct', amount });
+                        console.error('Error refunding credits:', result.error);
+                        resolve(false);
+                    }
+                } catch (error) {
+                    // Rollback optimistic update on error
+                    updateOptimisticCredits({ type: 'deduct', amount });
+                    console.error('Credits refund error:', error);
+                    resolve(false);
+                }
+            });
+        });
+    };
+
+    const refetchCredits = async () => {
+        if (user?.id) {
+            await fetchCredits(user.id);
+        }
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -31,11 +150,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                 // Get user data
                 const { data: { user } } = await client.auth.getUser();
                 if (user) {
-                    setUser({
+                    const userData = {
                         email: user.email!,
                         id: user.id,
                         registered_at: new Date(user.created_at)
-                    });
+                    };
+                    setUser(userData);
+                    
+                    // Fetch credits for this user
+                    await fetchCredits(user.id);
                 } else {
                     throw new Error('User not found');
                 }
@@ -51,7 +174,17 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <GlobalContext.Provider value={{ loading, user }}>
+        <GlobalContext.Provider value={{ 
+            loading, 
+            user, 
+            credits, 
+            optimisticCredits,
+            creditsLoading, 
+            refetchCredits,
+            deductCreditsOptimistic,
+            refundCreditsOptimistic,
+            isPending
+        }}>
             {children}
         </GlobalContext.Provider>
     );
