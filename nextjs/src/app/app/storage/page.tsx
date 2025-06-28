@@ -33,6 +33,43 @@ export default function FileManagementPage() {
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
     const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
     const previousJobsRef = useRef<ProcessingJob[]>([]);
+    const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [selectedImageName, setSelectedImageName] = useState<string>('');
+    const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
+
+    // Utility function to clean up filenames for display
+    const cleanFilename = (filename: string) => {
+        const nameOnly = filename.split('/').pop() || '';
+        // Remove timestamp suffix: _YYYY-MM-DD_HH-MM-SS
+        return nameOnly.replace(/_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\./, '.');
+    };
+
+    // Generate preview URL for an image
+    const generatePreviewUrl = useCallback(async (filename: string) => {
+        if (!user?.id) return null;
+        try {
+            const supabase = await createSPASassClient();
+            const { data, error } = await supabase.shareFile(user.id, filename, 3600); // 1 hour
+            if (error) throw error;
+            return data.signedUrl;
+        } catch (err) {
+            console.error('Error generating preview URL:', err);
+            return null;
+        }
+    }, [user?.id]);
+
+    // Load preview URLs for all files
+    const loadImagePreviews = useCallback(async (fileList: FileObject[]) => {
+        const urls: Record<string, string> = {};
+        for (const file of fileList) {
+            const url = await generatePreviewUrl(file.name);
+            if (url) {
+                urls[file.name] = url;
+            }
+        }
+        setImageUrls(urls);
+    }, [generatePreviewUrl]);
 
     const loadFiles = useCallback(async () => {
         if (!user?.id) return;
@@ -43,14 +80,27 @@ export default function FileManagementPage() {
             const { data, error } = await supabase.getFiles(user.id);
 
             if (error) throw error;
-            setFiles(data || []);
+            
+            // Sort files by creation date (newest first)
+            const sortedFiles = (data || []).sort((a, b) => {
+                const dateA = new Date(a.created_at || '').getTime();
+                const dateB = new Date(b.created_at || '').getTime();
+                return dateB - dateA; // Newest first
+            });
+            
+            setFiles(sortedFiles);
+            
+            // Load image previews
+            if (sortedFiles.length > 0) {
+                await loadImagePreviews(sortedFiles);
+            }
         } catch (err) {
             setError('Failed to load files');
             console.error('Error loading files:', err);
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, loadImagePreviews]);
 
     const refreshJobs = useCallback(async () => {
         if (!user?.id) return;
@@ -403,161 +453,247 @@ export default function FileManagementPage() {
                         </label>
                     </div>
 
-                    <div className="space-y-4">
-                        {loading && (
-                            <div className="flex items-center justify-center">
-                                <Loader2 className="w-6 h-6 animate-spin"/>
-                            </div>
-                        )}
-                        {files.length === 0 ? (
-                            <p className="text-center text-gray-500">No files uploaded yet</p>
-                        ) : (
-                            files.map((file) => (
-                                <div
-                                    key={file.name}
-                                    className="flex items-center justify-between p-4 bg-white rounded-lg border"
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <FileIcon className="h-6 w-6 text-gray-400"/>
-                                        <span className="font-medium">{file.name.split('/').pop()}</span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <button
-                                            onClick={() => handleRestorePhoto(file.name)}
-                                            disabled={restoringFiles.has(file.name) || (optimisticCredits ?? 0) <= 0}
-                                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            title={
-                                                (optimisticCredits ?? 0) <= 0 
-                                                    ? "You need 1 credit to restore this photo. Please purchase more credits."
-                                                    : restoringFiles.has(file.name) 
-                                                        ? "Restoring in progress..." 
-                                                        : "Restore Photo (1 credit)"
-                                            }
-                                        >
-                                            {restoringFiles.has(file.name) ? (
-                                                <Loader2 className="h-5 w-5 animate-spin"/>
-                                            ) : (
-                                                <Wand2 className="h-5 w-5"/>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDownload(file.name)}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                            title="Download"
-                                        >
-                                            <Download className="h-5 w-5"/>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setFileToDelete(file.name);
-                                                setShowDeleteDialog(true);
-                                            }}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="h-5 w-5"/>
-                                        </button>
-                                    </div>
+                    {loading && (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary-600"/>
+                        </div>
+                    )}
+                    
+                    {!loading && files.length === 0 ? (
+                        <div className="text-center py-12">
+                            <FileIcon className="mx-auto h-12 w-12 text-gray-400 mb-4"/>
+                            <p className="text-gray-500 text-lg">No files uploaded yet</p>
+                            <p className="text-gray-400 text-sm">Upload your first photo to get started</p>
+                        </div>
+                    ) : !loading && (
+                        <>
+                            {/* Section Header */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-900">Your Photos</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {files.length} {files.length === 1 ? 'photo' : 'photos'} uploaded
+                                    </p>
                                 </div>
-                            ))
-                        )}
-                    </div>
-
-                    {/* Processing Jobs Section */}
-                    <div className="mt-8">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Photo Restoration History</h3>
-                            <div className="flex items-center space-x-4">
                                 <Link 
                                     href="/app/history" 
-                                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                                    className="inline-flex items-center px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
                                 >
-                                    View All Photos
-                                    <ExternalLink className="ml-1 h-4 w-4" />
+                                    View Gallery
+                                    <ExternalLink className="ml-2 h-4 w-4" />
                                 </Link>
-                                {POLLING_DEBUG && (
-                                    <div className="text-xs text-gray-500 space-y-1">
-                                        <div>Debug Mode: ON</div>
-                                        <div>Polling Interval: {POLLING_INTERVAL}ms</div>
-                                        <div>Active Jobs: {processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length}</div>
-                                    </div>
-                                )}
                             </div>
-                        </div>
-                        <div className="space-y-4">
-                            {processingJobs.length === 0 ? (
-                                <p className="text-center text-gray-500">No restoration jobs yet</p>
-                            ) : (
-                                processingJobs.map((job) => (
+                        </>
+                    )}
+                    
+                    {!loading && files.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {files.map((file) => {
+                                const filename = file.name;
+                                const cleanName = cleanFilename(filename);
+                                const previewUrl = imageUrls[filename];
+                                const associatedJob = processingJobs.find(job => 
+                                    job.image_path === `${user!.id}/${filename}`
+                                );
+                                
+                                // Priority: restored image → original preview → null
+                                const thumbnailUrl = associatedJob?.result_url || previewUrl;
+                                
+                                return (
                                     <div
-                                        key={job.id}
-                                        className="flex items-center justify-between p-4 bg-white rounded-lg border"
+                                        key={filename}
+                                        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
                                     >
-                                        <div className="flex items-center space-x-3">
-                                            <FileIcon className="h-6 w-6 text-gray-400"/>
-                                            <div>
-                                                <span className="font-medium">{job.image_path.split('/').pop()}</span>
-                                                <div className="text-sm text-gray-500">
-                                                    Created: {new Date(job.created_at).toLocaleDateString()}
+                                        {/* Image Preview */}
+                                        <div 
+                                            className="relative aspect-square bg-gray-100 cursor-pointer"
+                                            onClick={() => {
+                                                if (thumbnailUrl) {
+                                                    setSelectedImageUrl(thumbnailUrl);
+                                                    setSelectedImageName(cleanName);
+                                                    setSelectedImageFilename(filename);
+                                                }
+                                            }}
+                                        >
+                                            {thumbnailUrl ? (
+                                                <img
+                                                    src={thumbnailUrl}
+                                                    alt={cleanName}
+                                                    className={`w-full h-full object-cover hover:scale-105 transition-all duration-200 ${
+                                                        associatedJob?.status === 'processing' || restoringFiles.has(filename) 
+                                                            ? 'blur-sm scale-105' 
+                                                            : ''
+                                                    }`}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <FileIcon className="h-12 w-12 text-gray-400"/>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Processing Overlay */}
+                                            {(associatedJob?.status === 'processing' || restoringFiles.has(filename)) && (
+                                                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                                    <div className="text-center text-white">
+                                                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2"/>
+                                                        <p className="text-sm font-medium">
+                                                            {restoringFiles.has(filename) ? 'Starting...' : 'Restoring'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Status Badge */}
+                                            {associatedJob && (
+                                                <div className="absolute top-2 right-2">
+                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
+                                                        associatedJob.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                        associatedJob.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                                        associatedJob.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                        associatedJob.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                                        'bg-red-100 text-red-800'
+                                                    }`}>
+                                                        {associatedJob.status === 'processing' && (
+                                                            <Loader2 className="h-3 w-3 animate-spin"/>
+                                                        )}
+                                                        <span>{associatedJob.status}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Action Overlay */}
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() => handleRestorePhoto(filename)}
+                                                        disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0 || associatedJob?.status === 'processing'}
+                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title={
+                                                            (optimisticCredits ?? 0) <= 0 
+                                                                ? "You need 1 credit to restore this photo"
+                                                                : associatedJob?.status === 'processing'
+                                                                    ? "Restoration in progress..."
+                                                                    : restoringFiles.has(filename) 
+                                                                        ? "Starting restoration..." 
+                                                                        : "Restore Photo (1 credit)"
+                                                        }
+                                                    >
+                                                        {restoringFiles.has(filename) ? (
+                                                            <Loader2 className="h-4 w-4 text-purple-600 animate-spin"/>
+                                                        ) : (
+                                                            <Wand2 className="h-4 w-4 text-purple-600"/>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDownload(filename)}
+                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+                                                        title="Download Original"
+                                                    >
+                                                        <Download className="h-4 w-4 text-blue-600"/>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setFileToDelete(filename);
+                                                            setShowDeleteDialog(true);
+                                                        }}
+                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-600"/>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-3">
-                                            <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2 ${
-                                                job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                                job.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                job.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                                                'bg-red-100 text-red-800'
-                                            }`}>
-                                                {job.status === 'processing' && (
-                                                    <Loader2 className="h-3 w-3 animate-spin"/>
-                                                )}
-                                                <span>{job.status}</span>
-                                            </div>
-                                            {(job.status === 'pending' || job.status === 'processing') && isJobCancellable(job) && (
-                                                <button
-                                                    onClick={() => handleCancelJob(job)}
-                                                    disabled={cancellingJobs.has(job.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    title="Cancel Job"
-                                                >
-                                                    {cancellingJobs.has(job.id) ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin"/>
-                                                    ) : (
-                                                        <X className="h-4 w-4"/>
-                                                    )}
-                                                </button>
-                                            )}
-                                            {job.status === 'completed' && job.result_url && (
-                                                <>
+                                        
+                                        {/* Card Footer */}
+                                        <div className="p-4">
+                                            <h3 className="font-medium text-gray-900 truncate" title={cleanName}>
+                                                {cleanName}
+                                            </h3>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                Uploaded {new Date(file.created_at || '').toLocaleDateString()}
+                                            </p>
+                                            
+                                            {/* Restoration Result Actions */}
+                                            {associatedJob?.status === 'completed' && associatedJob.result_url && (
+                                                <div className="mt-3 flex space-x-2">
                                                     <button
-                                                        onClick={() => handleViewRestoredImage(job)}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                                                        title="View Restored Image"
+                                                        onClick={() => handleViewRestoredImage(associatedJob)}
+                                                        className="flex-1 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                                                     >
-                                                        <Download className="h-5 w-5"/>
+                                                        <CheckCircle className="h-4 w-4"/>
+                                                        <span>View Result</span>
                                                     </button>
                                                     <button
-                                                        onClick={() => handleShareRestoredImage(job)}
-                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                                                        onClick={() => handleShareRestoredImage(associatedJob)}
+                                                        className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center"
                                                         title="Share Restored Image"
                                                     >
-                                                        <Share2 className="h-5 w-5"/>
+                                                        <Share2 className="h-4 w-4"/>
                                                     </button>
-                                                </>
-                                            )}
-                                            {job.status === 'failed' && job.error_message && (
-                                                <div title={job.error_message}>
-                                                    <AlertCircle className="h-5 w-5 text-red-500"/>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                ))
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Quick Link to Full History */}
+                    {processingJobs.length > 0 && (
+                        <div className="mt-8 text-center">
+                            <Link 
+                                href="/app/history" 
+                                className="inline-flex items-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                                View Complete Restoration History
+                                <ExternalLink className="ml-2 h-4 w-4" />
+                            </Link>
+                            {POLLING_DEBUG && (
+                                <div className="mt-4 text-xs text-gray-500 space-y-1 bg-yellow-50 p-3 rounded-lg border">
+                                    <div>Debug Mode: ON</div>
+                                    <div>Polling Interval: {POLLING_INTERVAL}ms</div>
+                                    <div>Active Jobs: {processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length}</div>
+                                </div>
                             )}
                         </div>
-                    </div>
+                    )}
+
+                    {/* Image Modal */}
+                    <Dialog open={Boolean(selectedImageUrl)} onOpenChange={() => {
+                        setSelectedImageUrl(null);
+                        setSelectedImageName('');
+                        setSelectedImageFilename('');
+                    }}>
+                        <DialogContent className="max-w-4xl w-full p-0">
+                            <DialogHeader className="p-6 pb-0">
+                                <div className="flex items-center justify-between">
+                                    <DialogTitle className="text-lg font-semibold">
+                                        {selectedImageName}
+                                    </DialogTitle>
+                                    {selectedImageFilename && (
+                                        <Link
+                                            href={`/app/history?highlight=${encodeURIComponent(selectedImageFilename)}`}
+                                            className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
+                                        >
+                                            <ExternalLink className="h-4 w-4 mr-2"/>
+                                            Go to Gallery
+                                        </Link>
+                                    )}
+                                </div>
+                            </DialogHeader>
+                            <div className="p-6 pt-0">
+                                {selectedImageUrl && (
+                                    <img
+                                        src={selectedImageUrl}
+                                        alt={selectedImageName}
+                                        className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                                    />
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Share Dialog */}
                     <Dialog open={Boolean(shareUrl)} onOpenChange={() => {
