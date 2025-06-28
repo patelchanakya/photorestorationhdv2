@@ -44,51 +44,22 @@ export function ImageModal({
     onPrevious
 }: ImageModalProps) {
     const [showOriginal, setShowOriginal] = useState(false);
-    const [originalExists, setOriginalExists] = useState<boolean | null>(null);
-    const [restoredExists, setRestoredExists] = useState<boolean | null>(null);
     
-    // Test if images actually exist and can be loaded
-    useEffect(() => {
-        // Test original image
-        if (image.original_url && image.original_url.trim() !== '') {
-            const img = new window.Image();
-            img.onload = () => setOriginalExists(true);
-            img.onerror = () => setOriginalExists(false);
-            img.src = image.original_url;
-        } else {
-            setOriginalExists(false);
-        }
-
-        // Test restored image
-        if (image.edited_url && image.edited_url.trim() !== '') {
-            const img = new window.Image();
-            img.onload = () => setRestoredExists(true);
-            img.onerror = () => setRestoredExists(false);
-            img.src = image.edited_url;
-        } else {
-            setRestoredExists(false);
-        }
-    }, [image.original_url, image.edited_url]);
-    
-    // Check if both original and restored images are actually available
-    const hasOriginal = originalExists === true;
-    const hasRestored = restoredExists === true;
-    const canToggle = hasOriginal && hasRestored;
+    // Simplified logic - always show toggle buttons
+    // Display original if exists and requested, otherwise show restored
+    const hasOriginal = image.original_url && image.original_url.trim() !== '';
+    const hasRestored = image.edited_url && image.edited_url.trim() !== '';
     
     // Determine which image to display
     const displayUrl = showOriginal && hasOriginal ? image.original_url : 
                       hasRestored ? image.edited_url : 
-                      null; // No fallback to broken URLs
+                      hasOriginal ? image.original_url : 
+                      null;
     
-    // Reset showOriginal when image changes or when original is not available
+    // Reset showOriginal when image changes
     useEffect(() => {
-        if (!hasOriginal) {
-            setShowOriginal(false);
-        }
-    }, [hasOriginal, image.id]);
-    
-    // Show loading state while checking image existence
-    const isLoading = originalExists === null || restoredExists === null;
+        setShowOriginal(false);
+    }, [image.id]);
 
     const openInNewTab = (url: string) => {
         window.open(url, '_blank');
@@ -126,7 +97,7 @@ export function ImageModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-sm sm:max-w-4xl w-full max-h-[90vh] p-0">
+            <DialogContent className="w-[95vw] sm:w-full max-w-sm sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0">
                 <DialogTitle className="sr-only">
                     {(showOriginal && hasOriginal) ? 'Original Photo' : 'Restored Photo'}: {image.prompt}
                 </DialogTitle>
@@ -135,97 +106,101 @@ export function ImageModal({
                 </DialogDescription>
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b bg-background">
-                        <div className="flex items-center space-x-3">
-                            <div className="space-y-1">
-                                <h3 className="font-medium line-clamp-2 sm:line-clamp-3 break-words">{image.prompt}</h3>
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="h-3 w-3 mr-1" />
-                                    {image.created_at && formatDistanceToNow(new Date(image.created_at), { addSuffix: true })}
+                    <div className="flex flex-col gap-3 p-3 sm:p-4 border-b bg-background">
+                        {/* Title and meta info */}
+                        <div className="flex items-start space-x-3 min-w-0 pr-8">
+                            <div className="space-y-1 min-w-0 flex-1">
+                                <h3 className="font-medium line-clamp-2 break-words text-sm sm:text-base">{image.prompt}</h3>
+                                <div className="flex items-center text-xs sm:text-sm text-muted-foreground flex-wrap gap-1">
+                                    <Calendar className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">
+                                        {image.created_at && formatDistanceToNow(new Date(image.created_at), { addSuffix: true })}
+                                    </span>
                                     {image.is_hd && (
                                         <>
-                                            <span className="mx-2">•</span>
-                                            <Badge variant="secondary" className="text-xs">HD</Badge>
+                                            <span className="flex-shrink-0">•</span>
+                                            <Badge variant="secondary" className="text-xs flex-shrink-0">HD</Badge>
                                         </>
                                     )}
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="flex items-center space-x-1 sm:space-x-2">
-                            {canToggle && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowOriginal(!showOriginal)}
-                                        className="hidden sm:flex"
-                                    >
-                                        {showOriginal ? 'Show Restored' : 'Show Original'}
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowOriginal(!showOriginal)}
-                                        className="sm:hidden"
-                                    >
-                                        {showOriginal ? 'Restored' : 'Original'}
-                                    </Button>
-                                </>
-                            )}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => displayUrl && openInNewTab(displayUrl)}
-                                disabled={!displayUrl}
-                                title={displayUrl ? "Open in new tab" : "Image not available"}
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={onDownload} title="Download">
-                                <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={onShare} title="Share" className="hidden sm:flex">
-                                <Share2 className="h-4 w-4" />
-                            </Button>
+                        {/* Action buttons */}
+                        <div className="flex items-center justify-between gap-2">
+                            {/* Left side - Delete button */}
                             <Button 
                                 variant="outline" 
                                 size="sm" 
                                 onClick={onDelete}
-                                className="text-destructive hover:text-destructive"
+                                className="text-destructive hover:text-destructive flex items-center gap-1"
                                 title="Delete"
                             >
                                 <Trash2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Delete</span>
                             </Button>
+                            
+                            {/* Right side - Action buttons group */}
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                {/* Toggle button */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowOriginal(!showOriginal)}
+                                    disabled={!hasOriginal && !hasRestored}
+                                    className="text-xs sm:text-sm"
+                                >
+                                    <span className="hidden sm:inline">
+                                        {showOriginal ? 'Show Restored' : 'Show Original'}
+                                    </span>
+                                    <span className="sm:hidden">
+                                        {showOriginal ? 'Restored' : 'Original'}
+                                    </span>
+                                </Button>
+                                
+                                {/* Download button */}
+                                <Button variant="outline" size="sm" onClick={onDownload} title="Download">
+                                    <Download className="h-4 w-4" />
+                                </Button>
+                                
+                                {/* Open in new tab button */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => displayUrl && openInNewTab(displayUrl)}
+                                    disabled={!displayUrl}
+                                    title={displayUrl ? "Open in new tab" : "Image not available"}
+                                >
+                                    <ExternalLink className="h-4 w-4" />
+                                </Button>
+                                
+                                {/* Share button */}
+                                <Button variant="outline" size="sm" onClick={onShare} title="Share">
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     
                     {/* Image Content */}
-                    <div className="flex-1 relative bg-muted/30 flex items-center justify-center p-4">
-                        {isLoading ? (
-                            <div className="flex items-center justify-center w-full h-[50vh] sm:h-[60vh]">
-                                <div className="text-center">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                                    <p className="text-sm text-muted-foreground">Loading image...</p>
-                                </div>
-                            </div>
-                        ) : displayUrl ? (
-                            <div className="relative w-full h-[50vh] sm:h-[60vh] max-w-4xl">
+                    <div className="flex-1 relative bg-muted/30 flex items-center justify-center p-2 sm:p-4">
+                        {displayUrl ? (
+                            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] max-w-4xl">
                                 <Image
                                     src={displayUrl}
                                     alt={image.prompt}
                                     fill
                                     className="object-contain"
                                     priority
-                                    sizes="(max-width: 1024px) 100vw, 1024px"
+                                    sizes="(max-width: 640px) 95vw, (max-width: 1024px) 90vw, 1024px"
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center w-full h-[50vh] sm:h-[60vh]">
-                                <div className="text-center">
-                                    <div className="text-4xl mb-4">📸</div>
-                                    <p className="text-lg font-medium text-muted-foreground mb-2">Image Not Available</p>
-                                    <p className="text-sm text-muted-foreground">
+                            <div className="flex items-center justify-center w-full h-[40vh] sm:h-[50vh] md:h-[60vh]">
+                                <div className="text-center px-4">
+                                    <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📸</div>
+                                    <p className="text-base sm:text-lg font-medium text-muted-foreground mb-2">Image Not Available</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
                                         {!hasOriginal && !hasRestored 
                                             ? "Both original and restored images are unavailable"
                                             : "Image may be too large or temporarily unavailable"
@@ -242,29 +217,29 @@ export function ImageModal({
                                     <Button
                                         variant="secondary"
                                         size="sm"
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 z-10"
+                                        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9"
                                         onClick={onPrevious}
                                     >
-                                        <ChevronLeft className="h-4 w-4" />
+                                        <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </Button>
                                 )}
                                 {currentIndex < images.length - 1 && (
                                     <Button
                                         variant="secondary"
                                         size="sm"
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10"
+                                        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-9 sm:w-9"
                                         onClick={onNext}
                                     >
-                                        <ChevronRight className="h-4 w-4" />
+                                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </Button>
                                 )}
                             </>
                         )}
                         
                         {/* Image type indicator */}
-                        {!isLoading && displayUrl && (
-                            <div className="absolute top-4 left-4">
-                                <Badge variant={(showOriginal && hasOriginal) ? "outline" : "default"}>
+                        {displayUrl && (
+                            <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                                <Badge variant={(showOriginal && hasOriginal) ? "outline" : "default"} className="text-xs">
                                     {(showOriginal && hasOriginal) ? 'Original' : 'Restored'}
                                 </Badge>
                             </div>
@@ -272,7 +247,7 @@ export function ImageModal({
                         
                         {/* Image counter */}
                         {images.length > 1 && (
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+                            <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2">
                                 <Badge variant="secondary" className="text-xs">
                                     {currentIndex + 1} of {images.length}
                                 </Badge>
@@ -282,10 +257,10 @@ export function ImageModal({
                     
                     {/* Footer */}
                     {image.tags && image.tags.length > 0 && (
-                        <div className="p-4 border-t bg-background">
+                        <div className="p-3 sm:p-4 border-t bg-background">
                             <div className="space-y-2">
-                                <p className="text-sm font-medium">Tags</p>
-                                <div className="flex flex-wrap gap-2">
+                                <p className="text-xs sm:text-sm font-medium">Tags</p>
+                                <div className="flex flex-wrap gap-1 sm:gap-2">
                                     {image.tags.map((tag, index) => (
                                         <Badge key={index} variant="outline" className="text-xs">
                                             {tag}

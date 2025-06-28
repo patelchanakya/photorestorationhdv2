@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Globe, Shield, Users, Key, Database, Clock } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
+import FAQSection from '@/components/FAQSection';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
@@ -64,31 +65,18 @@ export default function Home() {
               </span>
               </div>
               <div className="hidden md:flex items-center space-x-8">
-                <Link href="#features" className="text-gray-600 hover:text-gray-900">
-                  Features
+                <Link href="/" className="text-gray-600 hover:text-gray-900">
+                  Home
                 </Link>
-
+                <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900">
+                  How it Works
+                </Link>
                 <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
                   Pricing
                 </Link>
-                <Link
-                    href="https://github.com/Razikus/supabase-nextjs-template"
-                    className="text-gray-600 hover:text-gray-900"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  Documentation
+                <Link href="#faq" className="text-gray-600 hover:text-gray-900">
+                  FAQ
                 </Link>
-
-                <Link
-                    href="https://github.com/Razikus/supabase-nextjs-template"
-                    className="bg-primary-800 text-white px-4 py-2 rounded-lg hover:bg-primary-900 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  Grab This Template
-                </Link>
-
                 <AuthAwareButtons variant="nav" />
               </div>
             </div>
@@ -99,15 +87,20 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-                Bootstrap Your SaaS
-                <span className="block text-primary-600">In 5 minutes</span>
+                Bring old photos <span className="relative inline-block">
+                  <span className="text-primary-600 z-10 relative">back to life</span>
+                  <svg className="absolute left-0 right-0 bottom-[-8px] w-full h-3 z-0" viewBox="0 0 200 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 10 Q100 2 190 10" stroke="#D35400" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+                  </svg>
+                </span> in seconds
               </h1>
               <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-                Launch your SaaS product in days, not months. Complete with authentication and enterprise-grade security built right in.
+                Transform damaged, faded, or low-quality photos into stunning HD images.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
-
-                <AuthAwareButtons />
+                <Link href="/auth/register" className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors text-lg shadow">
+                  Start Restoring Photos
+                </Link>
               </div>
             </div>
           </div>
@@ -126,26 +119,37 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-24 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold">Everything You Need</h2>
-              <p className="mt-4 text-xl text-gray-600">
-                Built with modern technologies for reliability and speed
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                  <div
-                      key={index}
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <feature.icon className={`h-8 w-8 ${feature.color}`} />
-                    <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-gray-600">{feature.description}</p>
-                  </div>
-              ))}
+        {/* Features Section - replaced with concise, relevant value props */}
+        <section className="py-16 bg-gradient-to-b from-white to-gray-50" id="benefits">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
+                    <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m4 4h1a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v7a2 2 0 002 2h1" /></svg>
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Fast processing</h3>
+                <p className="text-gray-600">Results within seconds</p>
+              </div>
+              <div>
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
+                    <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">HD quality results</h3>
+                <p className="text-gray-600">Up to 4K resolution</p>
+              </div>
+              <div>
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100">
+                    <svg className="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2zm0 0V7m0 4v4m0 0a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Secure storage</h3>
+                <p className="text-gray-600">Enterprise-grade security</p>
+              </div>
             </div>
           </div>
         </section>
@@ -167,6 +171,25 @@ export default function Home() {
               Get Started Now
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
+          </div>
+        </section>
+
+        <section className="py-24 bg-white" id="gallery">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold">
+                See the <span className="relative inline-block">
+                  <span className="text-primary-600 z-10 relative">transformation</span>
+                  <svg className="absolute left-0 right-0 bottom-0 w-full h-2 z-0" viewBox="0 0 200 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 8 Q100 15 195 8" stroke="#FF7A1A" strokeWidth="4" strokeLinecap="round"/>
+                  </svg>
+                </span>
+              </h2>
+              <p className="mt-4 text-xl text-gray-600">
+                Real results from real photos. Drag the slider to reveal the restoration magic.
+              </p>
+            </div>
+            {/* Gallery content here */}
           </div>
         </section>
 
@@ -221,6 +244,9 @@ export default function Home() {
             </div>
           </div>
         </footer>
+        <div id="faq">
+          <FAQSection />
+        </div>
       </div>
   );
 }
