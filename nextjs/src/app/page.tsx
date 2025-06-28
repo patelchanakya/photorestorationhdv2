@@ -18,16 +18,16 @@ export default function Home() {
       color: 'text-green-600'
     },
     {
+      icon: Database,
+      title: 'Secure & Private',
+      description: 'Your photos are encrypted and you can delete them permanently whenever you want',
+      color: 'text-purple-600'
+    },
+    {
       icon: Shield,
       title: 'HD Quality',
       description: 'Professional-grade restoration up to 4K resolution',
       color: 'text-blue-600'
-    },
-    {
-      icon: Database,
-      title: 'Secure & Private',
-      description: 'Your photos are encrypted and only you can access them',
-      color: 'text-purple-600'
     }
   ];
 

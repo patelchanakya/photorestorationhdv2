@@ -1,20 +1,56 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { CalendarDays, Upload, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import CreditTestPanel from '@/components/CreditTestPanel';
+import { createSPASassClient } from '@/lib/supabase/client';
 
 export default function DashboardContent() {
     const { loading, user } = useGlobal();
+    const [daysSinceFirstImage, setDaysSinceFirstImage] = useState<number>(0);
+    const [loadingDays, setLoadingDays] = useState(true);
 
-    const getDaysSinceRegistration = () => {
-        if (!user?.registered_at) return 0;
-        const today = new Date();
-        const diffTime = Math.abs(today.getTime() - user.registered_at.getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const getDaysSinceFirstImage = async () => {
+        if (!user?.id) return 0;
+        
+        try {
+            const supabase = await createSPASassClient();
+            const { data, error } = await supabase.getSupabaseClient()
+                .from('saved_images')
+                .select('created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: true })
+                .limit(1);
+            
+            if (error) {
+                console.error('Error fetching first image date:', error);
+                return 0;
+            }
+            
+            if (!data || data.length === 0) {
+                return 0; // No images saved yet
+            }
+            
+            const firstImageDate = new Date(data[0].created_at);
+            const today = new Date();
+            const diffTime = Math.abs(today.getTime() - firstImageDate.getTime());
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } catch (error) {
+            console.error('Error calculating days since first image:', error);
+            return 0;
+        }
     };
+
+    useEffect(() => {
+        if (user?.id) {
+            getDaysSinceFirstImage().then(days => {
+                setDaysSinceFirstImage(days);
+                setLoadingDays(false);
+            });
+        }
+    }, [user?.id]);
 
     if (loading) {
         return (
@@ -24,7 +60,6 @@ export default function DashboardContent() {
         );
     }
 
-    const daysSinceRegistration = getDaysSinceRegistration();
 
     return (
         <div className="space-y-6 p-6">
@@ -33,7 +68,13 @@ export default function DashboardContent() {
                     <CardTitle>Welcome, {user?.email?.split('@')[0]}! 👋</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4" />
-                        You have been restoring photos for {daysSinceRegistration} days!
+                        {loadingDays ? (
+                            <span className="animate-pulse">Loading...</span>
+                        ) : daysSinceFirstImage > 0 ? (
+                            `You have been restoring photos for ${daysSinceFirstImage} days!`
+                        ) : (
+                            "Start restoring photos to track your journey!"
+                        )}
                     </CardDescription>
                 </CardHeader>
             </Card>
