@@ -9,7 +9,7 @@ import {
     X,
     ChevronDown,
     LogOut,
-    Key, Upload, ImageIcon, Coins,
+    Key, Upload, ImageIcon, Coins, Camera,
 } from 'lucide-react';
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
@@ -67,7 +67,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
 
                 <div className="h-16 flex items-center justify-between px-4 border-b">
-                    <span className="text-xl font-semibold text-primary-600">{productName}</span>
+                    <Link href="/app" className="flex items-center space-x-2 group">
+                        <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                            <Camera className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <span className="text-xl font-bold text-orange-600 tracking-tight">
+                            photorestorationhd
+                        </span>
+                    </Link>
                     <button
                         onClick={toggleSidebar}
                         className="lg:hidden text-gray-500 hover:text-gray-700"
@@ -86,13 +93,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                 href={item.href}
                                 className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                                     isActive
-                                        ? 'bg-primary-50 text-primary-600'
+                                        ? 'bg-orange-50 text-orange-600'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                             >
                                 <item.icon
                                     className={`mr-3 h-5 w-5 ${
-                                        isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                                        isActive ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-500'
                                     }`}
                                 />
                                 {item.name}
@@ -105,17 +112,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             <div className="lg:pl-64">
                 <div className="sticky top-0 z-10 flex items-center justify-between h-16 bg-white shadow-sm px-4">
-                    <button
-                        onClick={toggleSidebar}
-                        className="lg:hidden text-gray-500 hover:text-gray-700"
-                    >
-                        <Menu className="h-6 w-6"/>
-                    </button>
+                    <div className="flex items-center space-x-3">
+                        <button
+                            onClick={toggleSidebar}
+                            className="lg:hidden text-gray-500 hover:text-gray-700"
+                        >
+                            <Menu className="h-6 w-6"/>
+                        </button>
+                        
+                        {/* Mobile Logo */}
+                        <Link href="/app" className="lg:hidden flex items-center space-x-2">
+                            <div className="p-1.5 bg-orange-100 rounded-lg">
+                                <Camera className="h-5 w-5 text-orange-600" />
+                            </div>
+                            <span className="text-lg font-bold text-orange-600 tracking-tight">
+                                photorestorationhd
+                            </span>
+                        </Link>
+                    </div>
 
                     {/* Credits Display */}
-                    <div className="flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-lg">
-                        <Coins className={`h-4 w-4 text-primary-600 ${isPending ? 'animate-spin' : ''}`} />
-                        <span className="text-sm font-medium text-primary-700">
+                    <div className="flex items-center space-x-2 bg-orange-50 px-3 py-1.5 rounded-lg">
+                        <Coins className={`h-4 w-4 text-orange-600 ${isPending ? 'animate-spin' : ''}`} />
+                        <span className="text-sm font-medium text-orange-700">
                             {creditsLoading ? (
                                 <span className="animate-pulse">Loading...</span>
                             ) : (
@@ -141,8 +160,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             onClick={() => setUserDropdownOpen(!isUserDropdownOpen)}
                             className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
                         >
-                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                                <span className="text-primary-700 font-medium">
+                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                <span className="text-orange-700 font-medium">
                                     {user ? getInitials(user.email) : '??'}
                                 </span>
                             </div>

@@ -85,7 +85,7 @@ export default function AuthLayout({
                         ))}
                         <div className="mt-8 text-center">
                             <p className="text-primary-100 text-sm">
-                                Join thousands who trust our photo restoration to bring memories back to life
+                                Join hundreds who trust our photo restoration to bring memories back to life
                             </p>
                         </div>
                     </div>

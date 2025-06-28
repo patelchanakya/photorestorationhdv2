@@ -13,7 +13,7 @@ const HomePricing = () => {
         <section id="pricing" className="py-24 bg-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold mb-4">One-Time Purchase</h2>
+                    <h2 className="text-3xl font-bold mb-4">Simple Credit Packages</h2>
                     <p className="text-gray-600 text-lg">Buy credits as you need them - no subscription required</p>
                 </div>
 
@@ -39,7 +39,7 @@ const HomePricing = () => {
                             <CardContent className="flex-grow flex flex-col">
                                 <div className="mb-6">
                                     <span className="text-4xl font-bold">{PricingService.formatPrice(tier.price)}</span>
-                                    <span className="text-gray-600 ml-2">/month</span>
+                                    <span className="text-gray-600 ml-2">credits</span>
                                 </div>
 
                                 <ul className="space-y-3 mb-8 flex-grow">

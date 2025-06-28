@@ -4,55 +4,33 @@ import { ArrowRight, Globe, Shield, Users, Key, Database, Clock } from 'lucide-r
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
 import FAQSection from '@/components/FAQSection';
+import PhotoShowcase from '@/components/PhotoShowcase';
+import Logo from '@/components/Logo';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
 
   const features = [
     {
-      icon: Shield,
-      title: 'Robust Authentication',
-      description: 'Secure login with email/password, Multi-Factor Authentication, and SSO providers',
+      icon: Clock,
+      title: 'Lightning Fast',
+      description: 'Get your restored photos in seconds, not hours',
       color: 'text-green-600'
     },
     {
-      icon: Database,
-      title: 'File Management',
-      description: 'Built-in file storage with secure sharing, downloads, and granular permissions',
-      color: 'text-orange-600'
-    },
-    {
-      icon: Users,
-      title: 'User Settings',
-      description: 'Complete user management with password updates, MFA setup, and profile controls',
-      color: 'text-red-600'
-    },
-    {
-      icon: Clock,
-      title: 'Task Management',
-      description: 'Built-in todo system with real-time updates and priority management',
-      color: 'text-teal-600'
-    },
-    {
-      icon: Globe,
-      title: 'Legal Documents',
-      description: 'Pre-configured privacy policy, terms of service, and refund policy pages',
-      color: 'text-purple-600'
-    },
-    {
-      icon: Key,
-      title: 'Cookie Consent',
-      description: 'GDPR-compliant cookie consent system with customizable preferences',
+      icon: Shield,
+      title: 'HD Quality',
+      description: 'Professional-grade restoration up to 4K resolution',
       color: 'text-blue-600'
+    },
+    {
+      icon: Database,
+      title: 'Secure & Private',
+      description: 'Your photos are encrypted and only you can access them',
+      color: 'text-purple-600'
     }
   ];
 
-  const stats = [
-    { label: 'Active Users', value: '10K+' },
-    { label: 'Organizations', value: '2K+' },
-    { label: 'Countries', value: '50+' },
-    { label: 'Uptime', value: '99.9%' }
-  ];
 
   return (
       <div className="min-h-screen">
@@ -60,16 +38,14 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
               <div className="flex-shrink-0">
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-                {productName}
-              </span>
+                <Logo variant="nav" />
               </div>
               <div className="hidden md:flex items-center space-x-8">
                 <Link href="/" className="text-gray-600 hover:text-gray-900">
                   Home
                 </Link>
-                <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900">
-                  How it Works
+                <Link href="#gallery" className="text-gray-600 hover:text-gray-900">
+                  Examples
                 </Link>
                 <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
                   Pricing
@@ -95,7 +71,7 @@ export default function Home() {
                 </span> in seconds
               </h1>
               <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-                Transform damaged, faded, or low-quality photos into stunning HD images.
+                Transform damaged, faded, or low-quality photos into stunning HD images using AI.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
                 <Link href="/auth/register" className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors text-lg shadow">
@@ -106,49 +82,98 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="text-4xl font-bold text-primary-600">{stat.value}</div>
-                    <div className="mt-2 text-sm text-gray-600">{stat.label}</div>
+
+        {/* Features Section */}
+        <section className="py-24 bg-white" id="benefits">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose Our Restoration?
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Professional-grade restoration that brings your memories back to life
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-12 text-center">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="group hover:scale-105 transition-transform duration-200">
+                    <div className="flex justify-center mb-6">
+                      <span className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl ${
+                        feature.color === 'text-green-600' ? 'bg-green-100' :
+                        feature.color === 'text-blue-600' ? 'bg-blue-100' : 'bg-purple-100'
+                      } group-hover:scale-110 transition-transform duration-200`}>
+                        <Icon className={`w-8 h-8 ${feature.color}`} />
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-gray-900">{feature.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{feature.description}</p>
                   </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* Features Section - replaced with concise, relevant value props */}
-        <section className="py-16 bg-gradient-to-b from-white to-gray-50" id="benefits">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="flex justify-center mb-4">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
-                    <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m4 4h1a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v7a2 2 0 002 2h1" /></svg>
-                  </span>
+        {/* Testimonials Section */}
+        <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                What Our Users Say
+              </h2>
+              <p className="text-xl text-gray-600">
+                Real stories from people who restored their precious memories
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Fast processing</h3>
-                <p className="text-gray-600">Results within seconds</p>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn't believe how clear they turned out.
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Sarah M.</div>
               </div>
-              <div>
-                <div className="flex justify-center mb-4">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
-                    <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  </span>
+
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">HD quality results</h3>
-                <p className="text-gray-600">Up to 4K resolution</p>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  "Had some WWII photos from my dad that were pretty beat up. This service brought them back to life, the details are amazing."
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Mike R.</div>
               </div>
-              <div>
-                <div className="flex justify-center mb-4">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100">
-                    <svg className="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2zm0 0V7m0 4v4m0 0a4 4 0 100-8 4 4 0 000 8z" /></svg>
-                  </span>
+
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Secure storage</h3>
-                <p className="text-gray-600">Enterprise-grade security</p>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  "Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic."
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Lisa T.</div>
               </div>
             </div>
           </div>
@@ -159,39 +184,24 @@ export default function Home() {
         <section className="py-24 bg-primary-600">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-white">
-              Ready to Transform Your Idea into Reality?
+              Ready to Restore Your Photos?
             </h2>
             <p className="mt-4 text-xl text-primary-100">
-              Join thousands of developers building their SaaS with {productName}
+              Join hundreds of users bringing their memories back to life
             </p>
             <Link
                 href="/auth/register"
                 className="mt-8 inline-flex items-center px-6 py-3 rounded-lg bg-white text-primary-600 font-medium hover:bg-primary-50 transition-colors"
             >
-              Get Started Now
+              Start Restoring Photos
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </section>
 
-        <section className="py-24 bg-white" id="gallery">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold">
-                See the <span className="relative inline-block">
-                  <span className="text-primary-600 z-10 relative">transformation</span>
-                  <svg className="absolute left-0 right-0 bottom-0 w-full h-2 z-0" viewBox="0 0 200 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 8 Q100 15 195 8" stroke="#FF7A1A" strokeWidth="4" strokeLinecap="round"/>
-                  </svg>
-                </span>
-              </h2>
-              <p className="mt-4 text-xl text-gray-600">
-                Real results from real photos. Drag the slider to reveal the restoration magic.
-              </p>
-            </div>
-            {/* Gallery content here */}
-          </div>
-        </section>
+        <PhotoShowcase />
+
+        <FAQSection />
 
         <footer className="bg-gray-50 border-t border-gray-200">
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -244,9 +254,6 @@ export default function Home() {
             </div>
           </div>
         </footer>
-        <div id="faq">
-          <FAQSection />
-        </div>
       </div>
   );
 }

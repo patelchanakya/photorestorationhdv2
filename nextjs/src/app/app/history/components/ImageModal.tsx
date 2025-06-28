@@ -11,7 +11,6 @@ import {
     Share2, 
     Trash2, 
     Calendar,
-    Maximize2,
     ExternalLink,
     ChevronLeft,
     ChevronRight

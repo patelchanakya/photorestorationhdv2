@@ -6,11 +6,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, X, ExternalLink } from 'lucide-react';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
+import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
@@ -81,8 +82,15 @@ export default function FileManagementPage() {
 
             if (error) throw error;
             
-            // Sort files by creation date (newest first)
-            const sortedFiles = (data || []).sort((a, b) => {
+            // Filter files to only show today's uploads and sort by creation date (newest first)
+            const today = new Date().toDateString();
+            const todayFiles = (data || []).filter(file => {
+                if (!file.created_at) return false;
+                const fileDate = new Date(file.created_at).toDateString();
+                return fileDate === today;
+            });
+            
+            const sortedFiles = todayFiles.sort((a, b) => {
                 const dateA = new Date(a.created_at || '').getTime();
                 const dateB = new Date(b.created_at || '').getTime();
                 return dateB - dateA; // Newest first
@@ -359,11 +367,11 @@ export default function FileManagementPage() {
         }
     };
 
-    // Check if a job can be cancelled (must be at least 10 seconds old)
+    // Check if a job can be cancelled (must be at least 15 seconds old)
     const isJobCancellable = (job: ProcessingJob): boolean => {
         if (!job.started_at) return false;
-        const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
-        return new Date(job.started_at) < tenSecondsAgo;
+        const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000);
+        return new Date(job.started_at) < fifteenSecondsAgo;
     };
 
     const handleCancelJob = async (job: ProcessingJob) => {
@@ -401,93 +409,152 @@ export default function FileManagementPage() {
         }
     };
 
-
     return (
-        <div className="space-y-6 p-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>File Management</CardTitle>
-                    <CardDescription>Upload, generate, download, and share your restorations.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+        <div className="min-h-screen bg-gray-50">
+            {/* Header Section with Credits */}
+            <div className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Create</h1>
+                        </div>
+                        <ProminentCreditsDisplay />
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="space-y-8">
+                    {/* Alerts */}
                     {error && (
-                        <Alert variant="destructive" className="mb-4">
+                        <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4"/>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     )}
 
                     {success && (
-                        <Alert className="mb-4">
+                        <Alert>
                             <CheckCircle className="h-4 w-4"/>
                             <AlertDescription>{success}</AlertDescription>
                         </Alert>
                     )}
 
+                    {/* Upload Section */}
+                    <Card className="border-0 shadow-xl bg-white">
+                        <CardContent className="p-8">
+
                     <div className="flex items-center justify-center w-full">
                         <label
-                            className={`w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg shadow-lg tracking-wide border-2 cursor-pointer transition-colors ${
+                            className={`relative w-full max-w-2xl flex flex-col items-center px-8 py-12 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
                                 isDragging
-                                    ? 'border-primary-500 border-dashed bg-primary-50'
-                                    : 'border-primary-600 hover:bg-primary-50'
+                                    ? 'border-2 border-dashed border-orange-400 bg-orange-50 shadow-lg scale-105'
+                                    : 'border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
                             }`}
                             onDragEnter={handleDragEnter}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                         >
-                            <Upload className="w-8 h-8"/>
-                            <span className="mt-2 text-base">
-                                {uploading
-                                    ? 'Uploading...'
-                                    : isDragging
-                                        ? 'Drop your file here'
-                                        : 'Drag and drop or click to select a file (max 50mb)'}
-                            </span>
+                            {/* Upload Icon */}
+                            <div className={`p-4 rounded-full transition-all duration-300 ${
+                                isDragging
+                                    ? 'bg-orange-100 text-orange-600'
+                                    : 'bg-gray-100 text-gray-500 group-hover:bg-orange-100 group-hover:text-orange-600'
+                            }`}>
+                                <Upload className="w-12 h-12"/>
+                            </div>
+                            
+                            {/* Main Text */}
+                            <div className="text-center mt-6 space-y-2">
+                                <h3 className={`text-xl font-semibold transition-colors ${
+                                    isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
+                                }`}>
+                                    {uploading
+                                        ? 'Uploading your image...'
+                                        : isDragging
+                                            ? 'Drop your image here'
+                                            : 'Drop your image here'}
+                                </h3>
+                                
+                                <p className={`text-sm transition-colors ${
+                                    isDragging ? 'text-orange-600' : 'text-gray-500 group-hover:text-orange-600'
+                                }`}>
+                                    {!uploading && !isDragging && 'or click to browse your files'}
+                                </p>
+                                
+                                {/* File format info */}
+                                <div className="pt-3">
+                                    <p className="text-xs text-gray-400">
+                                        Supports JPG, PNG, and other image formats • Max 50MB
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {/* Loading indicator */}
+                            {uploading && (
+                                <div className="mt-4">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                                        <span className="text-sm text-orange-600">Processing...</span>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <input
                                 type="file"
                                 className="hidden"
                                 onChange={handleInputChange}
                                 disabled={uploading}
+                                accept="image/*"
                             />
                         </label>
-                    </div>
+                        </div>
+                        </CardContent>
+                    </Card>
 
+                    {/* Loading State */}
                     {loading && (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary-600"/>
+                            <Loader2 className="w-8 h-8 animate-spin text-orange-600"/>
                         </div>
                     )}
                     
-                    {!loading && files.length === 0 ? (
-                        <div className="text-center py-12">
-                            <FileIcon className="mx-auto h-12 w-12 text-gray-400 mb-4"/>
-                            <p className="text-gray-500 text-lg">No files uploaded yet</p>
-                            <p className="text-gray-400 text-sm">Upload your first photo to get started</p>
-                        </div>
-                    ) : !loading && (
-                        <>
-                            {/* Section Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-gray-900">Your Photos</h2>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        {files.length} {files.length === 1 ? 'photo' : 'photos'} uploaded
-                                    </p>
-                                </div>
-                                <Link 
-                                    href="/app/history" 
-                                    className="inline-flex items-center px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                                >
-                                    View Gallery
-                                    <ExternalLink className="ml-2 h-4 w-4" />
-                                </Link>
-                            </div>
-                        </>
+                    {/* Empty State */}
+                    {!loading && files.length === 0 && (
+                        <Card className="border-0 shadow-lg bg-white">
+                            <CardContent className="text-center py-16">
+                                <FileIcon className="mx-auto h-16 w-16 text-gray-300 mb-6"/>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos uploaded today</h3>
+                                <p className="text-gray-500 mb-6">Upload a photo above to get started with AI restoration</p>
+                                <p className="text-sm text-gray-400">Visit the <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium">Gallery</Link> to see all your photos</p>
+                            </CardContent>
+                        </Card>
                     )}
-                    
+
+                    {/* Files Section */}
                     {!loading && files.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <Card className="border-0 shadow-lg bg-white">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-xl">Today&apos;s Photos</CardTitle>
+                                        <CardDescription className="mt-1">
+                                            {files.length} {files.length === 1 ? 'photo' : 'photos'} uploaded today
+                                        </CardDescription>
+                                    </div>
+                                    <Link 
+                                        href="/app/history" 
+                                        className="inline-flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
+                                    >
+                                        View Gallery
+                                        <ExternalLink className="ml-2 h-4 w-4" />
+                                    </Link>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                             {files.map((file) => {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
@@ -502,7 +569,7 @@ export default function FileManagementPage() {
                                 return (
                                     <div
                                         key={filename}
-                                        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
+                                        className="@container bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
                                     >
                                         {/* Image Preview */}
                                         <div 
@@ -561,48 +628,6 @@ export default function FileManagementPage() {
                                                 </div>
                                             )}
                                             
-                                            {/* Action Overlay */}
-                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                <div className="flex space-x-2">
-                                                    <button
-                                                        onClick={() => handleRestorePhoto(filename)}
-                                                        disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0 || associatedJob?.status === 'processing'}
-                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title={
-                                                            (optimisticCredits ?? 0) <= 0 
-                                                                ? "You need 1 credit to restore this photo"
-                                                                : associatedJob?.status === 'processing'
-                                                                    ? "Restoration in progress..."
-                                                                    : restoringFiles.has(filename) 
-                                                                        ? "Starting restoration..." 
-                                                                        : "Restore Photo (1 credit)"
-                                                        }
-                                                    >
-                                                        {restoringFiles.has(filename) ? (
-                                                            <Loader2 className="h-4 w-4 text-purple-600 animate-spin"/>
-                                                        ) : (
-                                                            <Wand2 className="h-4 w-4 text-purple-600"/>
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDownload(filename)}
-                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-                                                        title="Download Original"
-                                                    >
-                                                        <Download className="h-4 w-4 text-blue-600"/>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setFileToDelete(filename);
-                                                            setShowDeleteDialog(true);
-                                                        }}
-                                                        className="p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600"/>
-                                                    </button>
-                                                </div>
-                                            </div>
                                         </div>
                                         
                                         {/* Card Footer */}
@@ -614,35 +639,134 @@ export default function FileManagementPage() {
                                                 Uploaded {new Date(file.created_at || '').toLocaleDateString()}
                                             </p>
                                             
-                                            {/* Restoration Result Actions */}
-                                            {associatedJob?.status === 'completed' && associatedJob.result_url && (
-                                                <div className="mt-3 flex space-x-2">
+                                            {/* Primary Action Button */}
+                                            <div className="mt-3 space-y-2">
+                                                {/* Show different buttons based on job status */}
+                                                {!associatedJob || associatedJob.status === 'failed' || associatedJob.status === 'cancelled' ? (
                                                     <button
-                                                        onClick={() => handleViewRestoredImage(associatedJob)}
-                                                        className="flex-1 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRestorePhoto(filename);
+                                                        }}
+                                                        disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0}
+                                                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-600"
+                                                    >
+                                                        {restoringFiles.has(filename) ? (
+                                                            <>
+                                                                <Loader2 className="h-4 w-4 animate-spin"/>
+                                                                <span>Starting Restoration...</span>
+                                                            </>
+                                                        ) : (optimisticCredits ?? 0) <= 0 ? (
+                                                            <>
+                                                                <Wand2 className="h-4 w-4"/>
+                                                                <span>Need Credits to Restore</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Wand2 className="h-4 w-4"/>
+                                                                <span>Restore</span>
+                                                                <span className="text-xs bg-orange-500 px-2 py-0.5 rounded-full">1 credit</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                ) : associatedJob.status === 'pending' || associatedJob.status === 'processing' ? (
+                                                    <div className="space-y-2">
+                                                        <div className="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                                                            <Loader2 className="h-4 w-4 animate-spin"/>
+                                                            <span>
+                                                                {associatedJob.status === 'pending' ? 'Queued for Processing...' : 'Restoring Photo...'}
+                                                            </span>
+                                                        </div>
+                                                        {associatedJob.status === 'processing' && isJobCancellable(associatedJob) && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleCancelJob(associatedJob);
+                                                                }}
+                                                                disabled={cancellingJobs.has(associatedJob.id)}
+                                                                className="w-full px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-1 disabled:opacity-50"
+                                                            >
+                                                                {cancellingJobs.has(associatedJob.id) ? (
+                                                                    <>
+                                                                        <Loader2 className="h-4 w-4 animate-spin"/>
+                                                                        <span>Cancelling...</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <X className="h-4 w-4"/>
+                                                                        <span>Cancel & Refund</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : associatedJob.status === 'completed' && associatedJob.result_url ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewRestoredImage(associatedJob);
+                                                        }}
+                                                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                                                     >
                                                         <CheckCircle className="h-4 w-4"/>
-                                                        <span>View Result</span>
+                                                        <span>View Restored Photo</span>
                                                     </button>
+                                                ) : null}
+                                                
+                                                {/* Secondary Actions Row */}
+                                                <div className="flex gap-2">
                                                     <button
-                                                        onClick={() => handleShareRestoredImage(associatedJob)}
-                                                        className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center"
-                                                        title="Share Restored Image"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDownload(filename);
+                                                        }}
+                                                        className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                        title="Download Original"
                                                     >
-                                                        <Share2 className="h-4 w-4"/>
+                                                        <Download className="h-4 w-4"/>
+                                                        <span className="hidden @lg:inline">Download</span>
+                                                    </button>
+                                                    
+                                                    {associatedJob?.status === 'completed' && associatedJob.result_url && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleShareRestoredImage(associatedJob);
+                                                            }}
+                                                            className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                            title="Share Restored Photo"
+                                                        >
+                                                            <Share2 className="h-4 w-4"/>
+                                                            <span className="hidden @lg:inline">Share</span>
+                                                        </button>
+                                                    )}
+                                                    
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFileToDelete(filename);
+                                                            setShowDeleteDialog(true);
+                                                        }}
+                                                        className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                        title="Delete Photo"
+                                                    >
+                                                        <Trash2 className="h-4 w-4"/>
+                                                        <span className="hidden @lg:inline">Delete</span>
                                                     </button>
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     </div>
                                 );
-                            })}
-                        </div>
+                                })}
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
 
                     {/* Debug info only */}
                     {POLLING_DEBUG && processingJobs.length > 0 && (
-                        <div className="mt-8 text-center">
+                        <div className="text-center">
                             <div className="text-xs text-gray-500 space-y-1 bg-yellow-50 p-3 rounded-lg border">
                                 <div>Debug Mode: ON</div>
                                 <div>Polling Interval: {POLLING_INTERVAL}ms</div>
@@ -650,7 +774,6 @@ export default function FileManagementPage() {
                             </div>
                         </div>
                     )}
-
                     {/* Image Modal */}
                     <Dialog open={Boolean(selectedImageUrl)} onOpenChange={() => {
                         setSelectedImageUrl(null);
@@ -755,8 +878,8 @@ export default function FileManagementPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

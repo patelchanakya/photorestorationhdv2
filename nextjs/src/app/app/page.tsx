@@ -58,7 +58,6 @@ export default function DashboardContent() {
                             </div>
                             <div>
                                 <h3 className="font-medium">Create</h3>
-                                <p className="text-sm text-gray-500">Upload and restore your photos</p>
                             </div>
                         </Link>
 
