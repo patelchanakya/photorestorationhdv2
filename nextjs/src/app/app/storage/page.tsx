@@ -640,23 +640,14 @@ export default function FileManagementPage() {
                         </div>
                     )}
 
-                    {/* Quick Link to Full History */}
-                    {processingJobs.length > 0 && (
+                    {/* Debug info only */}
+                    {POLLING_DEBUG && processingJobs.length > 0 && (
                         <div className="mt-8 text-center">
-                            <Link 
-                                href="/app/history" 
-                                className="inline-flex items-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                            >
-                                View Complete Restoration History
-                                <ExternalLink className="ml-2 h-4 w-4" />
-                            </Link>
-                            {POLLING_DEBUG && (
-                                <div className="mt-4 text-xs text-gray-500 space-y-1 bg-yellow-50 p-3 rounded-lg border">
-                                    <div>Debug Mode: ON</div>
-                                    <div>Polling Interval: {POLLING_INTERVAL}ms</div>
-                                    <div>Active Jobs: {processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length}</div>
-                                </div>
-                            )}
+                            <div className="text-xs text-gray-500 space-y-1 bg-yellow-50 p-3 rounded-lg border">
+                                <div>Debug Mode: ON</div>
+                                <div>Polling Interval: {POLLING_INTERVAL}ms</div>
+                                <div>Active Jobs: {processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length}</div>
+                            </div>
                         </div>
                     )}
 

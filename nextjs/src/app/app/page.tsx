@@ -2,7 +2,7 @@
 import React from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalendarDays, Settings, ExternalLink } from 'lucide-react';
+import { CalendarDays, Upload, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import CreditTestPanel from '@/components/CreditTestPanel';
 
@@ -50,28 +50,28 @@ export default function DashboardContent() {
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <Link
-                            href="/app/user-settings"
+                            href="/app/storage"
                             className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <div className="p-2 bg-primary-50 rounded-full">
-                                <Settings className="h-4 w-4 text-primary-600" />
+                                <Upload className="h-4 w-4 text-primary-600" />
                             </div>
                             <div>
-                                <h3 className="font-medium">User Settings</h3>
-                                <p className="text-sm text-gray-500">Manage your account preferences</p>
+                                <h3 className="font-medium">Create</h3>
+                                <p className="text-sm text-gray-500">Upload and restore your photos</p>
                             </div>
                         </Link>
 
                         <Link
-                            href="/app/table"
+                            href="/app/history"
                             className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <div className="p-2 bg-primary-50 rounded-full">
-                                <ExternalLink className="h-4 w-4 text-primary-600" />
+                                <ImageIcon className="h-4 w-4 text-primary-600" />
                             </div>
                             <div>
-                                <h3 className="font-medium">Example Page</h3>
-                                <p className="text-sm text-gray-500">Check out example features</p>
+                                <h3 className="font-medium">Gallery</h3>
+                                <p className="text-sm text-gray-500">View your restored images</p>
                             </div>
                         </Link>
                     </div>
