@@ -145,3 +145,26 @@ export async function validateCreditsForOperation(userId: string, requiredAmount
     return { success: false, error: 'Failed to validate credits' }
   }
 }
+
+export async function getPurchaseHistory(userId: string) {
+  try {
+    const adminClient = await createServerAdminClient()
+    
+    const { data, error } = await adminClient
+      .from('credit_purchases')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    if (error) {
+      console.error('Error fetching purchase history:', error)
+      return { success: false, error: 'Failed to fetch purchase history' }
+    }
+    
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('Purchase history fetch error:', error)
+    return { success: false, error: 'Failed to fetch purchase history' }
+  }
+}

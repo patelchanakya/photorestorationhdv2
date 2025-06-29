@@ -6,7 +6,15 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function ProminentCreditsDisplay() {
+interface ProminentCreditsDisplayProps {
+    onBuyMore?: () => void;
+    showBuyButton?: boolean;
+}
+
+export default function ProminentCreditsDisplay({ 
+    onBuyMore, 
+    showBuyButton = true 
+}: ProminentCreditsDisplayProps = {}) {
     const { credits, optimisticCredits, isPending } = useGlobal();
     
     const displayCredits = optimisticCredits ?? credits ?? 0;
@@ -41,20 +49,38 @@ export default function ProminentCreditsDisplay() {
                     </div>
                 </div>
                 
-                <Link href="/app/user-settings">
-                    <Button 
-                        size="sm" 
-                        className={`${
-                            isLowCredits 
-                                ? 'bg-red-600 hover:bg-red-700' 
-                                : 'bg-orange-600 hover:bg-orange-700'
-                        } text-white shadow-md`}
-                    >
-                        <Plus className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Buy More</span>
-                        <span className="sm:hidden">Buy</span>
-                    </Button>
-                </Link>
+                {showBuyButton && (
+                    onBuyMore ? (
+                        <Button 
+                            onClick={onBuyMore}
+                            size="sm" 
+                            className={`${
+                                isLowCredits 
+                                    ? 'bg-red-600 hover:bg-red-700' 
+                                    : 'bg-orange-600 hover:bg-orange-700'
+                            } text-white shadow-md`}
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Buy More</span>
+                            <span className="sm:hidden">Buy</span>
+                        </Button>
+                    ) : (
+                        <Link href="/app/user-settings">
+                            <Button 
+                                size="sm" 
+                                className={`${
+                                    isLowCredits 
+                                        ? 'bg-red-600 hover:bg-red-700' 
+                                        : 'bg-orange-600 hover:bg-orange-700'
+                                } text-white shadow-md`}
+                            >
+                                <Plus className="h-4 w-4 mr-1" />
+                                <span className="hidden sm:inline">Buy More</span>
+                                <span className="sm:hidden">Buy</span>
+                            </Button>
+                        </Link>
+                    )
+                )}
             </div>
             
         </div>

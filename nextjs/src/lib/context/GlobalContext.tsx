@@ -170,9 +170,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     // Fetch credits for this user
                     await fetchCredits(user.id);
-                } else {
-                    throw new Error('User not found');
                 }
+                // If no user, that's fine - they're just not authenticated
+                // Leave user as null and continue
 
             } catch (error) {
                 console.error('Error loading data:', error);

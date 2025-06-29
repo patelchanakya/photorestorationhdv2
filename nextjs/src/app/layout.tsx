@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import CookieConsent from "@/components/Cookies";
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { GoogleAnalytics } from '@next/third-parties/google';
+import { GlobalProvider } from '@/lib/context/GlobalContext';
 
 
 export const metadata: Metadata = {
@@ -23,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en">
     <body className={theme}>
-      {children}
+      <GlobalProvider>
+        {children}
+      </GlobalProvider>
       <Analytics />
       <CookieConsent />
       { gaID && (

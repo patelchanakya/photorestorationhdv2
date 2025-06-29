@@ -1,13 +1,25 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import PricingService from "@/lib/pricing";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useGlobal } from '@/lib/context/GlobalContext';
+import PurchaseModal from '@/components/PurchaseModal';
 
 const HomePricing = () => {
     const tiers = PricingService.getAllTiers();
     const commonFeatures = PricingService.getCommonFeatures();
+    const { user } = useGlobal();
+    const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+
+    const handleCtaClick = () => {
+        if (user) {
+            setShowPurchaseModal(true);
+        }
+        // If not authenticated, the Link component will handle navigation to register
+    };
 
     return (
         <section id="pricing" className="py-24 bg-gray-100">
@@ -51,16 +63,30 @@ const HomePricing = () => {
                                     ))}
                                 </ul>
 
-                                <Link
-                                    href="/auth/register"
-                                    className={`w-full text-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                                        tier.popular
-                                            ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                            : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    Get Started
-                                </Link>
+                                {user ? (
+                                    <Button
+                                        onClick={handleCtaClick}
+                                        className={`w-full ${
+                                            tier.popular
+                                                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                                : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
+                                        }`}
+                                        variant={tier.popular ? "default" : "secondary"}
+                                    >
+                                        Buy Credits
+                                    </Button>
+                                ) : (
+                                    <Link
+                                        href="/auth/register"
+                                        className={`w-full text-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                                            tier.popular
+                                                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                                : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        Get Started
+                                    </Link>
+                                )}
                             </CardContent>
                         </Card>
                     ))}
@@ -74,6 +100,15 @@ const HomePricing = () => {
                   </div>
                 )}
             </div>
+
+            {/* Purchase Modal */}
+            <PurchaseModal
+                isOpen={showPurchaseModal}
+                onClose={() => setShowPurchaseModal(false)}
+                onPurchaseSuccess={() => {
+                    setShowPurchaseModal(false);
+                }}
+            />
         </section>
     );
 };

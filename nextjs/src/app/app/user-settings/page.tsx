@@ -1,21 +1,69 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useGlobal } from '@/lib/context/GlobalContext';
-import { createSPASassClient } from '@/lib/supabase/client';
-import { Key, User, CheckCircle } from 'lucide-react';
+import { getPurchaseHistory } from '@/app/actions/credits';
+import { Key, User, CheckCircle, CreditCard, ShoppingCart, History } from 'lucide-react';
 import { MFASetup } from '@/components/MFASetup';
+import PurchaseModal from '@/components/PurchaseModal';
+import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
+import { useSearchParams } from 'next/navigation';
 
 export default function UserSettingsPage() {
     const { user } = useGlobal();
+    const searchParams = useSearchParams();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+    const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
+    // Handle Stripe redirect parameters
+    useEffect(() => {
+        const sessionId = searchParams.get('session_id');
+        const successParam = searchParams.get('success');
+        const cancelledParam = searchParams.get('cancelled');
 
+        if (sessionId && successParam === 'true') {
+            setSuccess('Payment successful! Your credits have been added to your account.');
+            // Clear URL parameters
+            window.history.replaceState({}, '', '/app/user-settings');
+        } else if (cancelledParam === 'true') {
+            setError('Payment was cancelled. No charges were made.');
+            // Clear URL parameters
+            window.history.replaceState({}, '', '/app/user-settings');
+        }
+    }, [searchParams]);
+
+    // Load purchase history
+    const loadPurchaseHistory = async () => {
+        if (!user) return;
+        
+        setLoadingHistory(true);
+        try {
+            const result = await getPurchaseHistory(user.id);
+            if (result.success) {
+                setPurchaseHistory(result.data || []);
+            } else {
+                console.error('Error loading purchase history:', result.error);
+            }
+        } catch (err) {
+            console.error('Error loading purchase history:', err);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            loadPurchaseHistory();
+        }
+    }, [user]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -152,8 +200,97 @@ export default function UserSettingsPage() {
                             setSuccess('Two-factor authentication settings updated successfully');
                         }}
                     />
+
+                    {/* Credit Management Section */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CreditCard className="h-5 w-5" />
+                                Credit Management
+                            </CardTitle>
+                            <CardDescription>Manage your photo restoration credits</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <ProminentCreditsDisplay />
+                            
+                            <div className="flex gap-3">
+                                <Button 
+                                    onClick={() => setShowPurchaseModal(true)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <ShoppingCart className="h-4 w-4" />
+                                    Buy More Credits
+                                </Button>
+                                
+                                <Button 
+                                    variant="outline"
+                                    onClick={loadPurchaseHistory}
+                                    disabled={loadingHistory}
+                                    className="flex items-center gap-2"
+                                >
+                                    <History className="h-4 w-4" />
+                                    {loadingHistory ? 'Loading...' : 'Refresh History'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Purchase History Section */}
+                    {purchaseHistory.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <History className="h-5 w-5" />
+                                    Purchase History
+                                </CardTitle>
+                                <CardDescription>Your recent credit purchases</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-3">
+                                    {purchaseHistory.map((purchase) => (
+                                        <div 
+                                            key={purchase.id}
+                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                        >
+                                            <div>
+                                                <p className="font-medium">{purchase.credits_purchased} credits</p>
+                                                <p className="text-sm text-gray-500">
+                                                    {new Date(purchase.created_at).toLocaleDateString()} at{' '}
+                                                    {new Date(purchase.created_at).toLocaleTimeString()}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-medium">
+                                                    ${(purchase.amount_paid / 100).toFixed(2)} {purchase.currency.toUpperCase()}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    ID: {purchase.stripe_session_id.slice(-8)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {purchaseHistory.length === 10 && (
+                                    <p className="text-xs text-gray-500 mt-3 text-center">
+                                        Showing last 10 purchases
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
+
+            {/* Purchase Modal */}
+            <PurchaseModal
+                isOpen={showPurchaseModal}
+                onClose={() => setShowPurchaseModal(false)}
+                onPurchaseSuccess={() => {
+                    setShowPurchaseModal(false);
+                    setSuccess('Redirecting to payment...');
+                }}
+            />
         </div>
     );
 }
