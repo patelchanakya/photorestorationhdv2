@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,7 +13,6 @@ import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
-import StreakTestPanel from '@/components/StreakTestPanel';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import HowItWorksTour from '@/components/HowItWorksTour';
 
@@ -148,14 +148,13 @@ export default function FileManagementPage() {
         }
     }, [user?.id, loadFiles, refreshJobs]);
 
+    // Compute if jobs are active
+    const hasActiveJobs = useMemo(() => processingJobs.some(j => j.status === 'pending' || j.status === 'processing'), [processingJobs]);
+
     // Smart polling: only when active jobs exist
     useEffect(() => {
         if (!user?.id) return;
 
-        const hasActiveJobs = processingJobs.some(job => 
-            job.status === 'pending' || job.status === 'processing'
-        );
-        
         if (!hasActiveJobs) {
             if (POLLING_DEBUG) console.log('No active jobs, no polling needed');
             return;
@@ -163,7 +162,7 @@ export default function FileManagementPage() {
 
         const activeJobCount = processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
         if (POLLING_DEBUG) console.log(`Starting smart polling for ${activeJobCount} active jobs (interval: ${POLLING_INTERVAL}ms)`);
-        
+
         const interval = setInterval(() => {
             if (POLLING_DEBUG) console.log('Polling for job updates...');
             refreshJobs();
@@ -173,7 +172,7 @@ export default function FileManagementPage() {
             if (POLLING_DEBUG) console.log('Stopping polling - cleanup');
             clearInterval(interval);
         };
-    }, [processingJobs.some(job => job.status === 'pending' || job.status === 'processing'), user?.id, refreshJobs]);
+    }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
@@ -466,9 +465,6 @@ export default function FileManagementPage() {
                         </Alert>
                     )}
 
-                    {/* Streak Test Panel - Development Tool */}
-                    <StreakTestPanel />
-
                     {/* Upload Section */}
                     <Card className="border-0 shadow-xl bg-white" data-tour="upload-area">
                         <CardContent className="p-8">
@@ -588,12 +584,12 @@ export default function FileManagementPage() {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
                                 const previewUrl = imageUrls[filename];
-                                const associatedJob = processingJobs.find(job => 
+                                const hasAssociatedJob = processingJobs.some(job => 
                                     job.image_path === `${user!.id}/${filename}`
                                 );
                                 
                                 // Priority: restored image → original preview → null
-                                const thumbnailUrl = associatedJob?.result_url || previewUrl;
+                                const thumbnailUrl = hasAssociatedJob ? previewUrl : null;
                                 
                                 return (
                                     <div
@@ -612,13 +608,18 @@ export default function FileManagementPage() {
                                             }}
                                         >
                                             {thumbnailUrl ? (
-                                                <img
+                                                <Image
                                                     src={thumbnailUrl}
                                                     alt={cleanName}
-                                                    className={`w-full h-full object-cover hover:scale-105 transition-all duration-200 ${
-                                                        associatedJob?.status === 'processing' || restoringFiles.has(filename) 
+                                                    fill
+                                                    sizes="(max-width:768px) 100vw, 33vw"
+                                                    className={`object-cover hover:scale-105 transition-all duration-200 ${
+                                                        hasAssociatedJob ? (processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'processing' || restoringFiles.has(filename) 
                                                             ? 'blur-sm scale-105' 
                                                             : ''
+                                                    ) : ''
                                                     }`}
                                                 />
                                             ) : (
@@ -628,7 +629,9 @@ export default function FileManagementPage() {
                                             )}
                                             
                                             {/* Processing Overlay */}
-                                            {(associatedJob?.status === 'processing' || restoringFiles.has(filename)) && (
+                                            {hasAssociatedJob && (processingJobs.find(job => 
+                                                job.image_path === `${user!.id}/${filename}`
+                                            )?.status === 'processing' || restoringFiles.has(filename)) && (
                                                 <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                                                     <div className="text-center text-white">
                                                         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2"/>
@@ -640,19 +643,31 @@ export default function FileManagementPage() {
                                             )}
                                             
                                             {/* Status Badge */}
-                                            {associatedJob && (
+                                            {hasAssociatedJob && (
                                                 <div className="absolute top-2 right-2">
                                                     <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
-                                                        associatedJob.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        associatedJob.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                                        associatedJob.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                        associatedJob.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                                        processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                        processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                                        processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                        processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                                                         'bg-red-100 text-red-800'
                                                     }`}>
-                                                        {associatedJob.status === 'processing' && (
+                                                        {processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'processing' && (
                                                             <Loader2 className="h-3 w-3 animate-spin"/>
                                                         )}
-                                                        <span>{associatedJob.status}</span>
+                                                        <span>{processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -671,7 +686,11 @@ export default function FileManagementPage() {
                                             {/* Primary Action Button */}
                                             <div className="mt-3 space-y-2">
                                                 {/* Show different buttons based on job status */}
-                                                {!associatedJob || associatedJob.status === 'failed' || associatedJob.status === 'cancelled' ? (
+                                                {!hasAssociatedJob || processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.status === 'failed' || processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.status === 'cancelled' ? (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -699,24 +718,40 @@ export default function FileManagementPage() {
                                                             </>
                                                         )}
                                                     </button>
-                                                ) : associatedJob.status === 'pending' || associatedJob.status === 'processing' ? (
+                                                ) : processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.status === 'pending' || processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.status === 'processing' ? (
                                                     <div className="space-y-2">
                                                         <div className="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
                                                             <Loader2 className="h-4 w-4 animate-spin"/>
                                                             <span>
-                                                                {associatedJob.status === 'pending' ? 'Queued for Processing...' : 'Restoring Photo...'}
+                                                                {processingJobs.find(job => 
+                                                                    job.image_path === `${user!.id}/${filename}`
+                                                                )?.status === 'pending' ? 'Queued for Processing...' : 'Restoring Photo...'}
                                                             </span>
                                                         </div>
-                                                        {associatedJob.status === 'processing' && isJobCancellable(associatedJob) && (
+                                                        {processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )?.status === 'processing' && isJobCancellable(processingJobs.find(job => 
+                                                            job.image_path === `${user!.id}/${filename}`
+                                                        )!) && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleCancelJob(associatedJob);
+                                                                    handleCancelJob(processingJobs.find(job => 
+                                                                        job.image_path === `${user!.id}/${filename}`
+                                                                    )!);
                                                                 }}
-                                                                disabled={cancellingJobs.has(associatedJob.id)}
+                                                                disabled={cancellingJobs.has(processingJobs.find(job => 
+                                                                    job.image_path === `${user!.id}/${filename}`
+                                                                )!.id)}
                                                                 className="w-full px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-1 disabled:opacity-50"
                                                             >
-                                                                {cancellingJobs.has(associatedJob.id) ? (
+                                                                {cancellingJobs.has(processingJobs.find(job => 
+                                                                    job.image_path === `${user!.id}/${filename}`
+                                                                )!.id) ? (
                                                                     <>
                                                                         <Loader2 className="h-4 w-4 animate-spin"/>
                                                                         <span>Cancelling...</span>
@@ -730,11 +765,17 @@ export default function FileManagementPage() {
                                                             </button>
                                                         )}
                                                     </div>
-                                                ) : associatedJob.status === 'completed' && associatedJob.result_url ? (
+                                                ) : processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.status === 'completed' && processingJobs.find(job => 
+                                                    job.image_path === `${user!.id}/${filename}`
+                                                )?.result_url ? (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleViewRestoredImage(associatedJob);
+                                                            handleViewRestoredImage(processingJobs.find(job => 
+                                                                job.image_path === `${user!.id}/${filename}`
+                                                            )!);
                                                         }}
                                                         className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                                                     >
@@ -757,11 +798,17 @@ export default function FileManagementPage() {
                                                         <span className="hidden @lg:inline">Download</span>
                                                     </button>
                                                     
-                                                    {associatedJob?.status === 'completed' && associatedJob.result_url && (
+                                                    {processingJobs.find(job => 
+                                                        job.image_path === `${user!.id}/${filename}`
+                                                    )?.status === 'completed' && processingJobs.find(job => 
+                                                        job.image_path === `${user!.id}/${filename}`
+                                                    )?.result_url && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleShareRestoredImage(associatedJob);
+                                                                handleShareRestoredImage(processingJobs.find(job => 
+                                                                    job.image_path === `${user!.id}/${filename}`
+                                                                )!);
                                                             }}
                                                             className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
                                                             title="Share Restored Photo"
@@ -829,9 +876,11 @@ export default function FileManagementPage() {
                             </DialogHeader>
                             <div className="p-6 pt-0">
                                 {selectedImageUrl && (
-                                    <img
+                                    <Image
                                         src={selectedImageUrl}
                                         alt={selectedImageName}
+                                        width={1200}
+                                        height={800}
                                         className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
                                     />
                                 )}
@@ -881,7 +930,7 @@ export default function FileManagementPage() {
                                 {selectedJob && (
                                     <p className="text-sm text-gray-600">
                                         Original: {(() => {
-                                            const filename = selectedJob.image_path.split('/').pop() || '';
+                                            const filename = selectedJob?.image_path?.split('/').pop() ?? '';
                                             // Remove the timestamp suffix (format: _YYYY-MM-DD_HH-MM-SS)
                                             return filename.replace(/_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.[^.]+$/, '');
                                         })()}

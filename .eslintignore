@@ -1,0 +1,2 @@
+# Ignore streak legacy module
+nextjs/src/app/actions/streak.ts 

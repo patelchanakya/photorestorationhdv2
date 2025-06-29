@@ -1,7 +1,7 @@
 // src/lib/context/GlobalContext.tsx
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useOptimistic, useTransition } from 'react';
+import React, { createContext, useContext, useState, useEffect, useOptimistic, useTransition, useCallback } from 'react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { getCredits, deductCredits, refundCredits } from '@/app/actions/credits';
 
@@ -58,7 +58,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         }
     );
 
-    const fetchCredits = async (userId: string) => {
+    const fetchCredits = useCallback(async (userId: string) => {
         try {
             setCreditsLoading(true);
             const result = await getCredits(userId);
@@ -66,7 +66,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             if (result.success && result.credits !== undefined) {
                 setCredits(result.credits);
                 startTransition(() => {
-                    updateOptimisticCredits({ type: 'set', amount: result.credits });
+                    updateOptimisticCredits({ type: 'set', amount: result.credits ?? 0 });
                 });
             } else {
                 console.error('Error fetching credits:', result.error);
@@ -76,7 +76,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setCreditsLoading(false);
         }
-    };
+    }, [updateOptimisticCredits]);
 
     const deductCreditsOptimistic = async (amount: number): Promise<boolean> => {
         if (!user?.id) return false;
@@ -182,7 +182,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         }
 
         loadData();
-    }, []);
+    }, [fetchCredits]);
 
     return (
         <GlobalContext.Provider value={{ 

@@ -4,7 +4,7 @@ import { createSSRClient } from '@/lib/supabase/server';
 
 export interface ProcessingJob {
     id: string;
-    image_path: string;
+    image_path?: string;
     status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
     result_url?: string;
     error_message?: string;
@@ -31,7 +31,7 @@ export async function getProcessingJobs(userId: string): Promise<ProcessingJob[]
             throw error;
         }
 
-        return data || [];
+        return (data ?? []) as ProcessingJob[];
     } catch (error) {
         console.error('Server action error:', error);
         throw new Error('Failed to fetch processing jobs');
@@ -71,7 +71,7 @@ export async function getSavedImages(userId: string): Promise<SavedImage[]> {
             throw error;
         }
 
-        return data || [];
+        return (data ?? []) as SavedImage[];
     } catch (error) {
         console.error('Server action error:', error);
         throw new Error('Failed to fetch saved images');

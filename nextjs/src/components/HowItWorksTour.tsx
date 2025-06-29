@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ChevronRight, HelpCircle } from 'lucide-react';
 
@@ -52,8 +52,27 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
     const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
     const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
 
+    // Function to remove highlighting from an element
+    const removeHighlight = useCallback((element: HTMLElement) => {
+        element.classList.remove('ring-4', 'ring-orange-300', 'ring-opacity-75', 'animate-pulse');
+        element.style.zIndex = '';
+        // Reset position if we changed it
+        if (element.style.position === 'relative' && element.style.zIndex === '') {
+            element.style.position = '';
+        }
+    }, []);
+
+    // Function to remove all highlights from any element
+    const removeAllHighlights = useCallback(() => {
+        const highlightedElements = document.querySelectorAll('.ring-4.ring-orange-300');
+        highlightedElements.forEach(el => {
+            const element = el as HTMLElement;
+            removeHighlight(element);
+        });
+    }, [removeHighlight]);
+
     // Function to add highlighting to an element
-    const highlightElement = (element: HTMLElement) => {
+    const highlightElement = useCallback((element: HTMLElement) => {
         // Remove any existing highlights first
         removeAllHighlights();
         
@@ -67,28 +86,9 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         if (!originalPosition || originalPosition === 'static') {
             element.style.position = 'relative';
         }
-    };
+    }, [removeAllHighlights]);
 
-    // Function to remove highlighting from an element
-    const removeHighlight = (element: HTMLElement) => {
-        element.classList.remove('ring-4', 'ring-orange-300', 'ring-opacity-75', 'animate-pulse');
-        element.style.zIndex = '';
-        // Reset position if we changed it
-        if (element.style.position === 'relative' && element.style.zIndex === '') {
-            element.style.position = '';
-        }
-    };
-
-    // Function to remove all highlights from any element
-    const removeAllHighlights = () => {
-        const highlightedElements = document.querySelectorAll('.ring-4.ring-orange-300');
-        highlightedElements.forEach(el => {
-            const element = el as HTMLElement;
-            removeHighlight(element);
-        });
-    };
-
-    const calculateResponsivePosition = (element: HTMLElement, position: string) => {
+    const calculateResponsivePosition = useCallback((element: HTMLElement, position: string) => {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         
@@ -156,7 +156,7 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         transform = 'none';
         
         return { top, left, transform };
-    };
+    }, []);
 
     useEffect(() => {
         if (!isOpen) {
@@ -192,7 +192,7 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         // Delay to ensure DOM is ready and scroll has completed
         const timer = setTimeout(highlightTarget, 100);
         return () => clearTimeout(timer);
-    }, [isOpen, currentStep]);
+    }, [isOpen, currentStep, highlightElement, removeAllHighlights, calculateResponsivePosition]);
 
     // Recalculate position on window resize
     useEffect(() => {
@@ -206,7 +206,7 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [highlightedElement, isOpen, currentStep]);
+    }, [highlightedElement, isOpen, currentStep, calculateResponsivePosition]);
 
     const nextStep = () => {
         if (currentStep < tourSteps.length - 1) {
@@ -226,7 +226,7 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         return () => {
             removeAllHighlights();
         };
-    }, []);
+    }, [removeAllHighlights]);
 
     const currentTourStep = tourSteps[currentStep];
     

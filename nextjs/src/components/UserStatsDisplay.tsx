@@ -34,14 +34,16 @@ export default function UserStatsDisplay({ userId }: UserStatsDisplayProps) {
                 }
 
                 if (data && data.length > 0) {
-                    const firstDate = new Date(data[0].created_at);
-                    const today = new Date();
-                    
-                    // Calculate the difference in days
-                    const timeDifference = today.getTime() - firstDate.getTime();
-                    const daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
-                    
-                    setDaysSinceFirst(Math.max(1, daysDifference)); // Show at least 1 day
+                    const createdAt = data[0].created_at;
+                    if (!createdAt) {
+                        setDaysSinceFirst(null);
+                    } else {
+                        const firstDate = new Date(createdAt);
+                        const today = new Date();
+                        const timeDifference = today.getTime() - firstDate.getTime();
+                        const daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
+                        setDaysSinceFirst(Math.max(1, daysDifference));
+                    }
                 } else {
                     // No saved images yet
                     setDaysSinceFirst(null);

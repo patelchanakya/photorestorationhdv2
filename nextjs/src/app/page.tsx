@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Globe, Shield, Users, Key, Database, Clock } from 'lucide-react';
+import { ArrowRight, Shield, Database, Clock } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
 import FAQSection from '@/components/FAQSection';
@@ -139,7 +139,7 @@ export default function Home() {
                   </div>
                 </div>
                 <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
-                  Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn't believe how clear they turned out.
+                  Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn&apos;t believe how clear they turned out.
                 </blockquote>
                 <div className="text-gray-500 font-medium">— Sarah M.</div>
               </div>
@@ -155,7 +155,7 @@ export default function Home() {
                   </div>
                 </div>
                 <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
-                  "Had some WWII photos from my dad that were pretty beat up. This service brought them back to life, the details are amazing."
+                  &ldquo;Had some WWII photos from my dad that were pretty beat up. This service brought them back to life, the details are amazing.&rdquo;
                 </blockquote>
                 <div className="text-gray-500 font-medium">— Mike R.</div>
               </div>
@@ -171,7 +171,7 @@ export default function Home() {
                   </div>
                 </div>
                 <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
-                  "Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic."
+                  &ldquo;Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic.&rdquo;
                 </blockquote>
                 <div className="text-gray-500 font-medium">— Lisa T.</div>
               </div>
