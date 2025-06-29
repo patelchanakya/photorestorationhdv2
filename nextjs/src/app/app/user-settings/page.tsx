@@ -211,7 +211,7 @@ export default function UserSettingsPage() {
                             <CardDescription>Manage your photo restoration credits</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <ProminentCreditsDisplay />
+                            <ProminentCreditsDisplay onBuyMore={() => setShowPurchaseModal(true)} />
                             
                             <div className="flex gap-3">
                                 <Button 

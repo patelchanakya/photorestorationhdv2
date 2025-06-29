@@ -17,6 +17,7 @@ import UserStatsDisplay from '@/components/UserStatsDisplay';
 import HowItWorksTour from '@/components/HowItWorksTour';
 import CreditTestPanel from '@/components/CreditTestPanel';
 import Confetti from '@/components/Confetti';
+import PurchaseModal from '@/components/PurchaseModal';
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '1200');
@@ -45,6 +46,7 @@ export default function FileManagementPage() {
     const [selectedImageName, setSelectedImageName] = useState<string>('');
     const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
     const [showTour, setShowTour] = useState(false);
+    const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
     // Utility function to clean up filenames for display
     const cleanFilename = (filename: string) => {
@@ -446,7 +448,7 @@ export default function FileManagementPage() {
                         </div>
                         <div className="flex-shrink-0 xl:mt-0">
                             <div className="flex justify-center xl:justify-end">
-                                <ProminentCreditsDisplay />
+                                <ProminentCreditsDisplay onBuyMore={() => setShowPurchaseModal(true)} />
                             </div>
                         </div>
                     </div>
@@ -922,6 +924,15 @@ export default function FileManagementPage() {
                     
                     {/* Confetti Animation */}
                     <Confetti active={showConfetti} />
+                    
+                    {/* Purchase Modal */}
+                    <PurchaseModal
+                        isOpen={showPurchaseModal}
+                        onClose={() => setShowPurchaseModal(false)}
+                        onPurchaseSuccess={() => {
+                            setShowPurchaseModal(false);
+                        }}
+                    />
                 </div>
             </div>
         </div>
