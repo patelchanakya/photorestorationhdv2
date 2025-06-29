@@ -6,14 +6,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X } from 'lucide-react';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X, HelpCircle } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import StreakTestPanel from '@/components/StreakTestPanel';
+// ... existing imports ...
+import StreakTestPanel from '@/components/StreakTestPanel';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
+import HowItWorksTour from '@/components/HowItWorksTour';
+// ... rest of the file ...
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
@@ -40,6 +44,7 @@ export default function FileManagementPage() {
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedImageName, setSelectedImageName] = useState<string>('');
     const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
+    const [showTour, setShowTour] = useState(false);
 
     // Utility function to clean up filenames for display
     const cleanFilename = (filename: string) => {
@@ -371,9 +376,9 @@ export default function FileManagementPage() {
 
     // Check if a job can be cancelled (must be at least 15 seconds old)
     const isJobCancellable = (job: ProcessingJob): boolean => {
-        if (!job.started_at) return false;
+        if (!job.created_at) return false;
         const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000);
-        return new Date(job.started_at) < fifteenSecondsAgo;
+        return new Date(job.created_at) < fifteenSecondsAgo;
     };
 
     const handleCancelJob = async (job: ProcessingJob) => {
@@ -415,25 +420,33 @@ export default function FileManagementPage() {
         <div className="min-h-screen bg-gray-50">
             {/* Header Section with Welcome and Credits */}
             <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-                    <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8 xl:gap-12">
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 mb-3">
-                                Welcome back, {user?.email?.split('@')[0]}! 👋
-                            </h1>
-                            <p className="text-gray-600 mb-4 text-base sm:text-lg">
-                                Ready to restore more memories? Your journey continues below.
-                            </p>
-                            {user?.id && (
-                                <div className="mt-2">
-                                    <UserStatsDisplay userId={user.id} />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-shrink-0 xl:mt-0">
-                            <div className="flex justify-center xl:justify-end">
-                                <ProminentCreditsDisplay />
-                            </div>
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8 xl:gap-12">
+    <div className="flex-1 min-w-0">
+      <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 mb-3">
+        Welcome back, {user?.email?.split('@')[0]}!
+      </h1>
+      <p className="text-gray-600 mb-4 text-base sm:text-lg">
+        Ready to restore more memories? Your journey continues below.
+      </p>
+      {user?.id && (
+        <div className="mt-2">
+          <UserStatsDisplay userId={user.id} />
+        </div>
+      )}
+    </div>
+    <div className="flex flex-col gap-2 xl:items-end">
+      <ProminentCreditsDisplay />
+      <button
+        onClick={() => setShowTour(true)}
+        className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium mt-2"
+      >
+        <HelpCircle className="h-4 w-4 mr-2" />
+        How It Works
+      </button>
+    </div>
+  </div>
+</div>
                         </div>
                     </div>
                 </div>
@@ -461,7 +474,7 @@ export default function FileManagementPage() {
                     <StreakTestPanel />
 
                     {/* Upload Section */}
-                    <Card className="border-0 shadow-xl bg-white">
+                    <Card className="border-0 shadow-xl bg-white" data-tour="upload-area">
                         <CardContent className="p-8">
 
                     <div className="flex items-center justify-center w-full">
@@ -554,7 +567,7 @@ export default function FileManagementPage() {
 
                     {/* Files Section */}
                     {!loading && files.length > 0 && (
-                        <Card className="border-0 shadow-lg bg-white">
+                        <Card className="border-0 shadow-lg bg-white" data-tour="photos-section">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -566,6 +579,7 @@ export default function FileManagementPage() {
                                     <Link 
                                         href="/app/history" 
                                         className="inline-flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
+                                        data-tour="gallery-link"
                                     >
                                         View Gallery
                                         <ExternalLink className="ml-2 h-4 w-4" />
@@ -574,7 +588,7 @@ export default function FileManagementPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
-                            {files.map((file) => {
+                            {files.map((file, index) => {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
                                 const previewUrl = imageUrls[filename];
@@ -669,6 +683,7 @@ export default function FileManagementPage() {
                                                         }}
                                                         disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0}
                                                         className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-600"
+                                                        data-tour={index === 0 ? "first-restore-button" : undefined}
                                                     >
                                                         {restoringFiles.has(filename) ? (
                                                             <>
@@ -897,6 +912,12 @@ export default function FileManagementPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
+                    
+                    {/* How It Works Tour */}
+                    <HowItWorksTour 
+                        isOpen={showTour} 
+                        onClose={() => setShowTour(false)} 
+                    />
                 </div>
             </div>
         </div>

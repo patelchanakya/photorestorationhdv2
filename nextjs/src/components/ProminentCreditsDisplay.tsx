@@ -6,15 +6,16 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+// KEEP BOTH imports here, at the top:
+import UserStatsDisplay from '@/components/UserStatsDisplay';
+import HowItWorksTour from '@/components/HowItWorksTour';
+
 export default function ProminentCreditsDisplay() {
-    const { credits, optimisticCredits, isPending } = useGlobal();
-    
-    const displayCredits = optimisticCredits ?? credits ?? 0;
-    const isLowCredits = displayCredits <= 5;
-    
-    return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 w-full sm:w-auto sm:min-w-[280px]">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  const { credits, optimisticCredits, isPending } = useGlobal();
+  const displayCredits = optimisticCredits ?? credits ?? 0;
+  const isLowCredits = displayCredits <= 5;
+
+  return (
                 <div className="flex items-center space-x-3">
                     <div className={`p-3 rounded-full ${
                         isLowCredits ? 'bg-red-100' : 'bg-orange-100'
@@ -35,11 +36,6 @@ export default function ProminentCreditsDisplay() {
                                     isLowCredits ? 'text-red-600' : 'text-gray-900'
                                 }`}>
                                     {displayCredits}
-                                </span>
-                            )}
-                            {isLowCredits && (
-                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                                    Low!
                                 </span>
                             )}
                         </div>
