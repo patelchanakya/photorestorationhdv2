@@ -2,19 +2,13 @@
 import React from 'react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CalendarDays, Settings, ExternalLink } from 'lucide-react';
+import { Upload, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import CreditTestPanel from '@/components/CreditTestPanel';
+import EnhancedStreakDisplay from '@/components/EnhancedStreakDisplay';
 
 export default function DashboardContent() {
     const { loading, user } = useGlobal();
-
-    const getDaysSinceRegistration = () => {
-        if (!user?.registered_at) return 0;
-        const today = new Date();
-        const diffTime = Math.abs(today.getTime() - user.registered_at.getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    };
 
     if (loading) {
         return (
@@ -24,21 +18,30 @@ export default function DashboardContent() {
         );
     }
 
-    const daysSinceRegistration = getDaysSinceRegistration();
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-3 sm:p-6">
+            {/* Welcome Section with Integrated Streak */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Welcome, {user?.email?.split('@')[0]}! 👋</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        You have been restoring photos for {daysSinceRegistration} days!
-                    </CardDescription>
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
+                        <div className="flex-1">
+                            <CardTitle className="text-2xl mb-2">Welcome back, {user?.email?.split('@')[0]}! 👋</CardTitle>
+                            <CardDescription>
+                                Ready to restore more memories? Your journey continues below.
+                            </CardDescription>
+                        </div>
+                        
+                        {user?.id && (
+                            <div className="flex-shrink-0">
+                                <EnhancedStreakDisplay userId={user.id} />
+                            </div>
+                        )}
+                    </div>
                 </CardHeader>
             </Card>
 
-            {/* Credit Test Panel */}
+            {/* Test Panels */}
             <CreditTestPanel />
 
             {/* Quick Actions */}
@@ -50,28 +53,27 @@ export default function DashboardContent() {
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <Link
-                            href="/app/user-settings"
+                            href="/app/storage"
                             className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <div className="p-2 bg-primary-50 rounded-full">
-                                <Settings className="h-4 w-4 text-primary-600" />
+                                <Upload className="h-4 w-4 text-primary-600" />
                             </div>
                             <div>
-                                <h3 className="font-medium">User Settings</h3>
-                                <p className="text-sm text-gray-500">Manage your account preferences</p>
+                                <h3 className="font-medium">Create</h3>
                             </div>
                         </Link>
 
                         <Link
-                            href="/app/table"
+                            href="/app/history"
                             className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <div className="p-2 bg-primary-50 rounded-full">
-                                <ExternalLink className="h-4 w-4 text-primary-600" />
+                                <ImageIcon className="h-4 w-4 text-primary-600" />
                             </div>
                             <div>
-                                <h3 className="font-medium">Example Page</h3>
-                                <p className="text-sm text-gray-500">Check out example features</p>
+                                <h3 className="font-medium">Gallery</h3>
+                                <p className="text-sm text-gray-500">View your restored images</p>
                             </div>
                         </Link>
                     </div>

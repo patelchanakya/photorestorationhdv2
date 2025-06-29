@@ -26,6 +26,7 @@ interface GlobalContextType {
     refetchCredits: () => Promise<void>;
     deductCreditsOptimistic: (amount: number) => Promise<boolean>;
     refundCreditsOptimistic: (amount: number) => Promise<boolean>;
+    triggerCreditUpdate: (newCredits: number) => void;
     isPending: boolean;
 }
 
@@ -144,6 +145,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const triggerCreditUpdate = (newCredits: number) => {
+        setCredits(newCredits);
+        startTransition(() => {
+            updateOptimisticCredits({ type: 'set', amount: newCredits });
+        });
+    };
+
     useEffect(() => {
         async function loadData() {
             try {
@@ -186,6 +194,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             refetchCredits,
             deductCreditsOptimistic,
             refundCreditsOptimistic,
+            triggerCreditUpdate,
             isPending
         }}>
             {children}

@@ -9,22 +9,22 @@ export default function AuthLayout({
     const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
     const testimonials = [
         {
-            quote: "This template helped us launch our SaaS product in just two weeks. The authentication and multi-tenancy features are rock solid.",
-            author: "Sarah Chen",
-            role: "CTO, TechStart",
-            avatar: "SC"
+            quote: "I was on the verge of tears when I saw my grandparents' wedding photo restored. I never thought it could look this good again. Thank you so much!",
+            author: "Kristen N.",
+            role: "Granddaughter, USA",
+            avatar: "KN"
         },
         {
-            quote: "The best part is how well thought out the organization management is. It saved us months of development time.",
-            author: "Michael Roberts",
-            role: "Founder, DataFlow",
-            avatar: "MR"
+            quote: "Absolutely blown away! The photo had a huge tear and now you'd never know. My mom was speechless when she saw it.",
+            author: "Paul K.",
+            role: "Family Historian, UK",
+            avatar: "PK"
         },
         {
-            quote: "Clean code, great documentation, and excellent support. Exactly what we needed to get our MVP off the ground.",
-            author: "Jessica Kim",
-            role: "Lead Developer, CloudScale",
-            avatar: "JK"
+            quote: "You brought my dad's Navy photo back to life. The details are incredible. I can't thank you enough for this priceless gift.",
+            author: "David M.",
+            role: "Veteran's Son, Canada",
+            avatar: "DM"
         }
     ];
 
@@ -54,7 +54,7 @@ export default function AuthLayout({
                 <div className="w-full flex items-center justify-center p-12">
                     <div className="space-y-6 max-w-lg">
                         <h3 className="text-white text-2xl font-bold mb-8">
-                            Trusted by developers worldwide
+                            Cherished Around the World
                         </h3>
                         {testimonials.map((testimonial, index) => (
                             <div
@@ -85,7 +85,7 @@ export default function AuthLayout({
                         ))}
                         <div className="mt-8 text-center">
                             <p className="text-primary-100 text-sm">
-                                Join thousands of developers building with {productName}
+                                Join hundreds who trust our photo restoration to bring memories back to life
                             </p>
                         </div>
                     </div>

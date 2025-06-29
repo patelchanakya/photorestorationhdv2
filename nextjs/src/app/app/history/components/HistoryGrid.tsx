@@ -46,9 +46,25 @@ export function HistoryGrid({ images }: HistoryGridProps) {
         setCurrentImages(images);
     }, [images]);
 
-    // Sort images
+    // Helper function to check if URL is valid for Next.js Image
+    const isValidImageUrl = (url: string): boolean => {
+        // Skip test URLs that don't have proper protocol
+        if (url.startsWith('test-') || url.includes('test-bulk')) {
+            return false;
+        }
+        // Must be absolute URL or start with /
+        return url.startsWith('http') || url.startsWith('/');
+    };
+
+    // Sort and filter images
     const sortedImages = useMemo(() => {
-        const sorted = [...currentImages].sort((a, b) => {
+        // Filter out test images with invalid URLs that would break Next.js Image
+        const validImages = currentImages.filter(image => 
+            isValidImageUrl(image.edited_url) && 
+            (!image.thumbnail_url || isValidImageUrl(image.thumbnail_url))
+        );
+
+        const sorted = [...validImages].sort((a, b) => {
             switch (sortBy) {
                 case 'newest':
                     return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();

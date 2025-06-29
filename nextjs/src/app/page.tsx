@@ -3,55 +3,34 @@ import Link from 'next/link';
 import { ArrowRight, Globe, Shield, Users, Key, Database, Clock } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
+import FAQSection from '@/components/FAQSection';
+import PhotoShowcase from '@/components/PhotoShowcase';
+import Logo from '@/components/Logo';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
 
   const features = [
     {
-      icon: Shield,
-      title: 'Robust Authentication',
-      description: 'Secure login with email/password, Multi-Factor Authentication, and SSO providers',
+      icon: Clock,
+      title: 'Lightning Fast',
+      description: 'Get your restored photos in seconds, not hours',
       color: 'text-green-600'
     },
     {
       icon: Database,
-      title: 'File Management',
-      description: 'Built-in file storage with secure sharing, downloads, and granular permissions',
-      color: 'text-orange-600'
-    },
-    {
-      icon: Users,
-      title: 'User Settings',
-      description: 'Complete user management with password updates, MFA setup, and profile controls',
-      color: 'text-red-600'
-    },
-    {
-      icon: Clock,
-      title: 'Task Management',
-      description: 'Built-in todo system with real-time updates and priority management',
-      color: 'text-teal-600'
-    },
-    {
-      icon: Globe,
-      title: 'Legal Documents',
-      description: 'Pre-configured privacy policy, terms of service, and refund policy pages',
+      title: 'Secure & Private',
+      description: 'Your photos are encrypted and you can delete them permanently whenever you want',
       color: 'text-purple-600'
     },
     {
-      icon: Key,
-      title: 'Cookie Consent',
-      description: 'GDPR-compliant cookie consent system with customizable preferences',
+      icon: Shield,
+      title: 'HD Quality',
+      description: 'Professional-grade restoration up to 4K resolution',
       color: 'text-blue-600'
     }
   ];
 
-  const stats = [
-    { label: 'Active Users', value: '10K+' },
-    { label: 'Organizations', value: '2K+' },
-    { label: 'Countries', value: '50+' },
-    { label: 'Uptime', value: '99.9%' }
-  ];
 
   return (
       <div className="min-h-screen">
@@ -59,36 +38,21 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
               <div className="flex-shrink-0">
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-                {productName}
-              </span>
+                <Logo variant="nav" />
               </div>
               <div className="hidden md:flex items-center space-x-8">
-                <Link href="#features" className="text-gray-600 hover:text-gray-900">
-                  Features
+                <Link href="/" className="text-gray-600 hover:text-gray-900">
+                  Home
                 </Link>
-
+                <Link href="#gallery" className="text-gray-600 hover:text-gray-900">
+                  Examples
+                </Link>
                 <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
                   Pricing
                 </Link>
-                <Link
-                    href="https://github.com/Razikus/supabase-nextjs-template"
-                    className="text-gray-600 hover:text-gray-900"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  Documentation
+                <Link href="#faq" className="text-gray-600 hover:text-gray-900">
+                  FAQ
                 </Link>
-
-                <Link
-                    href="https://github.com/Razikus/supabase-nextjs-template"
-                    className="bg-primary-800 text-white px-4 py-2 rounded-lg hover:bg-primary-900 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  Grab This Template
-                </Link>
-
                 <AuthAwareButtons variant="nav" />
               </div>
             </div>
@@ -99,53 +63,118 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-                Bootstrap Your SaaS
-                <span className="block text-primary-600">In 5 minutes</span>
+                Bring old photos <span className="relative inline-block">
+                  <span className="text-primary-600 z-10 relative">back to life</span>
+                  <svg className="absolute left-0 right-0 bottom-[-8px] w-full h-3 z-0" viewBox="0 0 200 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 10 Q100 2 190 10" stroke="#D35400" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+                  </svg>
+                </span> in seconds
               </h1>
               <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-                Launch your SaaS product in days, not months. Complete with authentication and enterprise-grade security built right in.
+                Transform damaged, faded, or low-quality photos into stunning HD images using AI.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
-
-                <AuthAwareButtons />
+                <Link href="/auth/register" className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors text-lg shadow">
+                  Start Restoring Photos
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="text-4xl font-bold text-primary-600">{stat.value}</div>
-                    <div className="mt-2 text-sm text-gray-600">{stat.label}</div>
+
+        {/* Features Section */}
+        <section className="py-24 bg-white" id="benefits">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose Our Restoration?
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Professional-grade restoration that brings your memories back to life
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-12 text-center">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="group hover:scale-105 transition-transform duration-200">
+                    <div className="flex justify-center mb-6">
+                      <span className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl ${
+                        feature.color === 'text-green-600' ? 'bg-green-100' :
+                        feature.color === 'text-blue-600' ? 'bg-blue-100' : 'bg-purple-100'
+                      } group-hover:scale-110 transition-transform duration-200`}>
+                        <Icon className={`w-8 h-8 ${feature.color}`} />
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-gray-900">{feature.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{feature.description}</p>
                   </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-24 bg-gray-50">
+        {/* Testimonials Section */}
+        <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold">Everything You Need</h2>
-              <p className="mt-4 text-xl text-gray-600">
-                Built with modern technologies for reliability and speed
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                What Our Users Say
+              </h2>
+              <p className="text-xl text-gray-600">
+                Real stories from people who restored their precious memories
               </p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                  <div
-                      key={index}
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <feature.icon className={`h-8 w-8 ${feature.color}`} />
-                    <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-gray-600">{feature.description}</p>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
-              ))}
+                </div>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn't believe how clear they turned out.
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Sarah M.</div>
+              </div>
+
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  "Had some WWII photos from my dad that were pretty beat up. This service brought them back to life, the details are amazing."
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Mike R.</div>
+              </div>
+
+              <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex justify-center mb-6">
+                  <div className="flex space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+                <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                  "Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic."
+                </blockquote>
+                <div className="text-gray-500 font-medium">— Lisa T.</div>
+              </div>
             </div>
           </div>
         </section>
@@ -155,20 +184,24 @@ export default function Home() {
         <section className="py-24 bg-primary-600">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-white">
-              Ready to Transform Your Idea into Reality?
+              Ready to Restore Your Photos?
             </h2>
             <p className="mt-4 text-xl text-primary-100">
-              Join thousands of developers building their SaaS with {productName}
+              Join hundreds of users bringing their memories back to life
             </p>
             <Link
                 href="/auth/register"
                 className="mt-8 inline-flex items-center px-6 py-3 rounded-lg bg-white text-primary-600 font-medium hover:bg-primary-50 transition-colors"
             >
-              Get Started Now
+              Start Restoring Photos
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </section>
+
+        <PhotoShowcase />
+
+        <FAQSection />
 
         <footer className="bg-gray-50 border-t border-gray-200">
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
