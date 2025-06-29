@@ -13,7 +13,11 @@ import { FileObject } from '@supabase/storage-js';
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import StreakTestPanel from '@/components/StreakTestPanel';
+// ... existing imports ...
+import StreakTestPanel from '@/components/StreakTestPanel';
+import UserStatsDisplay from '@/components/UserStatsDisplay';
 import HowItWorksTour from '@/components/HowItWorksTour';
+// ... rest of the file ...
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
@@ -414,21 +418,36 @@ export default function FileManagementPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header Section with Credits */}
+            {/* Header Section with Welcome and Credits */}
             <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <div className="flex items-center space-x-4">
-                            <h1 className="text-3xl font-bold text-gray-900">Create</h1>
-                            <button
-                                onClick={() => setShowTour(true)}
-                                className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium"
-                            >
-                                <HelpCircle className="h-4 w-4 mr-2" />
-                                How It Works
-                            </button>
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8 xl:gap-12">
+    <div className="flex-1 min-w-0">
+      <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 mb-3">
+        Welcome back, {user?.email?.split('@')[0]}!
+      </h1>
+      <p className="text-gray-600 mb-4 text-base sm:text-lg">
+        Ready to restore more memories? Your journey continues below.
+      </p>
+      {user?.id && (
+        <div className="mt-2">
+          <UserStatsDisplay userId={user.id} />
+        </div>
+      )}
+    </div>
+    <div className="flex flex-col gap-2 xl:items-end">
+      <ProminentCreditsDisplay />
+      <button
+        onClick={() => setShowTour(true)}
+        className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium mt-2"
+      >
+        <HelpCircle className="h-4 w-4 mr-2" />
+        How It Works
+      </button>
+    </div>
+  </div>
+</div>
                         </div>
-                        <ProminentCreditsDisplay />
                     </div>
                 </div>
             </div>

@@ -6,15 +6,16 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+// KEEP BOTH imports here, at the top:
+import UserStatsDisplay from '@/components/UserStatsDisplay';
+import HowItWorksTour from '@/components/HowItWorksTour';
+
 export default function ProminentCreditsDisplay() {
-    const { credits, optimisticCredits, isPending } = useGlobal();
-    
-    const displayCredits = optimisticCredits ?? credits ?? 0;
-    const isLowCredits = displayCredits <= 5;
-    
-    return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm">
-            <div className="flex items-center justify-between gap-4">
+  const { credits, optimisticCredits, isPending } = useGlobal();
+  const displayCredits = optimisticCredits ?? credits ?? 0;
+  const isLowCredits = displayCredits <= 5;
+
+  return (
                 <div className="flex items-center space-x-3">
                     <div className={`p-3 rounded-full ${
                         isLowCredits ? 'bg-red-100' : 'bg-orange-100'
@@ -41,18 +42,17 @@ export default function ProminentCreditsDisplay() {
                     </div>
                 </div>
                 
-                <Link href="/app/user-settings">
+                <Link href="/app/user-settings" className="w-full sm:w-auto">
                     <Button 
                         size="sm" 
-                        className={`${
+                        className={`w-full sm:w-auto ${
                             isLowCredits 
                                 ? 'bg-red-600 hover:bg-red-700' 
                                 : 'bg-orange-600 hover:bg-orange-700'
                         } text-white shadow-md`}
                     >
                         <Plus className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Buy More</span>
-                        <span className="sm:hidden">Buy</span>
+                        <span>Buy More</span>
                     </Button>
                 </Link>
             </div>
