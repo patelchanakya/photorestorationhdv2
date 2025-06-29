@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
 
             setSuccess(true);
             setTimeout(() => {
-                router.push('/app/storage');
+                router.push('/app');
             }, 3000);
         } catch (err) {
             if (err instanceof Error) {
