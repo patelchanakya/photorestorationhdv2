@@ -6,6 +6,7 @@ import HomePricing from "@/components/HomePricing";
 import FAQSection from '@/components/FAQSection';
 import PhotoShowcase from '@/components/PhotoShowcase';
 import Logo from '@/components/Logo';
+import StartRestoringButton from '@/components/StartRestoringButton';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
@@ -74,9 +75,7 @@ export default function Home() {
                 Transform damaged, faded, or low-quality photos into stunning HD images using AI.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
-                <Link href="/auth/register" className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors text-lg shadow">
-                  Start Restoring Photos
-                </Link>
+                <StartRestoringButton variant="hero" />
               </div>
             </div>
           </div>
@@ -189,13 +188,7 @@ export default function Home() {
             <p className="mt-4 text-xl text-primary-100">
               Join hundreds of users bringing their memories back to life
             </p>
-            <Link
-                href="/auth/register"
-                className="mt-8 inline-flex items-center px-6 py-3 rounded-lg bg-white text-primary-600 font-medium hover:bg-primary-50 transition-colors"
-            >
-              Start Restoring Photos
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+            <StartRestoringButton variant="cta" className="mt-8" />
           </div>
         </section>
 
