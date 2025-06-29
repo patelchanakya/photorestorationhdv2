@@ -14,7 +14,7 @@ export default function ProminentCreditsDisplay() {
     
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center space-x-3">
                     <div className={`p-3 rounded-full ${
                         isLowCredits ? 'bg-red-100' : 'bg-orange-100'
@@ -35,11 +35,6 @@ export default function ProminentCreditsDisplay() {
                                     isLowCredits ? 'text-red-600' : 'text-gray-900'
                                 }`}>
                                     {displayCredits}
-                                </span>
-                            )}
-                            {isLowCredits && (
-                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                                    Low!
                                 </span>
                             )}
                         </div>
