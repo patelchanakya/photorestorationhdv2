@@ -211,20 +211,26 @@ serve(async (req) => {
 
     } else if (req.method === 'POST') {
       // Start restoration job
+      console.log('🚀 Edge Function: Starting restoration job');
       const { user_id, image_path }: StartJobRequest = await req.json();
+      console.log('📝 Edge Function: Request data:', { user_id, image_path });
 
       if (!user_id || !image_path) {
+        console.log('❌ Edge Function: Missing user_id or image_path');
         return new Response('Missing user_id or image_path', { status: 400, headers: corsHeaders });
       }
 
       // Get signed URL for the private file
+      console.log('🔗 Edge Function: Creating signed URL for:', image_path);
       const { data: signedUrlData, error: urlError } = await supabaseClient
         .storage
         .from('files')
         .createSignedUrl(image_path, 3600); // 1 hour expiry
 
+      console.log('🔗 Edge Function: Signed URL result:', { signedUrlData, urlError });
+
       if (urlError || !signedUrlData) {
-        console.error('Error creating signed URL:', urlError);
+        console.error('❌ Edge Function: Error creating signed URL:', urlError);
         return new Response('Error accessing image', { status: 400, headers: corsHeaders });
       }
 
@@ -234,10 +240,13 @@ serve(async (req) => {
       
       if (publicUrl.includes(currentUrlConfig.internal)) {
         publicUrl = publicUrl.replace(currentUrlConfig.internal, ngrokHost);
-        console.log('Fixed signed URL for external access:', publicUrl);
+        console.log('Fixed signed URL for external access (internal -> ngrok):', publicUrl);
       } else if (publicUrl.includes(currentUrlConfig.external)) {
         publicUrl = publicUrl.replace(currentUrlConfig.external, ngrokHost);
-        console.log('Fixed signed URL for external access:', publicUrl);
+        console.log('Fixed signed URL for external access (external -> ngrok):', publicUrl);
+      } else if (publicUrl.includes('127.0.0.1:54321')) {
+        publicUrl = publicUrl.replace('127.0.0.1:54321', ngrokHost);
+        console.log('Fixed signed URL for external access (127.0.0.1 -> ngrok):', publicUrl);
       }
 
       // Create processing job record with timeout
@@ -268,12 +277,26 @@ serve(async (req) => {
 
       // Call Replicate API
       const replicateToken = Deno.env.get('REPLICATE_API_TOKEN');
+      console.log('🔑 Edge Function: Replicate token available:', !!replicateToken);
       if (!replicateToken) {
+        console.error('❌ Edge Function: Replicate API token not configured');
         return new Response('Replicate API token not configured', { status: 500, headers: corsHeaders });
       }
 
-      console.log('Webhook URL:', webhookUrl);
-      console.log('Calling Replicate API with model:', CURRENT_MODEL);
+      console.log('🎯 Edge Function: Webhook URL:', webhookUrl);
+      console.log('🤖 Edge Function: Calling Replicate API with model:', CURRENT_MODEL);
+      console.log('🖼️ Edge Function: Image URL for Replicate:', publicUrl);
+
+      const replicatePayload = {
+        input: {
+          input_image: publicUrl,
+          output_format: "png",
+          safety_tolerance: 2
+        },
+        webhook: webhookUrl,
+        webhook_events_filter: ["completed"]
+      };
+      console.log('📦 Edge Function: Replicate payload:', JSON.stringify(replicatePayload, null, 2));
 
       const replicateResponse = await fetch(`https://api.replicate.com/v1/models/${CURRENT_MODEL}/predictions`, {
         method: 'POST',
@@ -281,20 +304,16 @@ serve(async (req) => {
           'Authorization': `Token ${replicateToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          input: {
-            input_image: publicUrl,
-            output_format: "png",
-            safety_tolerance: 2
-          },
-          webhook: webhookUrl,
-          webhook_events_filter: ["completed"]
-        }),
+        body: JSON.stringify(replicatePayload),
       });
+
+      console.log('📡 Edge Function: Replicate API response status:', replicateResponse.status);
 
       if (!replicateResponse.ok) {
         const errorText = await replicateResponse.text();
-        console.error('Replicate API error:', errorText);
+        console.error('❌ Edge Function: Replicate API error:', errorText);
+        console.error('❌ Edge Function: Replicate response status:', replicateResponse.status);
+        console.error('❌ Edge Function: Replicate response headers:', Object.fromEntries(replicateResponse.headers.entries()));
         
         // Update job status to failed
         await supabaseClient
