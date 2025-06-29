@@ -12,6 +12,7 @@ import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
+import StreakTestPanel from '@/components/StreakTestPanel';
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
@@ -413,7 +414,7 @@ export default function FileManagementPage() {
         <div className="min-h-screen bg-gray-50">
             {/* Header Section with Credits */}
             <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">Create</h1>
@@ -424,7 +425,7 @@ export default function FileManagementPage() {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
                 <div className="space-y-8">
                     {/* Alerts */}
                     {error && (
@@ -440,6 +441,9 @@ export default function FileManagementPage() {
                             <AlertDescription>{success}</AlertDescription>
                         </Alert>
                     )}
+
+                    {/* Streak Test Panel - Development Tool */}
+                    <StreakTestPanel />
 
                     {/* Upload Section */}
                     <Card className="border-0 shadow-xl bg-white">
@@ -554,7 +558,7 @@ export default function FileManagementPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
                             {files.map((file) => {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);

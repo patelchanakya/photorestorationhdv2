@@ -111,7 +111,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="lg:pl-64">
-                <div className="sticky top-0 z-10 flex items-center justify-between h-16 bg-white shadow-sm px-4">
+                <div className="sticky top-0 z-10 flex items-center justify-between h-16 bg-white shadow-sm px-2 sm:px-4">
                     <div className="flex items-center space-x-3">
                         <button
                             onClick={toggleSidebar}
@@ -120,26 +120,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             <Menu className="h-6 w-6"/>
                         </button>
                         
-                        {/* Mobile Logo */}
+                        {/* Mobile Logo - responsive text */}
                         <Link href="/app" className="lg:hidden flex items-center space-x-2">
                             <div className="p-1.5 bg-orange-100 rounded-lg">
                                 <Camera className="h-5 w-5 text-orange-600" />
                             </div>
                             <span className="text-lg font-bold text-orange-600 tracking-tight">
-                                photorestorationhd
+                                <span className="hidden xs:inline">photorestorationhd</span>
+                                <span className="xs:hidden">PRH</span>
                             </span>
                         </Link>
                     </div>
 
-                    {/* Credits Display */}
-                    <div className="flex items-center space-x-2 bg-orange-50 px-3 py-1.5 rounded-lg">
+                    {/* Credits Display - responsive spacing */}
+                    <div className="flex items-center space-x-1 sm:space-x-2 bg-orange-50 px-2 sm:px-3 py-1.5 rounded-lg">
                         <Coins className={`h-4 w-4 text-orange-600 ${isPending ? 'animate-spin' : ''}`} />
                         <span className="text-sm font-medium text-orange-700">
                             {creditsLoading ? (
                                 <span className="animate-pulse">Loading...</span>
                             ) : (
                                 <span className={isPending ? 'opacity-75' : ''}>
-                                    {optimisticCredits ?? credits ?? 0} credits
+                                    {optimisticCredits ?? credits ?? 0}
+                                    <span className="hidden xs:inline"> credits</span>
                                 </span>
                             )}
                         </span>
@@ -170,7 +172,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </button>
 
                         {isUserDropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg border">
+                            <div className="absolute right-0 mt-2 w-48 sm:w-64 bg-white rounded-md shadow-lg border">
                                 <div className="p-2 border-b border-gray-100">
                                     <p className="text-xs text-gray-500">Signed in as</p>
                                     <p className="text-sm font-medium text-gray-900 truncate">
