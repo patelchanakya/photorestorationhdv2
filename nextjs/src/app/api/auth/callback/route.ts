@@ -27,7 +27,7 @@ export async function GET(request: Request) {
         }
 
         // If MFA is not required or already verified, proceed to app
-        return NextResponse.redirect(new URL('/app', request.url))
+        return NextResponse.redirect(new URL('/app/storage', request.url))
     }
 
     // If no code provided, redirect to login
