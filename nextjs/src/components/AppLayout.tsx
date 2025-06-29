@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {usePathname, useRouter} from 'next/navigation';
 import {
-    Home,
     User,
     Menu,
     X,
@@ -42,7 +41,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             : parts[0].slice(0, 2).toUpperCase();
     };
 
-    const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
 
     const navigation = [
         { name: 'Create', href: '/app/storage', icon: Upload },
@@ -142,7 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                     {user ? getInitials(user.email) : '??'}
                                 </span>
                             </div>
-                            <span>{user?.email || 'Loading...'}</span>
+                            <span className="hidden sm:inline">{user?.email || 'Loading...'}</span>
                             <ChevronDown className="h-4 w-4"/>
                         </button>
 
