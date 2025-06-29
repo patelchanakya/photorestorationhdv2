@@ -4,6 +4,7 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { CalendarDays, Settings, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import CreditTestPanel from '@/components/CreditTestPanel';
 
 export default function DashboardContent() {
     const { loading, user } = useGlobal();
@@ -36,6 +37,9 @@ export default function DashboardContent() {
                     </CardDescription>
                 </CardHeader>
             </Card>
+
+            {/* Credit Test Panel */}
+            <CreditTestPanel />
 
             {/* Quick Actions */}
             <Card>
