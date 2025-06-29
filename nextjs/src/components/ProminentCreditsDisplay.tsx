@@ -57,14 +57,6 @@ export default function ProminentCreditsDisplay() {
                 </Link>
             </div>
             
-            {isPending && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                    <div className="text-xs text-blue-600 flex items-center">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600 mr-2"></div>
-                        Updating credits...
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

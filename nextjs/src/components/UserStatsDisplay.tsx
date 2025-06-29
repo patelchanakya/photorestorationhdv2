@@ -59,12 +59,7 @@ export default function UserStatsDisplay({ userId }: UserStatsDisplayProps) {
     }, [userId]);
 
     if (loading) {
-        return (
-            <div className="flex items-center space-x-2 text-gray-500">
-                <Calendar className="h-4 w-4 animate-pulse" />
-                <span className="text-sm animate-pulse">Loading...</span>
-            </div>
-        );
+        return null; // Don't show loading state to prevent layout shifts
     }
 
     if (daysSinceFirst === null) {

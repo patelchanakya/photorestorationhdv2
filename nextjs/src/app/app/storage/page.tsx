@@ -545,12 +545,6 @@ export default function FileManagementPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Loading State */}
-                    {loading && (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-orange-600"/>
-                        </div>
-                    )}
                     
                     {/* Empty State */}
                     {!loading && files.length === 0 && (
