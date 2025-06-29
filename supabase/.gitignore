@@ -1,4 +1,9 @@
 # Supabase
 .branches
 .temp
+<<<<<<< HEAD
+# .env
+.env*
+=======
 .env
+>>>>>>> parent of 4ea6e37 (clean compile)

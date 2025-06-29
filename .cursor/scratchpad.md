@@ -4,6 +4,16 @@
 - [x] Overhaul navigation bar (remove template links, add Home, How it Works, Pricing, FAQ, Login/Register)
 - [x] Update hero section with new headline, subheadline, and CTA for photo restoration
 - [x] Add creative underline SVG accents to hero and gallery section headlines for consistent, beautiful visual style
+<<<<<<< HEAD
+- [x] Refactor useEffect deps in storage/page.tsx
+- [x] Refactor useEffect deps in HowItWorksTour.tsx
+- [x] Refactor useEffect deps in useCredits.ts
+- [x] Refactor useEffect deps in GlobalContext.tsx
+- [x] Replace <img> with <Image/> in PhotoShowcase.tsx
+- [x] Replace <img> with <Image/> in storage/page.tsx
+- [ ] Verify clean build (no warnings)
+=======
+>>>>>>> parent of 4ea6e37 (clean compile)
 
 ## Executor's Feedback or Assistance Requests
 - The testimonials now use authentic, emotional language inspired by real customer feedback from Facebook groups and testimonial sites. Please review the new testimonials for authenticity and emotional impact. Let me know if you want further tweaks or have specific stories to include. 
@@ -99,4 +109,62 @@
 - Focus on creative, beautiful, and emotionally resonant design for the homepage.
 - Use subtle, consistent visual cues (e.g., underlines, color accents, iconography) inspired by the current style (like the underline under 'back to life' and 'transformation').
 - Ensure all design choices align with the brand's ICP (Ideal Customer Profile): families, memory keepers, sentimental users, and those seeking to preserve precious moments.
+<<<<<<< HEAD
+- Prioritize warmth, trust, and a sense of transformation in all visuals and copy.
+
+## Code Quality Cleanup (ESLint & TypeScript Warnings)
+
+### Background and Motivation
+After resolving the blocking build errors, the project still compiles with a handful of ESLint warnings:
+1. React-hook dependency warnings in several files.
+2. `<img>` vs `<Image/>` optimisation warnings.
+Cleaning these now prevents future regressions and keeps CI noise low.
+
+### Key Challenges and Analysis
+• Each `useEffect` warning needs a case-by-case refactor (add deps or memoise callbacks).
+• Converting `<img>` tags requires importing `next/image`, setting explicit `width/height`, and whitelisting remote hosts in `next.config.ts`.
+• Must avoid perf regressions—so memoise expensive callbacks rather than blindly adding objects/arrays to dep arrays.
+
+### High-level Task Breakdown
+1. storage/page.tsx
+   1.1 Create `const hasActiveJobs = …` with `useMemo`.
+   1.2 Move `processingJobs.some` expression into variable; add `processingJobs` + memo to deps.
+   1.3 Success: no hook warning in that file.
+2. HowItWorksTour.tsx
+   2.1 Wrap `highlightElement` & `removeAllHighlights` in `useCallback`.
+   2.2 Add them to the dep arrays.
+   2.3 Success: warnings gone.
+3. useCredits.ts & GlobalContext.tsx
+   3.1 Memoise `fetchCredits` with `useCallback`.
+   3.2 Add to dep arrays.
+   3.3 Success: no hook-dependency warnings.
+4. Replace `<img>` in PhotoShowcase.tsx & storage/page.tsx
+   4.1 Import `next/image` and convert each tag.
+   4.2 Add `width`, `height`, `alt`.
+   4.3 Update `next.config.ts` with `remotePatterns` for any external domains.
+   4.4 Success: no `@next/next/no-img-element` warnings.
+5. Run `yarn run build` – build passes with **zero** ESLint errors or warnings.
+
+### Project Status Board (new items)
+- [ ] Refactor useEffect deps in storage/page.tsx
+- [ ] Refactor useEffect deps in HowItWorksTour.tsx
+- [ ] Refactor useEffect deps in useCredits.ts
+- [ ] Refactor useEffect deps in GlobalContext.tsx
+- [ ] Replace <img> with <Image/> in PhotoShowcase.tsx
+- [ ] Replace <img> with <Image/> in storage/page.tsx
+- [ ] Verify clean build (no warnings)
+
+### Current Status / Progress Tracking
+Refactored `useEffect` dependencies in `storage/page.tsx` using `useMemo` and updated import list. ESLint hook-dependency warning for that file is resolved. Ready for next subtask. 
+
+Refactored `HowItWorksTour.tsx`: wrapped `highlightElement`, `removeAllHighlights`, and `calculateResponsivePosition` in `useCallback`, fixed dependency arrays, resolved all hook warnings. Next: address hook warnings in `useCredits.ts` and `GlobalContext.tsx`. 
+
+Refactored `useCredits` and `GlobalContext` to use `useCallback` and correct dependency arrays; all React hook dependency warnings are resolved. Remaining ESLint warnings pertain only to `<img>` vs `<Image>` conversion in several components. 
+
+## Verify clean build (no warnings)
+- [x] Replace <img> with <Image/> in PhotoShowcase.tsx
+- [x] Replace <img> with <Image/> in storage/page.tsx
+- [x] Verify clean build (no warnings) 
+=======
 - Prioritize warmth, trust, and a sense of transformation in all visuals and copy. 
+>>>>>>> parent of 4ea6e37 (clean compile)

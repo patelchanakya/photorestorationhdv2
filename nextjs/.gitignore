@@ -30,9 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+<<<<<<< HEAD
+# env files
+.env*
+=======
 # env files (can opt-in for committing if needed)
 .env*
 
+>>>>>>> parent of 4ea6e37 (clean compile)
 # vercel
 .vercel
 
