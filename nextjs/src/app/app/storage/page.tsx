@@ -16,9 +16,10 @@ import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import HowItWorksTour from '@/components/HowItWorksTour';
 import CreditTestPanel from '@/components/CreditTestPanel';
+import Confetti from '@/components/Confetti';
 
 // Polling configuration
-const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '3000');
+const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '1200');
 const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 
 export default function FileManagementPage() {
@@ -36,6 +37,7 @@ export default function FileManagementPage() {
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
+    const [showConfetti, setShowConfetti] = useState(false);
     const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
     const previousJobsRef = useRef<ProcessingJob[]>([]);
     const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
@@ -127,6 +129,9 @@ export default function FileManagementPage() {
                     if (previousJob && previousJob.status !== currentJob.status) {
                         if (currentJob.status === 'completed') {
                             setSuccess('Photo restoration completed! Your restored image is ready.');
+                            // Trigger confetti celebration
+                            setShowConfetti(true);
+                            setTimeout(() => setShowConfetti(false), 3000); // Hide after 3 seconds
                         } else if (currentJob.status === 'failed') {
                             setError(`Restoration failed: ${currentJob.error_message || 'Unknown error'}`);
                         }
@@ -914,6 +919,9 @@ export default function FileManagementPage() {
                         isOpen={showTour} 
                         onClose={() => setShowTour(false)} 
                     />
+                    
+                    {/* Confetti Animation */}
+                    <Confetti active={showConfetti} />
                 </div>
             </div>
         </div>

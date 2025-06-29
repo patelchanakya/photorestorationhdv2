@@ -29,6 +29,10 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
         const colors = ['#ffd700', '#ff0000', '#00ff00', '#0000ff', '#ff00ff'];
 
         particles.current = Array.from({ length: 50 }, (): Particle => ({
@@ -81,12 +85,26 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
         };
     }, [active]);
 
+    useEffect(() => {
+        const handleResize = () => {
+            if (canvasRef.current) {
+                canvasRef.current.width = window.innerWidth;
+                canvasRef.current.height = window.innerHeight;
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    if (!active) return null;
+
     return (
         <canvas
             ref={canvasRef}
             className="fixed inset-0 pointer-events-none z-50"
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={typeof window !== 'undefined' ? window.innerWidth : 800}
+            height={typeof window !== 'undefined' ? window.innerHeight : 600}
         />
     );
 };
