@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface ShowcaseExample {
   id: string;
@@ -69,19 +70,23 @@ const PhotoShowcase: React.FC = () => {
                   <div className="mb-4 relative overflow-hidden rounded-lg aspect-square">
                     {/* Before/After Slider */}
                     <div className="relative w-full h-full">
-                      <img 
+                      <Image 
                         src={example.afterImage} 
                         alt={`${example.title} - After`}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="absolute inset-0 object-cover"
                       />
                       <div 
                         className="absolute inset-0 overflow-hidden"
                         style={{ clipPath: `inset(0 ${100 - sliderValue}% 0 0)` }}
                       >
-                        <img 
+                        <Image 
                           src={example.beforeImage} 
                           alt={`${example.title} - Before`}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover"
                         />
                       </div>
                       {/* Slider Line */}
@@ -127,19 +132,23 @@ const PhotoShowcase: React.FC = () => {
                     <div className="mb-4 relative overflow-hidden rounded-lg aspect-square">
                       {/* Before/After Slider */}
                       <div className="relative w-full h-full">
-                        <img 
+                        <Image 
                           src={example.afterImage} 
                           alt={`${example.title} - After`}
-                          className="absolute inset-0 w-full h-full object-cover"
+                          fill
+                          sizes="80vw"
+                          className="absolute inset-0 object-cover"
                         />
                         <div 
                           className="absolute inset-0 overflow-hidden"
                           style={{ clipPath: `inset(0 ${100 - sliderValue}% 0 0)` }}
                         >
-                          <img 
+                          <Image 
                             src={example.beforeImage} 
                             alt={`${example.title} - Before`}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="80vw"
+                            className="object-cover"
                           />
                         </div>
                         {/* Slider Line */}

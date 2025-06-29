@@ -171,7 +171,7 @@ export default function Home() {
                   </div>
                 </div>
                 <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
-                  "Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic."
+                  &quot;Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic.&quot;
                 </blockquote>
                 <div className="text-gray-500 font-medium">— Lisa T.</div>
               </div>

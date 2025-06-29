@@ -33,8 +33,8 @@ export default function UserStatsDisplay({ userId }: UserStatsDisplayProps) {
                     return;
                 }
 
-                if (data && data.length > 0) {
-                    const firstDate = new Date(data[0].created_at);
+                if (data && data.length > 0 && data[0].created_at) {
+                    const firstDate = new Date(data[0].created_at as string);
                     const today = new Date();
                     
                     // Calculate the difference in days

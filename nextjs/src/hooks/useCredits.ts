@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { useGlobal } from '@/lib/context/GlobalContext';
 
@@ -15,7 +15,7 @@ export function useCredits(): UseCreditsReturn {
   const [error, setError] = useState<string | null>(null);
   const { user } = useGlobal();
 
-  const fetchCredits = async () => {
+  const fetchCredits = useCallback(async () => {
     if (!user?.id) return;
     
     try {
@@ -44,11 +44,11 @@ export function useCredits(): UseCreditsReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchCredits();
-  }, [user?.id]);
+  }, [fetchCredits]);
 
   return {
     credits,
