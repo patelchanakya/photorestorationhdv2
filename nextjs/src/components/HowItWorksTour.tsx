@@ -2,6 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ChevronRight, HelpCircle } from 'lucide-react';
+import {
+    useFloating,
+    autoUpdate,
+    offset,
+    flip,
+    shift
+} from '@floating-ui/react';
 
 // VisuallyHidden component for accessibility
 const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
@@ -49,8 +56,41 @@ interface HowItWorksTourProps {
 
 export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
-    const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-    const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+    
+    const currentTourStep = tourSteps[currentStep];
+    
+    // Configure Floating UI with step-specific settings
+    const getPlacementForStep = (step: TourStep) => {
+        // Convert our position strings to Floating UI placements
+        switch (step.position) {
+            case 'top': return 'top';
+            case 'bottom': return 'bottom';
+            case 'left': return 'left';
+            case 'right': return 'right';
+            default: return 'bottom';
+        }
+    };
+
+    const getOffsetForStep = (step: TourStep) => {
+        // Special positioning for specific steps
+        if (step.target === 'gallery-link') return 2; // Very close to gallery button
+        if (step.target === 'upload-area') return 5; // Close to upload area
+        return 10; // Default spacing
+    };
+
+    const { refs, floatingStyles } = useFloating({
+        placement: getPlacementForStep(currentTourStep),
+        open: isOpen,
+        middleware: [
+            offset(getOffsetForStep(currentTourStep)),
+            flip(), // This will automatically flip left to right if no space
+            shift({ 
+                padding: 12, // Increase padding to keep modal within viewport
+                crossAxis: true // Allow shifting on cross axis for better positioning
+            })
+        ],
+        whileElementsMounted: autoUpdate,
+    });
 
     // Function to remove highlighting from an element
     const removeHighlight = useCallback((element: HTMLElement) => {
@@ -79,7 +119,7 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         // Add highlight classes
         element.classList.add('ring-4', 'ring-orange-300', 'ring-opacity-75', 'animate-pulse');
         element.style.position = 'relative';
-        element.style.zIndex = '999'; // High z-index to appear above everything
+        element.style.zIndex = '9997'; // Below the dialog backdrop but above everything else
         
         // Force the element to be above any backdrop or overlay
         const originalPosition = element.style.position;
@@ -88,81 +128,14 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         }
     }, [removeAllHighlights]);
 
-    const calculateResponsivePosition = useCallback((element: HTMLElement, position: string) => {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        
-        // Dynamic modal width based on screen size
-        const modalWidth = Math.min(screenWidth - 40, screenWidth < 480 ? screenWidth - 32 : 380);
-        const margin = Math.max(16, screenWidth * 0.04);
-        
-        // Get element bounds
-        const rect = element.getBoundingClientRect();
-        const elementTop = rect.top + window.scrollY;
-        const elementLeft = rect.left + window.scrollX;
-        
-        let top = '50%';
-        let left = '50%';
-        let transform = 'translate(-50%, -50%)';
-        
-        // For very small screens, always center
-        if (screenWidth < 480) {
-            return { top, left, transform };
-        }
-        
-        // Calculate position based on preferred position and available space
-        if (position === 'bottom') {
-            const spaceBelow = screenHeight - rect.bottom;
-            const spaceAbove = rect.top;
-            
-            if (spaceBelow >= 250 || spaceBelow > spaceAbove) {
-                // Position below - ensure enough gap to see the highlighted element
-                top = `${Math.min(elementTop + rect.height + 30, screenHeight - 280)}px`;
-            } else {
-                // Position above - ensure enough gap to see the highlighted element
-                top = `${Math.max(elementTop - 250, 20)}px`;
-            }
-        } else if (position === 'left') {
-            // Position to the left of the element
-            top = `${Math.max(20, Math.min(elementTop - 50, screenHeight - 280))}px`;
-            // Adjust horizontal positioning for left placement
-            const spaceLeft = rect.left;
-            if (spaceLeft >= modalWidth + 20) {
-                // Position to the left with gap
-                left = `${Math.max(margin, rect.left - modalWidth - 20)}px`;
-            } else {
-                // Not enough space on left, position to the right
-                left = `${Math.min(rect.right + 20, screenWidth - modalWidth - margin)}px`;
-            }
-            transform = 'none';
-            return { top, left, transform };
-        } else {
-            // Position above
-            const spaceAbove = rect.top;
-            const spaceBelow = screenHeight - rect.bottom;
-            
-            if (spaceAbove >= 250 || spaceAbove > spaceBelow) {
-                // Position above - ensure enough gap to see the highlighted element
-                top = `${Math.max(elementTop - 250, 20)}px`;
-            } else {
-                // Position below - ensure enough gap to see the highlighted element
-                top = `${Math.min(elementTop + rect.height + 30, screenHeight - 280)}px`;
-            }
-        }
-        
-        // Horizontal positioning
-        const idealLeft = elementLeft + (rect.width / 2) - (modalWidth / 2);
-        left = `${Math.max(margin, Math.min(idealLeft, screenWidth - modalWidth - margin))}px`;
-        transform = 'none';
-        
-        return { top, left, transform };
-    }, []);
+    // Simple function to update the reference element for Floating UI
+    const updateFloatingReference = useCallback((element: HTMLElement) => {
+        refs.setReference(element);
+    }, [refs]);
 
     useEffect(() => {
         if (!isOpen) {
             setCurrentStep(0);
-            setHighlightedElement(null);
-            setModalPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
             // Clean up any remaining highlights
             removeAllHighlights();
             return;
@@ -173,40 +146,21 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
             const element = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement;
             
             if (element) {
-                setHighlightedElement(element);
-                
-                // Add visual highlighting
-                highlightElement(element);
-                
+                // Scroll element into view smoothly
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
-                // Calculate responsive position
-                const position = calculateResponsivePosition(element, step.position);
-                setModalPosition(position);
-            } else {
-                // If element not found, center the modal
-                setModalPosition({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+                // Update Floating UI reference and highlight element
+                updateFloatingReference(element);
+                highlightElement(element);
             }
         };
 
-        // Delay to ensure DOM is ready and scroll has completed
+        // Small delay to ensure DOM is ready
         const timer = setTimeout(highlightTarget, 100);
         return () => clearTimeout(timer);
-    }, [isOpen, currentStep, highlightElement, removeAllHighlights, calculateResponsivePosition]);
+    }, [isOpen, currentStep, highlightElement, removeAllHighlights, updateFloatingReference]);
 
-    // Recalculate position on window resize
-    useEffect(() => {
-        const handleResize = () => {
-            if (highlightedElement && isOpen) {
-                const step = tourSteps[currentStep];
-                const position = calculateResponsivePosition(highlightedElement, step.position);
-                setModalPosition(position);
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [highlightedElement, isOpen, currentStep, calculateResponsivePosition]);
+    // Floating UI handles resize and scroll automatically via autoUpdate
 
     const nextStep = () => {
         if (currentStep < tourSteps.length - 1) {
@@ -228,39 +182,29 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         };
     }, [removeAllHighlights]);
 
-    const currentTourStep = tourSteps[currentStep];
-    
     if (!isOpen) return null;
 
     return (
         <>
-            {/* Backdrop Overlay - barely visible */}
-            <div className="fixed inset-0 bg-black bg-opacity-5 z-30" />
-
-            {/* Tour Tooltip */}
-            <Dialog open={isOpen} onOpenChange={onClose}>
+            {/* Tour Tooltip - no backdrop to allow scrolling */}
+            <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
                 <DialogContent 
-                    className="fixed z-[9999] p-0 border-0 shadow-2xl w-[calc(100vw-2rem)] max-w-xs sm:max-w-sm md:max-w-md lg:max-w-sm"
+                    ref={refs.setFloating}
+                    className="z-[9999] p-0 border-0 shadow-2xl w-max max-w-[280px] sm:max-w-[350px] md:max-w-[380px]"
                     style={{
-                        ...modalPosition,
-                        // CSS isolation to prevent inheriting animations
+                        ...floatingStyles,
+                        // Ensure stable positioning and no animations
                         animation: 'none',
-                        willChange: 'auto',
-                        isolation: 'isolate',
-                        contain: 'layout style paint'
+                        transition: 'none',
+                        maxHeight: '200px'
                     }}
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => e.preventDefault()}
                 >
                     <VisuallyHidden>
                         <DialogTitle>How It Works Tour</DialogTitle>
                     </VisuallyHidden>
-                    <div 
-                        className="bg-white rounded-lg shadow-xl border"
-                        style={{
-                            // Additional isolation for the content
-                            animation: 'none !important',
-                            transform: 'none'
-                        }}
-                    >
+                    <div className="bg-white rounded-lg shadow-xl border">
                         {/* Header */}
                         <div className="flex items-center justify-between p-3 sm:p-4 border-b">
                             <div className="flex items-center space-x-2">
