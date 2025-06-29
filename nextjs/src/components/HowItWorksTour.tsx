@@ -31,7 +31,7 @@ const tourSteps: TourStep[] = [
     {
         target: 'first-restore-button',
         title: '3. Click Restore',
-        content: 'Click the "Restore" button on any photo to start AI enhancement. Each restoration costs 1 credit.',
+        content: 'Click the "Restore" button on any photo to start enhancement. Each restoration costs 1 credit.',
         position: 'left'
     },
     {

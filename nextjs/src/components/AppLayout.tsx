@@ -8,7 +8,7 @@ import {
     X,
     ChevronDown,
     LogOut,
-    Key, Upload, ImageIcon, Coins, Camera,
+    Key, Upload, ImageIcon,
 } from 'lucide-react';
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
 
-    const { user, credits, optimisticCredits, creditsLoading, isPending } = useGlobal();
+    const { user } = useGlobal();
 
     const handleLogout = async () => {
         try {
@@ -43,7 +43,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
     const navigation = [
-        { name: 'Homepage', href: '/app', icon: Home },
         { name: 'Create', href: '/app/storage', icon: Upload },
         { name: 'Gallery', href: '/app/history', icon: ImageIcon },
         { name: 'User Settings', href: '/app/user-settings', icon: User },
@@ -65,12 +64,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
 
                 <div className="h-16 flex items-center justify-between px-4 border-b">
-                    <Link href="/app" className="flex items-center space-x-2 group">
+                    <Link href="/app/storage" className="flex items-center space-x-2 group">
                         <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                            <Camera className="h-6 w-6 text-orange-600" />
+                            <ImageIcon className="h-6 w-6 text-orange-600" />
                         </div>
-                        <span className="text-xl font-bold text-orange-600 tracking-tight">
-                            photorestorationhd
+                        <span className="text-sm font-bold text-orange-600 tracking-tight whitespace-nowrap">
+                            Photo Restoration HD
                         </span>
                     </Link>
                     <button
@@ -119,41 +118,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </button>
                         
                         {/* Mobile Logo - responsive text */}
-                        <Link href="/app" className="lg:hidden flex items-center space-x-2">
+                        <Link href="/app/storage" className="lg:hidden flex items-center space-x-2">
                             <div className="p-1.5 bg-orange-100 rounded-lg">
-                                <Camera className="h-5 w-5 text-orange-600" />
+                                <ImageIcon className="h-5 w-5 text-orange-600" />
                             </div>
-                            <span className="text-lg font-bold text-orange-600 tracking-tight">
-                                <span className="hidden xs:inline">photorestorationhd</span>
+                            <span className="text-sm font-bold text-orange-600 tracking-tight whitespace-nowrap">
+                                <span className="hidden xs:inline">Photo Restoration HD</span>
                                 <span className="xs:hidden">PRH</span>
                             </span>
                         </Link>
                     </div>
 
-                    {/* Credits Display - responsive spacing */}
-                    <div className="flex items-center space-x-1 sm:space-x-2 bg-orange-50 px-2 sm:px-3 py-1.5 rounded-lg">
-                        <Coins className={`h-4 w-4 text-orange-600 ${isPending ? 'animate-spin' : ''}`} />
-                        <span className="text-sm font-medium text-orange-700">
-                            {creditsLoading ? (
-                                <span className="animate-pulse">Loading...</span>
-                            ) : (
-                                <span className={isPending ? 'opacity-75' : ''}>
-                                    {optimisticCredits ?? credits ?? 0}
-                                    <span className="hidden xs:inline"> credits</span>
-                                </span>
-                            )}
-                        </span>
-                        {(optimisticCredits !== null && optimisticCredits <= 1) && (
-                            <span className="ml-1 text-xs text-amber-600 font-medium">
-                                Low!
-                            </span>
-                        )}
-                        {isPending && (
-                            <span className="ml-1 text-xs text-blue-600 font-medium">
-                                Updating...
-                            </span>
-                        )}
-                    </div>
 
                     <div className="relative">
                         <button

@@ -26,11 +26,7 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/auth/2fa', request.url))
         }
 
-<<<<<<< Updated upstream
-        // If MFA is not required or already verified, proceed to app
-=======
         // If MFA is not required or already verified, proceed directly to create page
->>>>>>> Stashed changes
         return NextResponse.redirect(new URL('/app/storage', request.url))
     }
 
