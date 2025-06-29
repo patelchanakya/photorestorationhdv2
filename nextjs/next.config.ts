@@ -5,12 +5,33 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/webp', 'image/avif'],
     remotePatterns: [
+      // PROD: Production Supabase patterns
+      {
+        protocol: 'https',
+        hostname: 'hhwugsiztorplhxztuei.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hhwugsiztorplhxztuei.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/sign/**',
+      },
+      // PROD: General Supabase wildcard (backup)
       {
         protocol: 'https',
         hostname: '*.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/sign/**',
+      },
+      // LOCAL: Local Supabase development patterns
       {
         protocol: 'http',
         hostname: '127.0.0.1',
@@ -29,6 +50,7 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/storage/v1/object/public/**',
       },
+      // DEV: Ngrok for webhook testing
       {
         protocol: 'https',
         hostname: '*.ngrok-free.app',
