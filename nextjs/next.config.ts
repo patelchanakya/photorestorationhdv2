@@ -13,9 +13,15 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '54321',
+        pathname: '/storage/v1/object/**',
+      },
+      {
+        protocol: 'http',
         hostname: 'localhost',
         port: '54321',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/storage/v1/object/**',
       },
       {
         protocol: 'http',
@@ -23,6 +29,12 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.ngrok-free.app',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      }
     ],
   },
   experimental: {
