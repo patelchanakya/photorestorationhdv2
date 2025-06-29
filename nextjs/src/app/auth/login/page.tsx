@@ -35,7 +35,7 @@ export default function LoginPage() {
             if (mfaData.nextLevel === 'aal2' && mfaData.nextLevel !== mfaData.currentLevel) {
                 setShowMFAPrompt(true);
             } else {
-                router.push('/app/storage');
+                router.push('/app');
                 return;
             }
         } catch (err) {
