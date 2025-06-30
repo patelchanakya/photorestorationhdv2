@@ -1,10 +1,11 @@
 'use client';
 
 import {createSPASassClient} from '@/lib/supabase/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from "@/components/SSOButtons";
+import { usePostHog } from 'posthog-js/react';
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
@@ -14,6 +15,14 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const router = useRouter();
+    const posthog = usePostHog();
+
+    // Track page view
+    useEffect(() => {
+        if (posthog) {
+            posthog.capture('registration_page_viewed');
+        }
+    }, [posthog]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,15 +30,26 @@ export default function RegisterPage() {
 
         if (!acceptedTerms) {
             setError('You must accept the Terms of Service and Privacy Policy');
+            if (posthog) {
+                posthog.capture('registration_failed', { reason: 'terms_not_accepted' });
+            }
             return;
         }
 
         if (password !== confirmPassword) {
             setError("Passwords don't match");
+            if (posthog) {
+                posthog.capture('registration_failed', { reason: 'password_mismatch' });
+            }
             return;
         }
 
         setLoading(true);
+
+        // Track registration attempt
+        if (posthog) {
+            posthog.capture('registration_attempted', { email_domain: email.split('@')[1] });
+        }
 
         try {
             const supabase = await createSPASassClient();
@@ -37,12 +57,30 @@ export default function RegisterPage() {
 
             if (error) throw error;
 
+            // Track successful registration
+            if (posthog) {
+                posthog.capture('registration_successful', { 
+                    email_domain: email.split('@')[1],
+                    method: 'email_password'
+                });
+            }
+
             router.push('/auth/verify-email');
         } catch (err: Error | unknown) {
             if(err instanceof Error) {
                 setError(err.message);
+                // Track registration failure
+                if (posthog) {
+                    posthog.capture('registration_failed', { 
+                        reason: 'api_error',
+                        error_message: err.message 
+                    });
+                }
             } else {
                 setError('An unknown error occurred');
+                if (posthog) {
+                    posthog.capture('registration_failed', { reason: 'unknown_error' });
+                }
             }
         } finally {
             setLoading(false);

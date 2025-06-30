@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Shield, Database, Clock } from 'lucide-react';
+import { Shield, Database, Clock } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
 import FAQSection from '@/components/FAQSection';

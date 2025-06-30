@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useOptimistic, useTransition, useCallback } from 'react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { getCredits, deductCredits, refundCredits } from '@/app/actions/credits';
+import { usePostHog } from 'posthog-js/react';
 
 
 type User = {
@@ -38,6 +39,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     const [credits, setCredits] = useState<number | null>(null);
     const [creditsLoading, setCreditsLoading] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const posthog = usePostHog();
 
     // Optimistic credits for instant UI updates
     const [optimisticCredits, updateOptimisticCredits] = useOptimistic(
@@ -168,6 +170,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     };
                     setUser(userData);
                     
+                    // Identify user in PostHog for analytics
+                    if (posthog) {
+                        posthog.identify(user.id, {
+                            email: user.email,
+                            registration_date: user.created_at,
+                            user_id: user.id
+                        });
+                    }
+                    
                     // Fetch credits for this user
                     await fetchCredits(user.id);
                 }
@@ -182,7 +193,17 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         }
 
         loadData();
-    }, [fetchCredits]);
+    }, [fetchCredits, posthog]);
+
+    // Update PostHog user properties when credits change
+    useEffect(() => {
+        if (posthog && user && credits !== null) {
+            posthog.setPersonProperties({
+                credit_balance: credits,
+                account_age_days: Math.floor((Date.now() - user.registered_at.getTime()) / (1000 * 60 * 60 * 24))
+            });
+        }
+    }, [posthog, user, credits]);
 
     return (
         <GlobalContext.Provider value={{ 

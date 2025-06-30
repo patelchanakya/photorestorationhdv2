@@ -8,21 +8,22 @@ const MODELS = {
 };
 const CURRENT_MODEL = MODELS.test;
 
-// URL configuration for easy environment switching
-const URL_CONFIG = {
-  development: {
-    internal: 'kong:8000',
-    external: 'localhost:54321'
-  },
-  production: {
-    internal: 'kong:8000', 
-    external: 'your-production-domain.com' // Replace with your actual domain
-  }
-};
+// Production Supabase configuration
+const SUPABASE_PROJECT_URL = 'https://hhwugsiztorplhxztuei.supabase.co';
 
-// Determine current environment (you can also use Deno.env.get('ENVIRONMENT') if set)
-const CURRENT_ENV = 'development'; // Change to 'production' when deploying
-const currentUrlConfig = URL_CONFIG[CURRENT_ENV];
+// Legacy local development configuration (commented out for production)
+// const URL_CONFIG = {
+//   development: {
+//     internal: 'kong:8000',
+//     external: 'localhost:54321'
+//   },
+//   production: {
+//     internal: 'kong:8000', 
+//     external: 'hhwugsiztorplhxztuei.supabase.co'
+//   }
+// };
+// const CURRENT_ENV = 'development';
+// const currentUrlConfig = URL_CONFIG[CURRENT_ENV];
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -134,12 +135,15 @@ serve(async (req) => {
             .from('restored-images')
             .getPublicUrl(restoredPath);
           
-          // Fix public URL hostname for current environment
+          // Use public URL directly - Supabase production URLs are already correct
           let publicUrl = publicUrlData.publicUrl;
-          if (publicUrl.includes(currentUrlConfig.internal)) {
-            publicUrl = publicUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
-            console.log('Fixed public URL for environment access:', publicUrl);
-          }
+          console.log('📸 Restored image public URL:', publicUrl);
+          
+          // Legacy URL fixing for local development (commented out for production)
+          // if (publicUrl.includes(currentUrlConfig.internal)) {
+          //   publicUrl = publicUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
+          //   console.log('Fixed public URL for environment access:', publicUrl);
+          // }
           
           updateData.result_url = publicUrl; // Store complete public URL with correct hostname
         } catch (error) {
@@ -172,12 +176,15 @@ serve(async (req) => {
           .from('files')
           .getPublicUrl(job.image_path);
         
-        // Fix original URL hostname for external access
+        // Use original URL directly - Supabase production URLs are already correct
         let originalUrl = originalUrlData.publicUrl;
-        if (originalUrl.includes(currentUrlConfig.internal)) {
-          originalUrl = originalUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
-          console.log('Fixed original URL for environment access:', originalUrl);
-        }
+        console.log('📷 Original image public URL:', originalUrl);
+        
+        // Legacy URL fixing for local development (commented out for production)
+        // if (originalUrl.includes(currentUrlConfig.internal)) {
+        //   originalUrl = originalUrl.replace(currentUrlConfig.internal, currentUrlConfig.external);
+        //   console.log('Fixed original URL for environment access:', originalUrl);
+        // }
         
         // Create basic prompt from filename
         const filename = job.image_path.split('/').pop() || '';
@@ -234,20 +241,22 @@ serve(async (req) => {
         return new Response('Error accessing image', { status: 400, headers: corsHeaders });
       }
 
-      // Fix signed URL for external access (Replicate needs to access this)
+      // Use the signed URL directly - Supabase production URLs are already externally accessible
       let publicUrl = signedUrlData.signedUrl;
-      const ngrokHost = Deno.env.get('WEBHOOK_BASE_URL')?.replace('https://', '') || currentUrlConfig.external;
+      console.log('🔗 Edge Function: Using signed URL for Replicate:', publicUrl);
       
-      if (publicUrl.includes(currentUrlConfig.internal)) {
-        publicUrl = publicUrl.replace(currentUrlConfig.internal, ngrokHost);
-        console.log('Fixed signed URL for external access (internal -> ngrok):', publicUrl);
-      } else if (publicUrl.includes(currentUrlConfig.external)) {
-        publicUrl = publicUrl.replace(currentUrlConfig.external, ngrokHost);
-        console.log('Fixed signed URL for external access (external -> ngrok):', publicUrl);
-      } else if (publicUrl.includes('127.0.0.1:54321')) {
-        publicUrl = publicUrl.replace('127.0.0.1:54321', ngrokHost);
-        console.log('Fixed signed URL for external access (127.0.0.1 -> ngrok):', publicUrl);
-      }
+      // Legacy local development URL fixing (commented out for production)
+      // const ngrokHost = Deno.env.get('WEBHOOK_BASE_URL')?.replace('https://', '') || currentUrlConfig.external;
+      // if (publicUrl.includes(currentUrlConfig.internal)) {
+      //   publicUrl = publicUrl.replace(currentUrlConfig.internal, ngrokHost);
+      //   console.log('Fixed signed URL for external access (internal -> ngrok):', publicUrl);
+      // } else if (publicUrl.includes(currentUrlConfig.external)) {
+      //   publicUrl = publicUrl.replace(currentUrlConfig.external, ngrokHost);
+      //   console.log('Fixed signed URL for external access (external -> ngrok):', publicUrl);
+      // } else if (publicUrl.includes('127.0.0.1:54321')) {
+      //   publicUrl = publicUrl.replace('127.0.0.1:54321', ngrokHost);
+      //   console.log('Fixed signed URL for external access (127.0.0.1 -> ngrok):', publicUrl);
+      // }
 
       // Create processing job record with timeout
       const timeoutMinutes = 10; // 10 minute timeout
@@ -271,9 +280,12 @@ serve(async (req) => {
         return new Response('Error creating job', { status: 500, headers: corsHeaders });
       }
 
-      // Prepare webhook URL
-      const webhookBaseUrl = Deno.env.get('WEBHOOK_BASE_URL') || 'http://localhost:54321';
-      const webhookUrl = `${webhookBaseUrl}/functions/v1/restore-photo/webhook`;
+      // Prepare webhook URL - use production Supabase URL
+      const webhookUrl = `${SUPABASE_PROJECT_URL}/functions/v1/restore-photo/webhook`;
+      
+      // Legacy local development webhook configuration (commented out)
+      // const webhookBaseUrl = Deno.env.get('WEBHOOK_BASE_URL') || 'http://localhost:54321';
+      // const webhookUrl = `${webhookBaseUrl}/functions/v1/restore-photo/webhook`;
 
       // Call Replicate API
       const replicateToken = Deno.env.get('REPLICATE_API_TOKEN');
@@ -311,14 +323,31 @@ serve(async (req) => {
 
       if (!replicateResponse.ok) {
         const errorText = await replicateResponse.text();
+        const responseHeaders = Object.fromEntries(replicateResponse.headers.entries());
+        
         console.error('❌ Edge Function: Replicate API error:', errorText);
         console.error('❌ Edge Function: Replicate response status:', replicateResponse.status);
-        console.error('❌ Edge Function: Replicate response headers:', Object.fromEntries(replicateResponse.headers.entries()));
+        console.error('❌ Edge Function: Replicate response headers:', responseHeaders);
+        console.error('❌ Edge Function: Replicate payload sent:', JSON.stringify(replicatePayload, null, 2));
         
-        // Update job status to failed
+        // Create detailed error message for database storage
+        const detailedError = {
+          status: replicateResponse.status,
+          error: errorText,
+          headers: responseHeaders,
+          payload_sent: replicatePayload,
+          timestamp: new Date().toISOString(),
+          execution_id: Deno.env.get('DENO_EXECUTION_ID') || 'unknown'
+        };
+        
+        // Update job status to failed with detailed error information
         await supabaseClient
           .from('processing_jobs')
-          .update({ status: 'failed', error_message: 'Failed to start processing' })
+          .update({ 
+            status: 'failed', 
+            error_message: `Replicate API Error: ${errorText}`,
+            metadata: detailedError
+          })
           .eq('id', job.id);
 
         return new Response('Error calling Replicate API', { status: 500, headers: corsHeaders });

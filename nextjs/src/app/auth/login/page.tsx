@@ -6,6 +6,7 @@ import {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from '@/components/SSOButtons';
+import { usePostHog } from 'posthog-js/react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -14,11 +15,27 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [showMFAPrompt, setShowMFAPrompt] = useState(false);
     const router = useRouter();
+    const posthog = usePostHog();
+
+    // Track page view
+    useEffect(() => {
+        if (posthog) {
+            posthog.capture('login_page_viewed');
+        }
+    }, [posthog]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
+
+        // Track login attempt
+        if (posthog) {
+            posthog.capture('login_attempted', { 
+                email_domain: email.split('@')[1],
+                method: 'email_password'
+            });
+        }
 
         try {
             const client = await createSPASassClient();
@@ -34,15 +51,41 @@ export default function LoginPage() {
 
             if (mfaData.nextLevel === 'aal2' && mfaData.nextLevel !== mfaData.currentLevel) {
                 setShowMFAPrompt(true);
+                // Track MFA required (though we're not focusing on MFA analytics)
+                if (posthog) {
+                    posthog.capture('login_mfa_required');
+                }
             } else {
+                // Track successful login
+                if (posthog) {
+                    posthog.capture('login_successful', { 
+                        email_domain: email.split('@')[1],
+                        method: 'email_password'
+                    });
+                }
                 router.push('/app/storage');
                 return;
             }
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
+                // Track login failure
+                if (posthog) {
+                    posthog.capture('login_failed', { 
+                        email_domain: email.split('@')[1],
+                        method: 'email_password',
+                        error_message: err.message 
+                    });
+                }
             } else {
                 setError('An unknown error occurred');
+                if (posthog) {
+                    posthog.capture('login_failed', { 
+                        email_domain: email.split('@')[1],
+                        method: 'email_password',
+                        error_message: 'unknown_error'
+                    });
+                }
             }
         } finally {
             setLoading(false);

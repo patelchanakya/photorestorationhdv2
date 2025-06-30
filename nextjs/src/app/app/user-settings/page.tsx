@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -10,17 +10,22 @@ import { MFASetup } from '@/components/MFASetup';
 import PurchaseModal from '@/components/PurchaseModal';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import { useSearchParams } from 'next/navigation';
+import { usePostHog } from 'posthog-js/react';
+import { CreditPurchase } from '../../../../../types';
+import { useCallback } from 'react';
+import { createSPASassClient } from '@/lib/supabase/client';
 
-export default function UserSettingsPage() {
+function UserSettingsContent() {
     const { user } = useGlobal();
     const searchParams = useSearchParams();
+    const posthog = usePostHog();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-    const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+    const [purchaseHistory, setPurchaseHistory] = useState<CreditPurchase[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Handle Stripe redirect parameters
@@ -31,17 +36,34 @@ export default function UserSettingsPage() {
 
         if (sessionId && successParam === 'true') {
             setSuccess('Payment successful! Your credits have been added to your account.');
+            
+            // Track successful purchase completion
+            if (posthog) {
+                posthog.capture('credit_purchase_completed', {
+                    session_id: sessionId,
+                    payment_method: 'stripe'
+                });
+            }
+            
             // Clear URL parameters
             window.history.replaceState({}, '', '/app/user-settings');
         } else if (cancelledParam === 'true') {
             setError('Payment was cancelled. No charges were made.');
+            
+            // Track purchase cancellation
+            if (posthog) {
+                posthog.capture('credit_purchase_cancelled', {
+                    stage: 'stripe_checkout'
+                });
+            }
+            
             // Clear URL parameters
             window.history.replaceState({}, '', '/app/user-settings');
         }
-    }, [searchParams]);
+    }, [searchParams, posthog]);
 
     // Load purchase history
-    const loadPurchaseHistory = async () => {
+    const loadPurchaseHistory = useCallback(async () => {
         if (!user) return;
         
         setLoadingHistory(true);
@@ -57,13 +79,13 @@ export default function UserSettingsPage() {
         } finally {
             setLoadingHistory(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         if (user) {
             loadPurchaseHistory();
         }
-    }, [user]);
+    }, [user, loadPurchaseHistory]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -292,5 +314,13 @@ export default function UserSettingsPage() {
                 }}
             />
         </div>
+    );
+}
+
+export default function UserSettingsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <UserSettingsContent />
+        </Suspense>
     );
 }

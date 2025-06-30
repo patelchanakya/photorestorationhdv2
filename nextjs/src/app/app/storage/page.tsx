@@ -18,6 +18,7 @@ import HowItWorksTour from '@/components/HowItWorksTour';
 import CreditTestPanel from '@/components/CreditTestPanel';
 import Confetti from '@/components/Confetti';
 import PurchaseModal from '@/components/PurchaseModal';
+import { usePostHog } from 'posthog-js/react';
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '1200');
@@ -25,6 +26,7 @@ const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 
 export default function FileManagementPage() {
     const { user, deductCreditsOptimistic, optimisticCredits } = useGlobal();
+    const posthog = usePostHog();
     const [files, setFiles] = useState<FileObject[]>([]);
     const [processingJobs, setProcessingJobs] = useState<ProcessingJob[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -47,6 +49,13 @@ export default function FileManagementPage() {
     const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
     const [showTour, setShowTour] = useState(false);
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+
+    // Track page view
+    useEffect(() => {
+        if (posthog) {
+            posthog.capture('storage_page_viewed');
+        }
+    }, [posthog]);
 
     // Utility function to clean up filenames for display
     const cleanFilename = (filename: string) => {
@@ -134,8 +143,30 @@ export default function FileManagementPage() {
                             // Trigger confetti celebration
                             setShowConfetti(true);
                             setTimeout(() => setShowConfetti(false), 3000); // Hide after 3 seconds
+                            
+                            // Track successful restoration completion
+                            if (posthog) {
+                                const processingTime = currentJob.completed_at && currentJob.created_at 
+                                    ? Math.round((new Date(currentJob.completed_at).getTime() - new Date(currentJob.created_at).getTime()) / 1000)
+                                    : null;
+                                    
+                                posthog.capture('photo_restoration_completed', {
+                                    job_id: currentJob.id,
+                                    processing_time_seconds: processingTime,
+                                    has_result_url: !!currentJob.result_url
+                                });
+                            }
                         } else if (currentJob.status === 'failed') {
                             setError(`Restoration failed: ${currentJob.error_message || 'Unknown error'}`);
+                            
+                            // Track restoration failure
+                            if (posthog) {
+                                posthog.capture('photo_restoration_job_failed', {
+                                    job_id: currentJob.id,
+                                    error_message: currentJob.error_message || 'unknown_error',
+                                    previous_status: previousJob.status
+                                });
+                            }
                         }
                     }
                 });
@@ -146,7 +177,7 @@ export default function FileManagementPage() {
         } catch (err) {
             console.error('Error loading processing jobs:', err);
         }
-    }, [user?.id]);
+    }, [user?.id, posthog]);
 
 
     useEffect(() => {
@@ -184,6 +215,16 @@ export default function FileManagementPage() {
 
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
+        
+        // Track upload attempt
+        if (posthog) {
+            posthog.capture('photo_upload_attempted', {
+                file_type: file.type,
+                file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                file_name_length: file.name.length
+            });
+        }
+        
         try {
             setUploading(true);
             setError('');
@@ -195,13 +236,31 @@ export default function FileManagementPage() {
 
             await loadFiles();
             setSuccess('File uploaded successfully');
+            
+            // Track successful upload
+            if (posthog) {
+                posthog.capture('photo_upload_successful', {
+                    file_type: file.type,
+                    file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    file_name_length: file.name.length
+                });
+            }
         } catch (err) {
             setError('Failed to upload file');
             console.error('Error uploading file:', err);
+            
+            // Track upload failure
+            if (posthog) {
+                posthog.capture('photo_upload_failed', {
+                    file_type: file.type,
+                    file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    error_message: err instanceof Error ? err.message : 'unknown_error'
+                });
+            }
         } finally {
             setUploading(false);
         }
-    }, [user?.id, loadFiles]);
+    }, [user?.id, loadFiles, posthog]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,6 +350,14 @@ export default function FileManagementPage() {
     };
 
     const handleRestorePhoto = async (filename: string) => {
+        // Track restoration attempt
+        if (posthog) {
+            posthog.capture('photo_restoration_attempted', {
+                filename_length: filename.length,
+                current_credits: optimisticCredits || 0
+            });
+        }
+        
         try {
             setRestoringFiles(prev => new Set([...prev, filename]));
             setError('');
@@ -298,6 +365,13 @@ export default function FileManagementPage() {
             // Deduct credit optimistically for instant UI feedback
             const creditDeductionSuccess = await deductCreditsOptimistic(1);
             if (!creditDeductionSuccess) {
+                // Track insufficient credits
+                if (posthog) {
+                    posthog.capture('photo_restoration_failed', {
+                        reason: 'insufficient_credits',
+                        current_credits: optimisticCredits || 0
+                    });
+                }
                 throw new Error('You don\'t have enough credits to restore this photo. Please purchase more credits to continue.');
             }
 
@@ -320,11 +394,29 @@ export default function FileManagementPage() {
             const result = await response.json();
             console.log('Restoration started:', result);
             
+            // Track successful restoration start
+            if (posthog) {
+                posthog.capture('photo_restoration_started', {
+                    filename_length: filename.length,
+                    credits_after: (optimisticCredits || 0) - 1,
+                    job_id: result.job_id
+                });
+            }
+            
             setSuccess('Photo restoration started! The result will appear automatically when ready.');
             await refreshJobs(); // Load the new job once, then polling takes over
         } catch (err) {
             console.error('Error starting restoration:', err);
             setError(err instanceof Error ? err.message : 'Failed to start photo restoration');
+            
+            // Track restoration failure
+            if (posthog) {
+                posthog.capture('photo_restoration_failed', {
+                    reason: 'api_error',
+                    error_message: err instanceof Error ? err.message : 'unknown_error',
+                    current_credits: optimisticCredits || 0
+                });
+            }
         } finally {
             setRestoringFiles(prev => {
                 const newSet = new Set(prev);
@@ -338,11 +430,27 @@ export default function FileManagementPage() {
         try {
             if (!job.result_url) return;
             
+            // Track image view
+            if (posthog) {
+                posthog.capture('restored_image_viewed', {
+                    job_id: job.id,
+                    is_external_url: !job.result_url.includes('/storage/v1/object/')
+                });
+            }
+            
             // result_url now always contains a complete URL (either our public URL or external Replicate URL)
             window.open(job.result_url, '_blank');
         } catch (err) {
             console.error('Error viewing restored image:', err);
             setError('Failed to view restored image');
+            
+            // Track view failure
+            if (posthog) {
+                posthog.capture('restored_image_view_failed', {
+                    job_id: job.id,
+                    error_message: err instanceof Error ? err.message : 'unknown_error'
+                });
+            }
         }
     };
 
@@ -351,6 +459,14 @@ export default function FileManagementPage() {
             if (!job.result_url) return;
             
             setError('');
+            
+            // Track share attempt
+            if (posthog) {
+                posthog.capture('restored_image_share_attempted', {
+                    job_id: job.id,
+                    is_external_url: !job.result_url.includes('/storage/v1/object/')
+                });
+            }
             
             // Extract the file path from the public URL to create a signed URL for sharing
             if (job.result_url.includes('/storage/v1/object/public/restored-images/')) {
@@ -367,14 +483,38 @@ export default function FileManagementPage() {
                 
                 setShareUrl(data.signedUrl);
                 setSelectedJob(job);
+                
+                // Track successful share link generation
+                if (posthog) {
+                    posthog.capture('restored_image_share_successful', {
+                        job_id: job.id,
+                        share_method: 'signed_url'
+                    });
+                }
             } else {
                 // External URL - use directly (though this is less common now)
                 setShareUrl(job.result_url);
                 setSelectedJob(job);
+                
+                // Track direct URL sharing
+                if (posthog) {
+                    posthog.capture('restored_image_share_successful', {
+                        job_id: job.id,
+                        share_method: 'direct_url'
+                    });
+                }
             }
         } catch (err) {
             console.error('Error sharing restored image:', err);
             setError('Failed to generate share link');
+            
+            // Track share failure
+            if (posthog) {
+                posthog.capture('restored_image_share_failed', {
+                    job_id: job.id,
+                    error_message: err instanceof Error ? err.message : 'unknown_error'
+                });
+            }
         }
     };
 

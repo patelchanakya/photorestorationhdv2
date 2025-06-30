@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import CookieConsent from "@/components/Cookies";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { GlobalProvider } from '@/lib/context/GlobalContext';
-
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_PRODUCTNAME,
@@ -23,17 +23,18 @@ export default function RootLayout({
   const gaID = process.env.NEXT_PUBLIC_GOOGLE_TAG;
   return (
     <html lang="en">
-    <body className={theme}>
-      <GlobalProvider>
-        {children}
-      </GlobalProvider>
-      <Analytics />
-      <CookieConsent />
-      { gaID && (
+      <body className={theme}>
+        <PostHogProvider>
+          <GlobalProvider>
+            {children}
+          </GlobalProvider>
+        </PostHogProvider>
+        <Analytics />
+        <CookieConsent />
+        { gaID && (
           <GoogleAnalytics gaId={gaID}/>
-      )}
-
-    </body>
+        )}
+      </body>
     </html>
   );
 }

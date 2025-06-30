@@ -1,29 +1,54 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, CreditCard, Loader2, Shield, Award, Copy } from 'lucide-react';
+import { X, Check, Loader2, Shield, Award, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { stripeProducts, type StripeProduct, getPricePerCredit, calculateSavings, getPopularProduct, getBestValueProduct } from '@/lib/stripe-config';
 import { useGlobal } from '@/lib/context/GlobalContext';
+import { usePostHog } from 'posthog-js/react';
+import { useEffect } from 'react';
 
 interface PurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Optional callback for future use when purchase completes successfully */
   onPurchaseSuccess?: () => void;
 }
 
-const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurchaseSuccess }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurchaseSuccess: _onPurchaseSuccess }) => {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailCopied, setEmailCopied] = useState(false);
-  const { user } = useGlobal();
+  const { user, credits } = useGlobal();
+  const posthog = usePostHog();
+
+  // Track modal open
+  useEffect(() => {
+    if (isOpen && posthog) {
+      posthog.capture('purchase_modal_opened', {
+        current_credits: credits || 0
+      });
+    }
+  }, [isOpen, posthog, credits]);
 
   const handlePurchase = async (product: StripeProduct) => {
     if (!user) {
       setError('Please sign in to make a purchase');
       return;
+    }
+
+    // Track purchase attempt
+    if (posthog) {
+      posthog.capture('credit_purchase_attempted', {
+        product_name: product.name,
+        credits: product.credits,
+        price: product.price,
+        price_per_credit: getPricePerCredit(product),
+        current_credits: credits || 0
+      });
     }
 
     setLoading(product.priceId);
@@ -63,6 +88,18 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
           userMessage = 'Customer setup failed. Please try again.';
         }
         
+        // Track API failure
+        if (posthog) {
+          posthog.capture('credit_purchase_failed', {
+            product_name: product.name,
+            credits: product.credits,
+            price: product.price,
+            reason: 'api_error',
+            stage: 'checkout_api',
+            error_message: userMessage
+          });
+        }
+        
         setError(userMessage);
         setLoading(null);
         return;
@@ -72,22 +109,57 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
       console.log('Checkout response:', data);
 
       if (data?.url) {
+        // Track successful checkout redirect
+        if (posthog) {
+          posthog.capture('credit_purchase_checkout_redirect', {
+            product_name: product.name,
+            credits: product.credits,
+            price: product.price,
+            checkout_session_id: data.sessionId
+          });
+        }
+        
         // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
         console.error('No checkout URL in response:', data);
         setError('No checkout URL received from payment system');
         setLoading(null);
+        
+        // Track failure
+        if (posthog) {
+          posthog.capture('credit_purchase_failed', {
+            product_name: product.name,
+            credits: product.credits,
+            price: product.price,
+            reason: 'no_checkout_url',
+            stage: 'checkout_setup'
+          });
+        }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Purchase error details:', err);
       
       let userMessage = 'Failed to start checkout process. Please try again.';
       
-      if (err.message?.includes('fetch')) {
-        userMessage = 'Network error. Please check your connection and try again.';
-      } else if (err.message?.includes('timeout')) {
-        userMessage = 'Request timed out. Please try again.';
+      if (err instanceof Error) {
+        if (err.message?.includes('fetch')) {
+          userMessage = 'Network error. Please check your connection and try again.';
+        } else if (err.message?.includes('timeout')) {
+          userMessage = 'Request timed out. Please try again.';
+        }
+      }
+      
+      // Track exception
+      if (posthog) {
+        posthog.capture('credit_purchase_failed', {
+          product_name: product.name,
+          credits: product.credits,
+          price: product.price,
+          reason: 'exception',
+          stage: 'checkout_request',
+          error_message: err instanceof Error ? err.message : 'unknown_exception'
+        });
       }
       
       setError(userMessage);

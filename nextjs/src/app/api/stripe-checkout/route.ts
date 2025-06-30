@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerAdminClient } from '@/lib/supabase/serverAdminClient';
 
 export async function POST(request: NextRequest) {
     console.log('🚀 Starting Stripe checkout API call');
