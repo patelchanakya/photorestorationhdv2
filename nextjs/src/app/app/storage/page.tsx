@@ -13,6 +13,7 @@ import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import { apiCache, createCacheKey } from '@/lib/utils/cache';
+import Compressor from 'compressorjs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import CreditTestPanel from '@/components/CreditTestPanel';
@@ -90,14 +91,15 @@ export default function FileManagementPage() {
     const generatePreviewUrl = useCallback(async (filename: string) => {
         if (!user?.id) return null;
         try {
-            // Cache preview URLs for 2 minutes to reduce API calls
+            // Cache preview URLs for 15 minutes to reduce API calls
+            // Longer cache is safe since images don't change once uploaded
             const cacheKey = createCacheKey('preview-url', user.id, filename);
             return await apiCache.get(cacheKey, async () => {
                 const supabase = await createSPASassClient();
-                const { data, error } = await supabase.shareFile(user.id, filename, 3600); // 1 hour
+                const { data, error } = await supabase.shareFile(user.id, filename, 21600); // 6 hours
                 if (error) throw error;
                 return data.signedUrl;
-            }, 120000); // 2 minute cache
+            }, 900000); // 15 minute cache
         } catch (err) {
             console.error('Error generating preview URL:', err);
             return null;
@@ -262,35 +264,81 @@ export default function FileManagementPage() {
         };
     }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 
+    // Helper function to compress images
+    const compressImage = useCallback((file: File): Promise<{ compressedFile: File; originalSize: number; compressedSize: number; compressionRatio: number }> => {
+        return new Promise((resolve) => {
+            new Compressor(file, {
+                quality: 0.7, // 70% quality for good balance of size vs quality
+                maxWidth: 2048, // Limit max width to reduce file size
+                maxHeight: 2048, // Limit max height to reduce file size
+                convertSize: 5000000, // Convert files larger than 5MB to JPEG
+                success(compressedFile) {
+                    const originalSize = file.size;
+                    const compressedSize = compressedFile.size;
+                    const compressionRatio = ((originalSize - compressedSize) / originalSize * 100);
+                    
+                    resolve({
+                        compressedFile: compressedFile as File,
+                        originalSize,
+                        compressedSize,
+                        compressionRatio
+                    });
+                },
+                error(err) {
+                    console.warn('Image compression failed, using original file:', err);
+                    // Fallback to original file if compression fails
+                    resolve({
+                        compressedFile: file,
+                        originalSize: file.size,
+                        compressedSize: file.size,
+                        compressionRatio: 0
+                    });
+                },
+            });
+        });
+    }, []);
+
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
-        
-        // Track upload attempt
-        if (posthog) {
-            posthog.capture('photo_upload_attempted', {
-                file_type: file.type,
-                file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
-                file_name_length: file.name.length
-            });
-        }
         
         try {
             setUploading(true);
             setError('');
 
+            // Compress image before upload to reduce storage costs
+            const { compressedFile, originalSize, compressedSize, compressionRatio } = await compressImage(file);
+            
+            // Track upload attempt with compression stats
+            if (posthog) {
+                posthog.capture('photo_upload_attempted', {
+                    file_type: file.type,
+                    original_size_mb: Math.round((originalSize / 1024 / 1024) * 100) / 100,
+                    compressed_size_mb: Math.round((compressedSize / 1024 / 1024) * 100) / 100,
+                    compression_ratio: Math.round(compressionRatio * 100) / 100,
+                    file_name_length: file.name.length
+                });
+            }
+
             const supabase = await createSPASassClient();
-            const { error } = await supabase.uploadFile(user.id, file.name, file);
+            const { error } = await supabase.uploadFile(user.id, file.name, compressedFile);
 
             if (error) throw error;
 
             await loadFiles();
-            setSuccess('File uploaded successfully');
             
-            // Track successful upload
+            // Show compression savings in success message
+            const sizeSavings = compressionRatio > 0 
+                ? ` (${compressionRatio.toFixed(1)}% smaller)`
+                : '';
+            setSuccess(`File uploaded successfully${sizeSavings}`);
+            
+            // Track successful upload with compression stats
             if (posthog) {
                 posthog.capture('photo_upload_successful', {
                     file_type: file.type,
-                    file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    original_size_mb: Math.round((originalSize / 1024 / 1024) * 100) / 100,
+                    compressed_size_mb: Math.round((compressedSize / 1024 / 1024) * 100) / 100,
+                    compression_ratio: Math.round(compressionRatio * 100) / 100,
                     file_name_length: file.name.length
                 });
             }
@@ -302,14 +350,14 @@ export default function FileManagementPage() {
             if (posthog) {
                 posthog.capture('photo_upload_failed', {
                     file_type: file.type,
-                    file_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
                     error_message: err instanceof Error ? err.message : 'unknown_error'
                 });
             }
         } finally {
             setUploading(false);
         }
-    }, [user?.id, loadFiles, posthog]);
+    }, [user?.id, loadFiles, posthog, compressImage]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,20 +398,6 @@ export default function FileManagementPage() {
     }, []);
 
 
-    const handleDownload = async (filename: string) => {
-        try {
-            setError('');
-            const supabase = await createSPASassClient();
-            const { data, error } = await supabase.shareFile(user!.id!, filename, 60, true);
-
-            if (error) throw error;
-
-            window.open(data.signedUrl, '_blank');
-        } catch (err) {
-            setError('Failed to download file');
-            console.error('Error downloading file:', err);
-        }
-    };
 
 
     const handleDelete = async () => {
@@ -496,6 +530,65 @@ export default function FileManagementPage() {
             // Track view failure
             if (posthog) {
                 posthog.capture('restored_image_view_failed', {
+                    job_id: job.id,
+                    error_message: err instanceof Error ? err.message : 'unknown_error'
+                });
+            }
+        }
+    };
+
+    const handleDownloadRestoredImage = async (job: ProcessingJob) => {
+        try {
+            if (!job.result_url) return;
+            
+            setError('');
+            
+            // Track download attempt
+            if (posthog) {
+                posthog.capture('restored_image_download_attempted', {
+                    job_id: job.id,
+                    is_external_url: !job.result_url.includes('/storage/v1/object/')
+                });
+            }
+            
+            // Extract the file path from the public URL to create a signed URL for download
+            if (job.result_url.includes('/storage/v1/object/public/restored-images/')) {
+                // Our bucket - create signed URL for download
+                const pathPart = job.result_url.split('/storage/v1/object/public/restored-images/')[1];
+                
+                const supabase = await createSPASassClient();
+                const { data, error } = await supabase.shareRestoredImage(pathPart, 60, true); // 1 hour, for download
+                
+                if (error) throw error;
+                
+                window.open(data.signedUrl, '_blank');
+                
+                // Track successful download
+                if (posthog) {
+                    posthog.capture('restored_image_download_successful', {
+                        job_id: job.id,
+                        download_method: 'signed_url'
+                    });
+                }
+            } else {
+                // External URL - use directly
+                window.open(job.result_url, '_blank');
+                
+                // Track direct URL download
+                if (posthog) {
+                    posthog.capture('restored_image_download_successful', {
+                        job_id: job.id,
+                        download_method: 'direct_url'
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Error downloading restored image:', err);
+            setError('Failed to download restored image');
+            
+            // Track download failure
+            if (posthog) {
+                posthog.capture('restored_image_download_failed', {
                     job_id: job.id,
                     error_message: err instanceof Error ? err.message : 'unknown_error'
                 });
@@ -940,20 +1033,21 @@ export default function FileManagementPage() {
                                                 ) : null}
                                                 
                                                 {/* Secondary Actions Row */}
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDownload(filename);
-                                                        }}
-                                                        className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
-                                                        title="Download Original"
-                                                    >
-                                                        <Download className="h-4 w-4"/>
-                                                        <span className="hidden @lg:inline">Download</span>
-                                                    </button>
-                                                    
-                                                    {associatedJob && associatedJob.status === 'completed' && associatedJob.result_url && (
+                                                {associatedJob && associatedJob.status === 'completed' && associatedJob.result_url ? (
+                                                    // Completed restoration - show download/share/delete for RESTORED image
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDownloadRestoredImage(associatedJob);
+                                                            }}
+                                                            className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                            title="Download Restored Photo"
+                                                        >
+                                                            <Download className="h-4 w-4"/>
+                                                            <span className="hidden @lg:inline">Download</span>
+                                                        </button>
+                                                        
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -965,21 +1059,35 @@ export default function FileManagementPage() {
                                                             <Share2 className="h-4 w-4"/>
                                                             <span className="hidden @lg:inline">Share</span>
                                                         </button>
-                                                    )}
-                                                    
+                                                        
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFileToDelete(filename);
+                                                                setShowDeleteDialog(true);
+                                                            }}
+                                                            className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                            title="Delete Photo"
+                                                        >
+                                                            <Trash2 className="h-4 w-4"/>
+                                                            <span className="hidden @lg:inline">Delete</span>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    // No restoration or restoration in progress - show full-width delete button to match restore button
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setFileToDelete(filename);
                                                             setShowDeleteDialog(true);
                                                         }}
-                                                        className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                        className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                                                         title="Delete Photo"
                                                     >
                                                         <Trash2 className="h-4 w-4"/>
-                                                        <span className="hidden @lg:inline">Delete</span>
+                                                        <span>Delete</span>
                                                     </button>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

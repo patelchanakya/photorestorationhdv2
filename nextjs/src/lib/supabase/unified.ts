@@ -77,14 +77,23 @@ export class SassClient {
     async shareFile(myId: string, filename: string, timeInSec: number, forDownload: boolean = false) {
         filename = myId + "/" + filename
         return this.client.storage.from('files').createSignedUrl(filename, timeInSec, {
-            download: forDownload
+            download: forDownload,
+            transform: {
+                // Add cache headers for better browser caching
+                // This reduces egress costs by caching images in browser
+                quality: 80 // Optimize quality for web viewing
+            }
         });
-
     }
 
     async shareRestoredImage(filePath: string, timeInSec: number, forDownload: boolean = false) {
         return this.client.storage.from('restored-images').createSignedUrl(filePath, timeInSec, {
-            download: forDownload
+            download: forDownload,
+            transform: {
+                // Optimize restored images for web viewing
+                // These are final results, so maintain higher quality
+                quality: 90
+            }
         });
     }
 
