@@ -1,0 +1,42 @@
+# Node & JavaScript dependencies
+node_modules/
+
+# Build output / caches
+.next/
+out/
+.eslintcache
+.cache/
+dist/
+
+# Environment variables & secrets
+.env
+.env.*
+!*.env.example
+!*.env.template
+
+# PostHog & Cursor integration workspace
+.cursor/
+
+# Supabase local artifacts
+.supabase/
+.supabase/**
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/
+
+# OS & Editor swap files
+*.swp
+*.swo
+*~
+
+# Misc
+keys.txt 
