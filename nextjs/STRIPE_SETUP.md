@@ -8,8 +8,6 @@ Your Stripe integration is now ready! You just need to configure the environment
 
 Add these variables to your `.env.local` file:
 
-
-
 ### 3. Webhook Setup
 
 1. **Create Stripe Webhook:**
