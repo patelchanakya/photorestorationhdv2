@@ -41,3 +41,13 @@ yarn-error.log*
 next-env.d.ts
 
 .env.local
+
+
+# Ignore local Stripe setup guide
+STRIPE_SETUP.md
+
+# Ignore all .env files (already covered above, but for clarity)
+.env
+.env.*
+!.env.example
+
