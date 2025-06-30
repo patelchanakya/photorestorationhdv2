@@ -246,7 +246,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                 <div className="space-y-3 mb-6 flex-grow">
                   {[
                     'Priority support',
-                    'HD quality output', 
+                    'HD quality restoration', 
                     'Instant processing',
                     'Download & keep forever'
                   ].map((feature, featureIndex) => (

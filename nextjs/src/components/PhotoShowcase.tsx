@@ -20,26 +20,14 @@ const PhotoShowcase: React.FC = () => {
     {
       id: 'example1',
       title: 'Cracked Vintage Portrait',
-      beforeImage: '/showcase/before1.jpg',
-      afterImage: '/showcase/after1.jpg',
+      beforeImage: '/showcase/before1.webp',
+      afterImage: '/showcase/after1.webp',
     },
     {
       id: 'example2', 
       title: 'Faded Family Photo',
-      beforeImage: '/showcase/before2.jpg',
-      afterImage: '/showcase/after2.jpg',
-    },
-    {
-      id: 'example3',
-      title: 'Damaged Memory',
-      beforeImage: '/showcase/before3.jpg',
-      afterImage: '/showcase/after3.jpg',
-    },
-    {
-      id: 'example4',
-      title: 'Enhanced Clarity',
-      beforeImage: '/showcase/before4.jpg',
-      afterImage: '/showcase/after4.jpg',
+      beforeImage: '/showcase/before2.webp',
+      afterImage: '/showcase/after2.webp',
     }
   ];
 
@@ -65,8 +53,8 @@ const PhotoShowcase: React.FC = () => {
         </div>
 
         {/* Desktop Grid */}
-        <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-8">
-          {examples.map((example) => {
+        <div className="hidden lg:grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {examples.map((example, index) => {
             const sliderValue = activeSliders[example.id] || 50;
             return (
               <div key={example.id} className="group">
@@ -79,6 +67,7 @@ const PhotoShowcase: React.FC = () => {
                         alt={`${example.title} - After`}
                         fill
                         sizes="(max-width:768px) 100vw, 50vw"
+                        priority={index === 0}
                         className="absolute inset-0 object-cover"
                       />
                       <div 
@@ -90,6 +79,7 @@ const PhotoShowcase: React.FC = () => {
                           alt={`${example.title} - Before`}
                           fill
                           sizes="(max-width:768px) 100vw, 50vw"
+                          priority={index === 0}
                           className="object-cover"
                         />
                       </div>
@@ -128,7 +118,7 @@ const PhotoShowcase: React.FC = () => {
         {/* Mobile Carousel */}
         <div className="lg:hidden">
           <div className="flex overflow-x-auto space-x-6 pb-6 snap-x snap-mandatory">
-            {examples.map((example) => {
+            {examples.map((example, index) => {
               const sliderValue = activeSliders[example.id] || 50;
               return (
                 <div key={example.id} className="flex-shrink-0 w-80 snap-center">
@@ -141,6 +131,7 @@ const PhotoShowcase: React.FC = () => {
                           alt={`${example.title} - After`}
                           fill
                           sizes="80vw"
+                          priority={index === 0}
                           className="absolute inset-0 object-cover"
                         />
                         <div 
@@ -152,6 +143,7 @@ const PhotoShowcase: React.FC = () => {
                             alt={`${example.title} - Before`}
                             fill
                             sizes="80vw"
+                            priority={index === 0}
                             className="object-cover"
                           />
                         </div>

@@ -21,7 +21,7 @@ export default function Home() {
     {
       icon: Database,
       title: 'Secure & Private',
-      description: 'Your photos are encrypted and you can delete them permanently whenever you want',
+      description: 'Your photos are private and you can delete them permanently whenever you want',
       color: 'text-purple-600'
     },
     {
@@ -72,7 +72,7 @@ export default function Home() {
                 </span> in seconds
               </h1>
               <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-                Transform damaged, faded, or low-quality photos into stunning HD images using AI.
+                Transform damaged, faded, or low-quality photos into stunning HD images.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
                 <StartRestoringButton variant="hero" />
