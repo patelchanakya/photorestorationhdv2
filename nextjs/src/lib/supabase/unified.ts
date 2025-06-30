@@ -65,6 +65,7 @@ export class SassClient {
         return this.client.storage.from('files').upload(fullPath, file);
     }
 
+
     async getFiles(myId: string) {
         return this.client.storage.from('files').list(myId)
     }
@@ -74,9 +75,9 @@ export class SassClient {
         return this.client.storage.from('files').remove([filename])
     }
 
-    async shareFile(myId: string, filename: string, timeInSec: number, forDownload: boolean = false) {
+    async shareFile(myId: string, filename: string, timeInSec: number, forDownload: boolean = false, bucket: string = 'files') {
         filename = myId + "/" + filename
-        return this.client.storage.from('files').createSignedUrl(filename, timeInSec, {
+        return this.client.storage.from(bucket).createSignedUrl(filename, timeInSec, {
             download: forDownload,
             transform: {
                 // Add cache headers for better browser caching

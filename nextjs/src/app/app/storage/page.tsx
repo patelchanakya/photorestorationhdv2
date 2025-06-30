@@ -67,6 +67,7 @@ export default function FileManagementPage() {
     const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
     const previousJobsRef = useRef<ProcessingJob[]>([]);
     const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+    const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedImageName, setSelectedImageName] = useState<string>('');
     const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
@@ -92,7 +93,6 @@ export default function FileManagementPage() {
         if (!user?.id) return null;
         try {
             // Cache preview URLs for 15 minutes to reduce API calls
-            // Longer cache is safe since images don't change once uploaded
             const cacheKey = createCacheKey('preview-url', user.id, filename);
             return await apiCache.get(cacheKey, async () => {
                 const supabase = await createSPASassClient();
@@ -106,17 +106,53 @@ export default function FileManagementPage() {
         }
     }, [user?.id]);
 
-    // Load preview URLs for all files
+    // Generate thumbnail URL from thumbnails bucket with graceful fallback
+    const generateThumbnailUrl = useCallback(async (filename: string) => {
+        if (!user?.id) return null;
+        try {
+            const cacheKey = createCacheKey('thumbnail-url', user.id, filename);
+            return await apiCache.get(cacheKey, async () => {
+                const supabase = await createSPASassClient();
+                const { data, error } = await supabase.shareFile(user.id, filename, 21600, false, 'thumbnails');
+                if (error) {
+                    // Silent fallback for missing thumbnails (expected for existing images)
+                    return null;
+                }
+                return data.signedUrl;
+            }, 900000);
+        } catch {
+            // Silent fallback - don't log errors for expected missing thumbnails
+            return null;
+        }
+    }, [user?.id]);
+
+
+    // Load image URLs for display with thumbnail fallback
     const loadImagePreviews = useCallback(async (fileList: FileObject[]) => {
         const urls: Record<string, string> = {};
-        for (const file of fileList) {
-            const url = await generatePreviewUrl(file.name);
-            if (url) {
-                urls[file.name] = url;
+        const thumbnails: Record<string, string> = {};
+        
+        // Process files in parallel for better performance
+        await Promise.all(fileList.map(async (file) => {
+            try {
+                // Get original file URL
+                const originalUrl = await generatePreviewUrl(file.name);
+                if (!originalUrl) return;
+                
+                urls[file.name] = originalUrl;
+                
+                // Try to get thumbnail, fallback to original if it doesn't exist
+                const thumbnailUrl = await generateThumbnailUrl(file.name).catch(() => null);
+                thumbnails[file.name] = thumbnailUrl || originalUrl;
+            } catch (err) {
+                // If anything fails, skip this file (graceful degradation)
+                console.warn(`Failed to load URLs for ${file.name}:`, err);
             }
-        }
-        setImageUrls(urls);
-    }, [generatePreviewUrl]);
+        }));
+        
+        setImageUrls(urls); // Original URLs
+        setThumbnails(thumbnails); // Thumbnail URLs for grid (with fallback)
+    }, [generatePreviewUrl, generateThumbnailUrl]);
 
     const loadFiles = useCallback(async () => {
         if (!user?.id) return;
@@ -264,36 +300,61 @@ export default function FileManagementPage() {
         };
     }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 
-    // Helper function to compress images
-    const compressImage = useCallback((file: File): Promise<{ compressedFile: File; originalSize: number; compressedSize: number; compressionRatio: number }> => {
+    // Dual compression function for optimal storage and display
+    const compressImageMultiSize = useCallback((file: File): Promise<{
+        original: File;
+        thumbnail: File;
+        stats: { originalSize: number; totalCompressedSize: number; compressionRatio: number; }
+    }> => {
         return new Promise((resolve) => {
-            new Compressor(file, {
-                quality: 0.7, // 70% quality for good balance of size vs quality
-                maxWidth: 2048, // Limit max width to reduce file size
-                maxHeight: 2048, // Limit max height to reduce file size
-                convertSize: 5000000, // Convert files larger than 5MB to JPEG
-                success(compressedFile) {
-                    const originalSize = file.size;
-                    const compressedSize = compressedFile.size;
-                    const compressionRatio = ((originalSize - compressedSize) / originalSize * 100);
+            const originalSize = file.size;
+            const results = { original: null as File | null, thumbnail: null as File | null };
+            let completed = 0;
+
+            const checkComplete = () => {
+                completed++;
+                if (completed === 2 && results.original && results.thumbnail) {
+                    const totalCompressedSize = results.original.size + results.thumbnail.size;
+                    const compressionRatio = ((originalSize - totalCompressedSize) / originalSize) * 100;
                     
                     resolve({
-                        compressedFile: compressedFile as File,
-                        originalSize,
-                        compressedSize,
-                        compressionRatio
+                        original: results.original,
+                        thumbnail: results.thumbnail,
+                        stats: { originalSize, totalCompressedSize, compressionRatio }
                     });
+                }
+            };
+
+            // Original: High quality for AI processing and modal view
+            new Compressor(file, {
+                quality: 0.9, // High quality for AI
+                maxWidth: 2048,
+                maxHeight: 2048,
+                convertSize: 5000000,
+                success(compressedFile) {
+                    results.original = compressedFile as File;
+                    checkComplete();
                 },
-                error(err) {
-                    console.warn('Image compression failed, using original file:', err);
-                    // Fallback to original file if compression fails
-                    resolve({
-                        compressedFile: file,
-                        originalSize: file.size,
-                        compressedSize: file.size,
-                        compressionRatio: 0
-                    });
+                error() {
+                    results.original = file; // Fallback to original
+                    checkComplete();
+                }
+            });
+
+            // Thumbnail: Small size for grid display
+            new Compressor(file, {
+                quality: 0.6,
+                maxWidth: 200,
+                maxHeight: 200,
+                convertSize: 500000,
+                success(compressedFile) {
+                    results.thumbnail = compressedFile as File;
+                    checkComplete();
                 },
+                error() {
+                    results.thumbnail = file; // Fallback to original
+                    checkComplete();
+                }
             });
         });
     }, []);
@@ -305,41 +366,50 @@ export default function FileManagementPage() {
             setUploading(true);
             setError('');
 
-            // Compress image before upload to reduce storage costs
-            const { compressedFile, originalSize, compressedSize, compressionRatio } = await compressImage(file);
+            // Generate original and thumbnail for optimal storage
+            const { original, thumbnail, stats } = await compressImageMultiSize(file);
             
             // Track upload attempt with compression stats
             if (posthog) {
                 posthog.capture('photo_upload_attempted', {
                     file_type: file.type,
-                    original_size_mb: Math.round((originalSize / 1024 / 1024) * 100) / 100,
-                    compressed_size_mb: Math.round((compressedSize / 1024 / 1024) * 100) / 100,
-                    compression_ratio: Math.round(compressionRatio * 100) / 100,
-                    file_name_length: file.name.length
+                    original_size_mb: Math.round((stats.originalSize / 1024 / 1024) * 100) / 100,
+                    total_compressed_size_mb: Math.round((stats.totalCompressedSize / 1024 / 1024) * 100) / 100,
+                    compression_ratio: Math.round(stats.compressionRatio * 100) / 100,
+                    file_name_length: file.name.length,
+                    has_thumbnail: true
                 });
             }
 
             const supabase = await createSPASassClient();
-            const { error } = await supabase.uploadFile(user.id, file.name, compressedFile);
-
-            if (error) throw error;
+            
+            // Upload original file
+            const { error: originalError, data } = await supabase.uploadFile(user.id, file.name, original);
+            if (originalError) throw originalError;
+            
+            const filename = data?.path?.split('/').pop();
+            if (!filename) throw new Error('Failed to get filename from upload');
+            
+            // Upload thumbnail to thumbnails bucket
+            await supabase.getSupabaseClient().storage
+                .from('thumbnails')
+                .upload(`${user.id}/${filename}`, thumbnail);
 
             await loadFiles();
             
-            // Show compression savings in success message
-            const sizeSavings = compressionRatio > 0 
-                ? ` (${compressionRatio.toFixed(1)}% smaller)`
-                : '';
-            setSuccess(`File uploaded successfully${sizeSavings}`);
+            // Show upload success
+            setSuccess(`File uploaded successfully with thumbnail`);
             
-            // Track successful upload with compression stats
+            // Track successful upload
             if (posthog) {
                 posthog.capture('photo_upload_successful', {
                     file_type: file.type,
-                    original_size_mb: Math.round((originalSize / 1024 / 1024) * 100) / 100,
-                    compressed_size_mb: Math.round((compressedSize / 1024 / 1024) * 100) / 100,
-                    compression_ratio: Math.round(compressionRatio * 100) / 100,
-                    file_name_length: file.name.length
+                    original_size_mb: Math.round((stats.originalSize / 1024 / 1024) * 100) / 100,
+                    total_compressed_size_mb: Math.round((stats.totalCompressedSize / 1024 / 1024) * 100) / 100,
+                    compression_ratio: Math.round(stats.compressionRatio * 100) / 100,
+                    file_name_length: file.name.length,
+                    has_thumbnail: true,
+                    uploaded_filename: filename
                 });
             }
         } catch (err) {
@@ -357,7 +427,7 @@ export default function FileManagementPage() {
         } finally {
             setUploading(false);
         }
-    }, [user?.id, loadFiles, posthog, compressImage]);
+    }, [user?.id, loadFiles, posthog, compressImageMultiSize]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -874,13 +944,17 @@ export default function FileManagementPage() {
                             {files.map((file, index) => {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
-                                const previewUrl = imageUrls[filename];
+                                const fullUrl = imageUrls[filename];
+                                const thumbnailUrl = thumbnails[filename];
                                 const associatedJob = processingJobs.find(job => job.image_path === `${user!.id}/${filename}`);
 
-                                // Determine which thumbnail to show
-                                let thumbnailUrl: string | null = previewUrl; // default to original preview
+                                // Determine which image to show (restored result takes priority)
+                                let displayUrl: string | null = thumbnailUrl; // Use thumbnail for grid
+                                let modalUrl: string = fullUrl || displayUrl; // Use original for modal
+                                
                                 if (associatedJob && associatedJob.status === 'completed' && associatedJob.result_url) {
-                                    thumbnailUrl = associatedJob.result_url;
+                                    displayUrl = associatedJob.result_url; // Show restored result if available
+                                    modalUrl = associatedJob.result_url; // Use restored result for modal too
                                 }
                                 
                                 return (
@@ -892,16 +966,16 @@ export default function FileManagementPage() {
                                         <div 
                                             className="relative aspect-square bg-gray-100 cursor-pointer"
                                             onClick={() => {
-                                                if (thumbnailUrl) {
-                                                    setSelectedImageUrl(thumbnailUrl);
+                                                if (modalUrl) {
+                                                    setSelectedImageUrl(modalUrl);
                                                     setSelectedImageName(cleanName);
                                                     setSelectedImageFilename(filename);
                                                 }
                                             }}
                                         >
-                                            {thumbnailUrl ? (
+                                            {displayUrl ? (
                                                 <Image
-                                                    src={thumbnailUrl}
+                                                    src={displayUrl}
                                                     alt={cleanName}
                                                     fill
                                                     sizes="(max-width:768px) 100vw, 33vw"
