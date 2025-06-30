@@ -8,21 +8,7 @@ Your Stripe integration is now ready! You just need to configure the environment
 
 Add these variables to your `.env.local` file:
 
-```bash
-# Stripe Configuration
-STRIPE_SECRET_KEY=sk_test_51RYLB5DHBXmKKCsnK2TY9W0vSmFjmcGVaqiJ5omv7C0J4yLDK9oIwiRQeCxGQh5gQQX0Kqdcmi532ignIVzJxqrY00dttyXbFf
-STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51RYLB5DHBXmKKCsnq2ftyjczT9hpemiB2ruilR6Rj9HOYKr5X2tQhRzMPRi1Strz903HQQ5AAPENK3KTfWuULx2j00kisvug4D
-```
 
-### 2. Supabase Edge Functions (Production)
-
-Set these in your Supabase Dashboard → Project Settings → Edge Functions → Environment Variables:
-
-```bash
-STRIPE_SECRET_KEY=sk_test_51RYLB5DHBXmKKCsnK2TY9W0vSmFjmcGVaqiJ5omv7C0J4yLDK9oIwiRQeCxGQh5gQQX0Kqdcmi532ignIVzJxqrY00dttyXbFf
-STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
-```
 
 ### 3. Webhook Setup
 
