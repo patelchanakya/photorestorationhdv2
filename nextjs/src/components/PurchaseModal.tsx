@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Loader2, Shield, Award, Copy } from 'lucide-react';
+import { Check, Loader2, Shield, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { stripeProducts, type StripeProduct, getPricePerCredit, calculateSavings, getPopularProduct, getBestValueProduct } from '@/lib/stripe-config';
+import { stripeProducts, type StripeProduct, getPricePerCredit, getPopularProduct } from '@/lib/stripe-config';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { usePostHog } from 'posthog-js/react';
 import { useEffect } from 'react';
@@ -168,31 +168,17 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
   };
 
   const popularProduct = getPopularProduct();
-  const bestValueProduct = getBestValueProduct();
-  const baseProduct = stripeProducts[0]; // First product for calculating savings
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
-                One-Time Purchase
-              </DialogTitle>
-              <DialogDescription className="text-gray-600 text-base">
-                Buy credits as you need them - no subscription required
-              </DialogDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-gray-100"
-            >
-              <X size={16} />
-            </Button>
-          </div>
+          <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
+            One-Time Purchase
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 text-base">
+            Buy credits as you need them - no subscription required
+          </DialogDescription>
         </DialogHeader>
 
         {error && (
@@ -207,30 +193,24 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stripeProducts.map((product, index) => {
+          {stripeProducts.map((product) => {
             const isPopular = product.id === popularProduct.id;
-            const isBestValue = product.id === bestValueProduct.id;
             const pricePerCredit = getPricePerCredit(product);
-            const savings = index > 0 ? calculateSavings(product, baseProduct) : 0;
             
             return (
               <div
                 key={product.id}
-                className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl ${
+                className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full ${
                   isPopular 
                     ? 'border-orange-500 shadow-lg scale-105' 
-                    : isBestValue
-                    ? 'border-green-500 shadow-lg'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {/* Badge */}
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  {(isPopular || isBestValue) ? (
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap ${
-                      isPopular ? 'bg-orange-500' : 'bg-green-500'
-                    }`}>
-                      {isPopular ? 'POPULAR' : 'BEST VALUE'}
+                  {isPopular ? (
+                    <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500">
+                      POPULAR
                     </span>
                   ) : (
                     <span className="px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap opacity-0 bg-transparent">
@@ -244,7 +224,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 h-10 flex items-center justify-center">
                     {product.description}
                   </p>
                 </div>
@@ -260,21 +240,10 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                   <div className="text-xs text-gray-400">
                     ${pricePerCredit.toFixed(2)} per photo
                   </div>
-                  
-                  {/* Savings Badge */}
-                  <div className="mt-2 h-6 flex items-center justify-center">
-                    {savings > 0 ? (
-                      <span className="inline-block bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
-                        Save ${savings}
-                      </span>
-                    ) : (
-                      <span className="invisible"></span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Features */}
-                <div className="space-y-3 mb-8">
+                <div className="space-y-3 mb-6 flex-grow">
                   {[
                     'Priority support',
                     'HD quality output', 
@@ -282,7 +251,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                     'Download & keep forever'
                   ].map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-center text-sm text-gray-700">
-                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                         <Check size={12} className="text-green-600" />
                       </div>
                       <span>{feature}</span>
@@ -291,26 +260,26 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                 </div>
 
                 {/* Button */}
-                <Button
-                  onClick={() => handlePurchase(product)}
-                  disabled={loading === product.priceId}
-                  className={`w-full py-3 px-4 font-semibold transition-all duration-300 ${
-                    isPopular 
-                      ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                      : isBestValue
-                      ? 'bg-green-500 hover:bg-green-600 text-white'
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
-                  } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-                >
-                  {loading === product.priceId ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    'Get Started'
-                  )}
-                </Button>
+                <div className="mt-auto">
+                  <Button
+                    onClick={() => handlePurchase(product)}
+                    disabled={loading === product.priceId}
+                    className={`w-full py-3 px-4 font-semibold transition-all duration-300 ${
+                      isPopular 
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                        : 'bg-gray-900 hover:bg-gray-800 text-white'
+                    } disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                  >
+                    {loading === product.priceId ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Get Started'
+                    )}
+                  </Button>
+                </div>
               </div>
             );
           })}
@@ -374,10 +343,10 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
               <Check size={16} className="mr-2 text-green-500" />
               <span>Instant Download</span>
             </div>
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <Award size={16} className="mr-2 text-green-500" />
               <span>Money-back Guarantee</span>
-            </div>
+            </div> */}
           </div>
 
           <div className="text-center text-xs text-gray-400">

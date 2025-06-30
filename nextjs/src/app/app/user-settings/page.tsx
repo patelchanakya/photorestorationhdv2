@@ -5,8 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { getPurchaseHistory } from '@/app/actions/credits';
-import { Key, User, CheckCircle, CreditCard, ShoppingCart, History } from 'lucide-react';
-import { MFASetup } from '@/components/MFASetup';
+import { Key, User, CheckCircle, CreditCard, History } from 'lucide-react';
 import PurchaseModal from '@/components/PurchaseModal';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import { useSearchParams } from 'next/navigation';
@@ -217,11 +216,6 @@ function UserSettingsContent() {
                         </CardContent>
                     </Card>
 
-                    <MFASetup
-                        onStatusChange={() => {
-                            setSuccess('Two-factor authentication settings updated successfully');
-                        }}
-                    />
 
                     {/* Credit Management Section */}
                     <Card>
@@ -236,14 +230,6 @@ function UserSettingsContent() {
                             <ProminentCreditsDisplay onBuyMore={() => setShowPurchaseModal(true)} />
                             
                             <div className="flex gap-3">
-                                <Button 
-                                    onClick={() => setShowPurchaseModal(true)}
-                                    className="flex items-center gap-2"
-                                >
-                                    <ShoppingCart className="h-4 w-4" />
-                                    Buy More Credits
-                                </Button>
-                                
                                 <Button 
                                     variant="outline"
                                     onClick={loadPurchaseHistory}
