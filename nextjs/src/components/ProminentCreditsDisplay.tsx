@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Coins, Plus } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,81 @@ interface ProminentCreditsDisplayProps {
     showBuyButton?: boolean;
 }
 
+// Animated counter component for smooth number transitions
+function AnimatedCounter({ value, className, isLowCredits }: { 
+    value: number; 
+    className?: string; 
+    isLowCredits: boolean;
+}) {
+    const [displayValue, setDisplayValue] = useState(value);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const animationRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (displayValue !== value) {
+            setIsAnimating(true);
+            const start = displayValue;
+            const end = value;
+            const startTime = Date.now();
+            const duration = 300; // 300ms animation
+
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease-out animation
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const currentValue = Math.round(start + (end - start) * easeProgress);
+                
+                setDisplayValue(currentValue);
+
+                if (progress < 1) {
+                    animationRef.current = requestAnimationFrame(animate);
+                } else {
+                    setIsAnimating(false);
+                }
+            };
+
+            animationRef.current = requestAnimationFrame(animate);
+        }
+
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
+    }, [value, displayValue]);
+
+    return (
+        <span 
+            className={`${className} transition-all duration-200 ${
+                isAnimating ? 'scale-110' : 'scale-100'
+            }`}
+            style={{
+                color: isLowCredits ? '#dc2626' : '#111827'
+            }}
+        >
+            {displayValue}
+        </span>
+    );
+}
+
 export default function ProminentCreditsDisplay({ 
     onBuyMore, 
     showBuyButton = true 
 }: ProminentCreditsDisplayProps = {}) {
     const { credits, optimisticCredits, isPending } = useGlobal();
     
-    const displayCredits = optimisticCredits ?? credits ?? 0;
+    // Improved display logic to prevent flicker
+    const displayCredits = React.useMemo(() => {
+        // During pending state, prefer optimistic credits for smooth UX
+        if (isPending && optimisticCredits !== null) {
+            return optimisticCredits;
+        }
+        // Otherwise use optimistic credits if available, falling back to actual credits
+        return optimisticCredits ?? credits ?? 0;
+    }, [optimisticCredits, credits, isPending]);
+    
     const isLowCredits = displayCredits <= 5;
     
     return (
@@ -34,16 +102,15 @@ export default function ProminentCreditsDisplay({
                     <div>
                         <p className="text-sm text-gray-500 font-medium">Credits</p>
                         <div className="flex items-center space-x-2">
-                            {isPending ? (
-                                <span className="text-2xl font-bold text-gray-400 animate-pulse">
-                                    {displayCredits}
-                                </span>
-                            ) : (
-                                <span className={`text-2xl font-bold ${
-                                    isLowCredits ? 'text-red-600' : 'text-gray-900'
-                                }`}>
-                                    {displayCredits}
-                                </span>
+                            <AnimatedCounter
+                                value={displayCredits}
+                                className={`text-2xl font-bold ${
+                                    isPending ? 'opacity-75' : 'opacity-100'
+                                }`}
+                                isLowCredits={isLowCredits}
+                            />
+                            {isPending && (
+                                <div className="w-1 h-1 bg-orange-500 rounded-full animate-pulse ml-1"></div>
                             )}
                         </div>
                     </div>

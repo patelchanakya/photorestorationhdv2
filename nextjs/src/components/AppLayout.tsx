@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
+import NavigationLoadingIndicator from './NavigationLoadingIndicator';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-gray-100">
+            <NavigationLoadingIndicator />
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
@@ -64,7 +66,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
 
                 <div className="h-16 flex items-center justify-between px-4 border-b">
-                    <Link href="/app/storage" className="flex items-center space-x-2 group">
+                    <Link 
+                        href="/app/storage" 
+                        className="flex items-center space-x-2 group"
+                        prefetch={false}
+                    >
                         <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
                             <ImageIcon className="h-6 w-6 text-orange-600" />
                         </div>
@@ -88,7 +94,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                                prefetch={false} // Enable hover-based prefetching
+                                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                                     isActive
                                         ? 'bg-orange-50 text-orange-600'
                                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -118,7 +125,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </button>
                         
                         {/* Mobile Logo - responsive text */}
-                        <Link href="/app/storage" className="lg:hidden flex items-center space-x-2">
+                        <Link 
+                            href="/app/storage" 
+                            className="lg:hidden flex items-center space-x-2"
+                            prefetch={false}
+                        >
                             <div className="p-1.5 bg-orange-100 rounded-lg">
                                 <ImageIcon className="h-5 w-5 text-orange-600" />
                             </div>

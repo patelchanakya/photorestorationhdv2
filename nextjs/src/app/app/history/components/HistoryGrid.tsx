@@ -198,7 +198,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
             
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {sortedImages.map((image) => (
+                    {sortedImages.map((image, index) => (
                         <Card key={image.id} className="group overflow-hidden hover:shadow-lg transition-shadow">
                             <CardContent className="p-0">
                                 <div className="relative aspect-square">
@@ -206,6 +206,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
                                         src={image.thumbnail_url || image.edited_url}
                                         alt={image.prompt}
                                         fill
+                                        priority={index < 4} // Priority for first 4 images (first row)
                                         className="object-cover cursor-pointer transition-transform group-hover:scale-105"
                                         onClick={() => handleImageSelect(image)}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"

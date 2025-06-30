@@ -61,7 +61,22 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     webpackMemoryOptimizations: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-alert-dialog'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@radix-ui/react-dialog', 
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-slot',
+      'date-fns',
+      'react-hook-form',
+      'clsx',
+      'class-variance-authority',
+      'tailwind-merge',
+      '@vercel/analytics',
+      'posthog-js'
+    ],
   },
   async rewrites() {
     return [

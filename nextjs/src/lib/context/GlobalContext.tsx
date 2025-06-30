@@ -67,9 +67,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             
             if (result.success && result.credits !== undefined) {
                 setCredits(result.credits);
-                startTransition(() => {
-                    updateOptimisticCredits({ type: 'set', amount: result.credits ?? 0 });
-                });
+                // Remove redundant optimistic update to prevent conflicts
+                // The optimistic state will naturally sync with the real credits state
             } else {
                 console.error('Error fetching credits:', result.error);
             }
@@ -78,7 +77,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setCreditsLoading(false);
         }
-    }, [updateOptimisticCredits]);
+    }, []);
 
     const deductCreditsOptimistic = async (amount: number): Promise<boolean> => {
         if (!user?.id) return false;
@@ -91,7 +90,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await deductCredits(user.id, amount);
                     if (result.success && result.credits !== undefined) {
+                        // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
+                        // Force optimistic state to match real state to prevent conflicts
+                        updateOptimisticCredits({ type: 'set', amount: result.credits });
                         resolve(true);
                     } else {
                         // Rollback optimistic update on failure
@@ -123,7 +125,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await refundCredits(user.id, amount);
                     if (result.success && result.credits !== undefined) {
+                        // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
+                        // Force optimistic state to match real state to prevent conflicts
+                        updateOptimisticCredits({ type: 'set', amount: result.credits });
                         resolve(true);
                     } else {
                         // Rollback optimistic update on failure
@@ -148,8 +153,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     };
 
     const triggerCreditUpdate = (newCredits: number) => {
-        setCredits(newCredits);
         startTransition(() => {
+            setCredits(newCredits);
             updateOptimisticCredits({ type: 'set', amount: newCredits });
         });
     };

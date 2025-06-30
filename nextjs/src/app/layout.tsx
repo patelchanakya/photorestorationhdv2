@@ -5,6 +5,7 @@ import CookieConsent from "@/components/Cookies";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { GlobalProvider } from '@/lib/context/GlobalContext';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { WebVitals } from '@/components/WebVitals';
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_PRODUCTNAME,
@@ -27,6 +28,7 @@ export default function RootLayout({
         <PostHogProvider>
           <GlobalProvider>
             {children}
+            <WebVitals />
           </GlobalProvider>
         </PostHogProvider>
         <Analytics />

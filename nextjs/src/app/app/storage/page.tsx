@@ -14,11 +14,32 @@ import { FileObject } from '@supabase/storage-js';
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
-import HowItWorksTour from '@/components/HowItWorksTour';
 import CreditTestPanel from '@/components/CreditTestPanel';
-import Confetti from '@/components/Confetti';
-import PurchaseModal from '@/components/PurchaseModal';
 import { usePostHog } from 'posthog-js/react';
+import dynamic from 'next/dynamic';
+
+const PurchaseModal = dynamic(() => import('@/components/PurchaseModal'), {
+    loading: () => <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="animate-pulse space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="h-32 bg-gray-200 rounded"></div>
+                    <div className="h-32 bg-gray-200 rounded"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+});
+
+const HowItWorksTour = dynamic(() => import('@/components/HowItWorksTour'), {
+    loading: () => null // No loading UI needed for tour
+});
+
+const Confetti = dynamic(() => import('@/components/Confetti'), {
+    loading: () => null // No loading UI needed for confetti
+});
 
 // Polling configuration
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '1200');
@@ -700,7 +721,7 @@ export default function FileManagementPage() {
                                 <FileIcon className="mx-auto h-16 w-16 text-gray-300 mb-6"/>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos uploaded today</h3>
                                 <p className="text-gray-500 mb-6">Upload a photo above to get started with AI restoration</p>
-                                <p className="text-sm text-gray-400">Visit the <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium">Gallery</Link> to see all your photos</p>
+                                <p className="text-sm text-gray-400">Visit the <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>Gallery</Link> to see all your photos</p>
                             </CardContent>
                         </Card>
                     )}
@@ -720,6 +741,7 @@ export default function FileManagementPage() {
                                         href="/app/history" 
                                         className="inline-flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
                                         data-tour="gallery-link"
+                                        prefetch={false}
                                     >
                                         View Gallery
                                         <ExternalLink className="ml-2 h-4 w-4" />
@@ -762,6 +784,7 @@ export default function FileManagementPage() {
                                                     alt={cleanName}
                                                     fill
                                                     sizes="(max-width:768px) 100vw, 33vw"
+                                                    priority={index < 3} // Priority for first 3 images
                                                     className={`object-cover hover:scale-105 transition-all duration-200 ${
                                                         associatedJob && (associatedJob.status === 'processing' || restoringFiles.has(filename)) ? 'blur-sm scale-105' : ''
                                                     }`}
@@ -965,6 +988,7 @@ export default function FileManagementPage() {
                                         <Link
                                             href={`/app/history?highlight=${encodeURIComponent(selectedImageFilename)}`}
                                             className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
+                                            prefetch={false}
                                         >
                                             <ExternalLink className="h-4 w-4 mr-2"/>
                                             Go to Gallery
@@ -979,6 +1003,7 @@ export default function FileManagementPage() {
                                         alt={selectedImageName}
                                         width={1200}
                                         height={800}
+                                        priority
                                         className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
                                     />
                                 )}
