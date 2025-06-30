@@ -28,6 +28,7 @@ interface ImageModalProps {
     onDelete: () => void;
     onNext: () => void;
     onPrevious: () => void;
+    imageUrl?: string; // Optional cached URL override
 }
 
 export function ImageModal({
@@ -40,25 +41,12 @@ export function ImageModal({
     onShare,
     onDelete,
     onNext,
-    onPrevious
+    onPrevious,
+    imageUrl
 }: ImageModalProps) {
-    const [showOriginal, setShowOriginal] = useState(false);
     
-    // Simplified logic - always show toggle buttons
-    // Display original if exists and requested, otherwise show restored
-    const hasOriginal = image.original_url && image.original_url.trim() !== '';
-    const hasRestored = image.edited_url && image.edited_url.trim() !== '';
-    
-    // Determine which image to display
-    const displayUrl = showOriginal && hasOriginal ? image.original_url : 
-                      hasRestored ? image.edited_url : 
-                      hasOriginal ? image.original_url : 
-                      null;
-    
-    // Reset showOriginal when image changes
-    useEffect(() => {
-        setShowOriginal(false);
-    }, [image.id]);
+    // Use cached URL if provided, otherwise fallback to original
+    const displayUrl = imageUrl || (image.edited_url && image.edited_url.trim() !== '' ? image.edited_url : null);
 
     const openInNewTab = (url: string) => {
         window.open(url, '_blank');
@@ -98,7 +86,7 @@ export function ImageModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="w-[95vw] sm:w-full max-w-sm sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0">
                 <DialogTitle className="sr-only">
-                    {(showOriginal && hasOriginal) ? 'Original Photo' : 'Restored Photo'}: {image.prompt}
+                    Restored Photo: {image.prompt}
                 </DialogTitle>
                 <DialogDescription className="sr-only">
                     Photo restoration comparison view. Toggle between original and restored versions of your image.
@@ -141,22 +129,6 @@ export function ImageModal({
                             
                             {/* Right side - Action buttons group */}
                             <div className="flex items-center gap-1 sm:gap-2">
-                                {/* Toggle button */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShowOriginal(!showOriginal)}
-                                    disabled={!hasOriginal && !hasRestored}
-                                    className="text-xs sm:text-sm"
-                                >
-                                    <span className="hidden sm:inline">
-                                        {showOriginal ? 'Show Restored' : 'Show Original'}
-                                    </span>
-                                    <span className="sm:hidden">
-                                        {showOriginal ? 'Restored' : 'Original'}
-                                    </span>
-                                </Button>
-                                
                                 {/* Download button */}
                                 <Button variant="outline" size="sm" onClick={onDownload} title="Download">
                                     <Download className="h-4 w-4" />
@@ -200,10 +172,7 @@ export function ImageModal({
                                     <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📸</div>
                                     <p className="text-base sm:text-lg font-medium text-muted-foreground mb-2">Image Not Available</p>
                                     <p className="text-xs sm:text-sm text-muted-foreground">
-                                        {!hasOriginal && !hasRestored 
-                                            ? "Both original and restored images are unavailable"
-                                            : "Image may be too large or temporarily unavailable"
-                                        }
+                                        Image may be too large or temporarily unavailable
                                     </p>
                                 </div>
                             </div>
@@ -238,8 +207,8 @@ export function ImageModal({
                         {/* Image type indicator */}
                         {displayUrl && (
                             <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
-                                <Badge variant={(showOriginal && hasOriginal) ? "outline" : "default"} className="text-xs">
-                                    {(showOriginal && hasOriginal) ? 'Original' : 'Restored'}
+                                <Badge variant="default" className="text-xs">
+                                    Restored
                                 </Badge>
                             </div>
                         )}

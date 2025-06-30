@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useGlobal } from '@/lib/context/GlobalContext';
+import { useCachedImages } from '@/hooks/useCachedImages';
 
 interface HistoryGridProps {
     images: SavedImage[];
@@ -40,6 +41,9 @@ export function HistoryGrid({ images }: HistoryGridProps) {
     const [imageToDelete, setImageToDelete] = useState<SavedImage | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentImages, setCurrentImages] = useState(images);
+    
+    // Use cached images hook for optimized loading
+    const { getCachedUrl, isLoading: urlsLoading } = useCachedImages(currentImages, user?.id);
 
     // Update local images when prop changes
     useEffect(() => {
@@ -203,7 +207,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
                             <CardContent className="p-0">
                                 <div className="relative aspect-square">
                                     <Image
-                                        src={image.thumbnail_url || image.edited_url}
+                                        src={getCachedUrl(image.id, 'thumbnail')}
                                         alt={image.prompt}
                                         fill
                                         priority={index < 4} // Priority for first 4 images (first row)
@@ -286,7 +290,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
                                 <div className="flex items-center space-x-4">
                                     <div className="relative w-16 h-16 flex-shrink-0">
                                         <Image
-                                            src={image.thumbnail_url || image.edited_url}
+                                            src={getCachedUrl(image.id, 'thumbnail')}
                                             alt={image.prompt}
                                             fill
                                             className="object-cover rounded cursor-pointer"
@@ -358,6 +362,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
                     onDelete={() => handleDelete(selectedImage)}
                     onNext={handleNext}
                     onPrevious={handlePrevious}
+                    imageUrl={getCachedUrl(selectedImage.id, 'edited')}
                 />
             )}
             
