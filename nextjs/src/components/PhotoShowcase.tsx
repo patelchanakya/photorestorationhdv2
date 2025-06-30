@@ -98,13 +98,6 @@ const PhotoShowcase: React.FC = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                       />
                     </div>
-                    {/* Labels */}
-                    <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                      Before
-                    </div>
-                    <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                      After
-                    </div>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 text-center">
                     {example.title}
@@ -161,13 +154,6 @@ const PhotoShowcase: React.FC = () => {
                           onChange={(e) => handleSliderChange(example.id, parseInt(e.target.value))}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                         />
-                      </div>
-                      {/* Labels */}
-                      <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                        Before
-                      </div>
-                      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                        After
                       </div>
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 text-center">
