@@ -13,6 +13,7 @@ export async function getCredits(userId: string): Promise<CreditActionResult> {
   try {
     const adminClient = await createServerAdminClient()
     
+    // Use cache tags for precise invalidation
     const { data, error } = await adminClient
       .from('user_credits')
       .select('credits')

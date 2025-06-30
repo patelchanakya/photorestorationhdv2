@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useOptimistic, u
 import { createSPASassClient } from '@/lib/supabase/client';
 import { getCredits, deductCredits, refundCredits } from '@/app/actions/credits';
 import { usePostHog } from 'posthog-js/react';
+import { apiCache, createCacheKey } from '@/lib/utils/cache';
 
 
 type User = {
@@ -63,7 +64,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     const fetchCredits = useCallback(async (userId: string) => {
         try {
             setCreditsLoading(true);
-            const result = await getCredits(userId);
+            // Cache credits for 2 seconds to reduce redundant calls
+            const cacheKey = createCacheKey('credits', userId);
+            const result = await apiCache.get(cacheKey, () => getCredits(userId), 2000);
             
             if (result.success && result.credits !== undefined) {
                 setCredits(result.credits);
@@ -90,6 +93,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await deductCredits(user.id, amount);
                     if (result.success && result.credits !== undefined) {
+                        // Invalidate credits cache since we have fresh data
+                        const cacheKey = createCacheKey('credits', user.id);
+                        apiCache.invalidate(cacheKey);
+                        
                         // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
                         // Force optimistic state to match real state to prevent conflicts
@@ -125,6 +132,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await refundCredits(user.id, amount);
                     if (result.success && result.credits !== undefined) {
+                        // Invalidate credits cache since we have fresh data
+                        const cacheKey = createCacheKey('credits', user.id);
+                        apiCache.invalidate(cacheKey);
+                        
                         // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
                         // Force optimistic state to match real state to prevent conflicts

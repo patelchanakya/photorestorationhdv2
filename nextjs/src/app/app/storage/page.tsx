@@ -12,6 +12,7 @@ import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
+import { apiCache, createCacheKey } from '@/lib/utils/cache';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import CreditTestPanel from '@/components/CreditTestPanel';
@@ -85,14 +86,18 @@ export default function FileManagementPage() {
         return nameOnly.replace(/_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\./, '.');
     };
 
-    // Generate preview URL for an image
+    // Generate preview URL for an image with caching
     const generatePreviewUrl = useCallback(async (filename: string) => {
         if (!user?.id) return null;
         try {
-            const supabase = await createSPASassClient();
-            const { data, error } = await supabase.shareFile(user.id, filename, 3600); // 1 hour
-            if (error) throw error;
-            return data.signedUrl;
+            // Cache preview URLs for 2 minutes to reduce API calls
+            const cacheKey = createCacheKey('preview-url', user.id, filename);
+            return await apiCache.get(cacheKey, async () => {
+                const supabase = await createSPASassClient();
+                const { data, error } = await supabase.shareFile(user.id, filename, 3600); // 1 hour
+                if (error) throw error;
+                return data.signedUrl;
+            }, 120000); // 2 minute cache
         } catch (err) {
             console.error('Error generating preview URL:', err);
             return null;
@@ -152,7 +157,9 @@ export default function FileManagementPage() {
     const refreshJobs = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const jobs = await getProcessingJobs(user.id);
+            // Use cache to reduce jitter/flicker (1.5s cache)
+            const cacheKey = createCacheKey('processing-jobs', user.id);
+            const jobs = await apiCache.get(cacheKey, () => getProcessingJobs(user.id));
             
             // Check for status changes and show notifications
             if (previousJobsRef.current.length > 0) {
@@ -160,6 +167,9 @@ export default function FileManagementPage() {
                     const previousJob = previousJobsRef.current.find(j => j.id === currentJob.id);
                     if (previousJob && previousJob.status !== currentJob.status) {
                         if (currentJob.status === 'completed') {
+                            // Invalidate cache for fresh data on completion
+                            apiCache.invalidate(cacheKey);
+                            
                             setSuccess('Photo restoration completed! Your restored image is ready.');
                             // Trigger confetti celebration
                             setShowConfetti(true);
@@ -178,6 +188,9 @@ export default function FileManagementPage() {
                                 });
                             }
                         } else if (currentJob.status === 'failed') {
+                            // Invalidate cache for fresh data on failure
+                            apiCache.invalidate(cacheKey);
+                            
                             setError(`Restoration failed: ${currentJob.error_message || 'Unknown error'}`);
                             
                             // Track restoration failure
@@ -211,7 +224,7 @@ export default function FileManagementPage() {
     // Compute if jobs are active
     const hasActiveJobs = useMemo(() => processingJobs.some(j => j.status === 'pending' || j.status === 'processing'), [processingJobs]);
 
-    // Smart polling: only when active jobs exist
+    // Exponential backoff polling: only when active jobs exist
     useEffect(() => {
         if (!user?.id) return;
 
@@ -221,16 +234,31 @@ export default function FileManagementPage() {
         }
 
         const activeJobCount = processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
-        if (POLLING_DEBUG) console.log(`Starting smart polling for ${activeJobCount} active jobs (interval: ${POLLING_INTERVAL}ms)`);
+        if (POLLING_DEBUG) console.log(`Starting exponential backoff polling for ${activeJobCount} active jobs`);
 
-        const interval = setInterval(() => {
-            if (POLLING_DEBUG) console.log('Polling for job updates...');
-            refreshJobs();
-        }, POLLING_INTERVAL);
+        let pollCount = 0;
+        let timeoutId: NodeJS.Timeout;
+
+        const scheduleNextPoll = () => {
+            // Exponential backoff: 2s → 3s → 4s → 5s → max 5s
+            const intervals = [2000, 3000, 4000, 5000];
+            const interval = intervals[Math.min(pollCount, intervals.length - 1)];
+            
+            if (POLLING_DEBUG) console.log(`Scheduling poll #${pollCount + 1} in ${interval}ms`);
+            
+            timeoutId = setTimeout(() => {
+                if (POLLING_DEBUG) console.log(`Polling for job updates (attempt #${pollCount + 1})...`);
+                refreshJobs();
+                pollCount++;
+                scheduleNextPoll();
+            }, interval);
+        };
+
+        scheduleNextPoll();
 
         return () => {
-            if (POLLING_DEBUG) console.log('Stopping polling - cleanup');
-            clearInterval(interval);
+            if (POLLING_DEBUG) console.log('Stopping exponential backoff polling - cleanup');
+            clearTimeout(timeoutId);
         };
     }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 

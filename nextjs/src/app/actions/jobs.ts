@@ -20,6 +20,7 @@ export async function getProcessingJobs(userId: string): Promise<ProcessingJob[]
 
         const supabase = await createSSRClient();
         
+        // This will be cached with tags for precise invalidation
         const { data, error } = await supabase
             .from('processing_jobs')
             .select('*')

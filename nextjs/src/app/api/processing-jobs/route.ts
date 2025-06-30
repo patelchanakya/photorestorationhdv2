@@ -29,7 +29,11 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ data });
+        return NextResponse.json({ data }, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+            }
+        });
     } catch (error) {
         console.error('API error:', error);
         return NextResponse.json(
