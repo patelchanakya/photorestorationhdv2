@@ -65,7 +65,7 @@ const HomePricing = () => {
                     <h2 className="text-3xl font-bold mb-4">Simple Credit Packages</h2>
                     <p className="text-gray-600 text-lg">Buy credits as you need them - no subscription required</p>
                     
-                    {/* Promotional Banner */}
+                    {/* Promotional Banner
                     <div className="mt-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
                         <div className="flex items-center justify-center space-x-2">
                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
@@ -74,7 +74,7 @@ const HomePricing = () => {
                             </p>
                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -83,16 +83,9 @@ const HomePricing = () => {
                         const creditCount = getCreditCount(tier);
                         
                         return (
-                            <div
-                                key={tier.name}
-                                className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full ${
-                                    tier.popular 
-                                        ? 'border-orange-500 shadow-lg scale-105' 
-                                        : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                            >
-                                {/* Badge */}
-                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <div key={tier.name} className="relative">
+                                {/* Badge - Outside card container */}
+                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-50">
                                     {tier.popular ? (
                                         <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500">
                                             Most Popular
@@ -103,6 +96,32 @@ const HomePricing = () => {
                                         </span>
                                     )}
                                 </div>
+                                
+                                <div
+                                    className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full overflow-hidden ${
+                                        tier.popular 
+                                            ? 'border-orange-500 shadow-lg scale-105' 
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                >
+                                    {/* Start for Free Ribbon */}
+                                    <div className="absolute -top-2 -right-2 z-30">
+                                        <div className="relative">
+                                            <div 
+                                                className="bg-gradient-to-br from-green-400 to-green-600 text-white text-[10px] font-bold px-8 py-1.5 transform rotate-45 origin-center shadow-lg"
+                                                style={{
+                                                    minWidth: '140px',
+                                                    textAlign: 'center',
+                                                    transformOrigin: 'center',
+                                                    position: 'relative',
+                                                    top: '20px',
+                                                    right: '-25px'
+                                                }}
+                                            >
+                                                START FREE!
+                                            </div>
+                                        </div>
+                                    </div>
 
                                 {/* Plan Name */}
                                 <div className="text-center mb-4">
@@ -164,6 +183,7 @@ const HomePricing = () => {
                                             Get Started
                                         </Link>
                                     )}
+                                </div>
                                 </div>
                             </div>
                         );

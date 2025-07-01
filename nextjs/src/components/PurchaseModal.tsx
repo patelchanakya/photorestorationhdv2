@@ -200,16 +200,9 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
             const pricePerCredit = getPricePerCredit(product);
             
             return (
-              <div
-                key={product.id}
-                className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full ${
-                  isPopular 
-                    ? 'border-orange-500 shadow-lg scale-105' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {/* Badge */}
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div key={product.id} className="relative">
+                {/* Badge - Outside card container */}
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-50">
                   {isPopular ? (
                     <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500">
                       POPULAR
@@ -220,6 +213,32 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                     </span>
                   )}
                 </div>
+                
+                <div
+                  className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full overflow-hidden ${
+                    isPopular 
+                      ? 'border-orange-500 shadow-lg scale-105' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {/* Start for Free Ribbon */}
+                  <div className="absolute -top-2 -right-2 z-30">
+                    <div className="relative">
+                      <div 
+                        className="bg-gradient-to-br from-green-400 to-green-600 text-white text-[10px] font-bold px-8 py-1.5 transform rotate-45 origin-center shadow-lg"
+                        style={{
+                          minWidth: '140px',
+                          textAlign: 'center',
+                          transformOrigin: 'center',
+                          position: 'relative',
+                          top: '20px',
+                          right: '-25px'
+                        }}
+                      >
+                        START FREE!
+                      </div>
+                    </div>
+                  </div>
 
                 {/* Plan Name */}
                 <div className="text-center mb-4">
@@ -281,6 +300,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                       'Get Started'
                     )}
                   </Button>
+                </div>
                 </div>
               </div>
             );
