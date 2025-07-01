@@ -27,6 +27,16 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
+    // Skip auth checks for Stripe callback URLs to prevent session corruption
+    const isStripeCallback = request.nextUrl.searchParams.has('session_id') || 
+                            request.nextUrl.searchParams.has('cancelled') || 
+                            request.nextUrl.searchParams.has('success')
+    
+    if (isStripeCallback && request.nextUrl.pathname.startsWith('/app')) {
+        // For Stripe callbacks, just pass through without auth checks
+        return supabaseResponse
+    }
+
     // Do not run code between createServerClient and
     // supabase.auth.getUser(). A simple mistake could make it very hard to debug
     // issues with users being randomly logged out.
