@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
+
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const stripe = new Stripe(stripeSecret, {
@@ -14,12 +15,12 @@ const stripe = new Stripe(stripeSecret, {
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
 // Credit mapping based on your stripe-config.ts
-// Updated with actual Stripe price IDs from your Dashboard (TEST MODE)
+// Live mode price IDs
 const CREDIT_MAPPING: { [key: string]: number } = {
-  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 2,   // Duo Pack
-  'price_1RYMbzDHBXmKKCsnjXbOyxui': 5,   // Memories Pack
-  'price_1RYMdJDHBXmKKCsn6BohuUcS': 25,  // Family Pack
-  'price_1RYMeIDHBXmKKCsnLT3mXJGJ': 100, // Archive Album Pack
+  'price_1RYtFaDHBXmKKCsn8MOF5vXf': 2,   // Duo Pack
+  'price_1RYtFYDHBXmKKCsnXfZkwhLn': 5,   // Memories Pack
+  'price_1RYtFWDHBXmKKCsnAc58fVVF': 25,  // Family Pack
+  'price_1RYtFUDHBXmKKCsnR3BIOW6C': 100, // Archive Album Pack
 };
 
 Deno.serve(async (req) => {

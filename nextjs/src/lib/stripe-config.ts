@@ -8,11 +8,11 @@ export interface StripeProduct {
   credits: number;
 }
 
-// Actual Stripe product configuration from your Stripe Dashboard (TEST MODE)
+// Live Stripe product configuration
 export const stripeProducts: StripeProduct[] = [
   {
-    id: 'prod_STJCDsrT1Ewf83',
-    priceId: 'price_1RYMaEDHBXmKKCsnzZK4iqzv',
+    id: 'prod_STqx8aYOmjG3LN',
+    priceId: 'price_1RYtFaDHBXmKKCsn8MOF5vXf',
     name: 'Duo Pack',
     description: 'Try our instant restoration service.',
     mode: 'payment',
@@ -20,8 +20,8 @@ export const stripeProducts: StripeProduct[] = [
     credits: 2,
   },
   {
-    id: 'prod_STJE0YWxUhWGWo',
-    priceId: 'price_1RYMbzDHBXmKKCsnjXbOyxui',
+    id: 'prod_STqxQjCuHlnSxK',
+    priceId: 'price_1RYtFYDHBXmKKCsnXfZkwhLn',
     name: 'Memories Pack',
     description: 'Perfect for a few important memories',
     mode: 'payment',
@@ -29,8 +29,8 @@ export const stripeProducts: StripeProduct[] = [
     credits: 5,
   },
   {
-    id: 'prod_STJF2nVicaMVXA',
-    priceId: 'price_1RYMdJDHBXmKKCsn6BohuUcS',
+    id: 'prod_STqxVMnifr0jjs',
+    priceId: 'price_1RYtFWDHBXmKKCsnAc58fVVF',
     name: 'Family Pack',
     description: 'Restore a complete photo collection',
     mode: 'payment',
@@ -38,8 +38,8 @@ export const stripeProducts: StripeProduct[] = [
     credits: 25,
   },
   {
-    id: 'prod_STJGb4axcXktRZ',
-    priceId: 'price_1RYMeIDHBXmKKCsnLT3mXJGJ',
+    id: 'prod_STqxk3ZS3aTnWI',
+    priceId: 'price_1RYtFUDHBXmKKCsnR3BIOW6C',
     name: 'Archive Album Pack',
     description: 'For photographers & large collections',
     mode: 'payment',
@@ -50,10 +50,10 @@ export const stripeProducts: StripeProduct[] = [
 
 // Credit mapping for webhook processing
 export const CREDIT_MAPPING: { [key: string]: number } = {
-  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 2,   // Duo Pack
-  'price_1RYMbzDHBXmKKCsnjXbOyxui': 5,   // Memories Pack
-  'price_1RYMdJDHBXmKKCsn6BohuUcS': 25,  // Family Pack
-  'price_1RYMeIDHBXmKKCsnLT3mXJGJ': 100, // Archive Album Pack
+  'price_1RYtFaDHBXmKKCsn8MOF5vXf': 2,   // Duo Pack
+  'price_1RYtFYDHBXmKKCsnXfZkwhLn': 5,   // Memories Pack
+  'price_1RYtFWDHBXmKKCsnAc58fVVF': 25,  // Family Pack
+  'price_1RYtFUDHBXmKKCsnR3BIOW6C': 100, // Archive Album Pack
 };
 
 export const getProductByPriceId = (priceId: string): StripeProduct | undefined => {
