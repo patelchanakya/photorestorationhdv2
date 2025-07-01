@@ -35,13 +35,13 @@ const HomePricing = () => {
     };
 
     // Calculate price per credit and extract credit count
-    const getPricePerCredit = (tier: any) => {
+    const getPricePerCredit = (tier: { price: number; features: string[] }) => {
         const price = typeof tier.price === 'number' ? tier.price : parseFloat(tier.price.toString().replace('$', ''));
         const creditCount = getCreditCount(tier);
         return creditCount > 0 ? price / creditCount : 0;
     };
 
-    const getCreditCount = (tier: any) => {
+    const getCreditCount = (tier: { price: number; features: string[] }) => {
         // Try to extract credit count from features
         const creditFeature = tier.features.find((f: string) => f.includes('photo restoration credit'));
         if (creditFeature) {
