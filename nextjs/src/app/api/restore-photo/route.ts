@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
         console.log('📁 File listing result:', { file, fileError });
 
-        if (fileError || !file) {
+        if (fileError || !file || !Array.isArray(file)) {
             console.log('❌ Error accessing user files:', fileError);
             return NextResponse.json(
                 { error: 'Error accessing user files' },
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
         // Extract filename from path (user_id/filename)
         const filename = image_path.split('/').pop();
-        const userOwnsFile = file.some(f => f.name === filename);
+        const userOwnsFile = file?.some(f => f.name === filename) || false;
         console.log('🔐 File ownership check:', { filename, userOwnsFile, availableFiles: file.map(f => f.name) });
 
         if (!userOwnsFile) {
