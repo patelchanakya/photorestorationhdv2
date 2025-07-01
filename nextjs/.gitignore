@@ -51,3 +51,4 @@ STRIPE_SETUP.md
 .env.*
 !.env.example
 
+/scripts/

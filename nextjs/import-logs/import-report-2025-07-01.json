@@ -1,0 +1,15 @@
+{
+  "import_timestamp": "2025-07-01T06:22:47.114Z",
+  "target_supabase_url": "https://hhwugsiztorplhxztuei.supabase.co",
+  "json_file": "scripts/users.json",
+  "batch_size": 100,
+  "duration_ms": 1086,
+  "duration_readable": "1s",
+  "results": {
+    "total_users": 63,
+    "successful_imports": 63,
+    "skipped_existing": 0,
+    "failed_imports": 0,
+    "success_rate": "100.0%"
+  }
+}
