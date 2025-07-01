@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import PricingService from "@/lib/pricing";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import dynamic from 'next/dynamic';
 
@@ -36,83 +34,139 @@ const HomePricing = () => {
         // If not authenticated, the Link component will handle navigation to register
     };
 
+    // Calculate price per credit and extract credit count
+    const getPricePerCredit = (tier: any) => {
+        const price = typeof tier.price === 'number' ? tier.price : parseFloat(tier.price.toString().replace('$', ''));
+        const creditCount = getCreditCount(tier);
+        return creditCount > 0 ? price / creditCount : 0;
+    };
+
+    const getCreditCount = (tier: any) => {
+        // Try to extract credit count from features
+        const creditFeature = tier.features.find((f: string) => f.includes('photo restoration credit'));
+        if (creditFeature) {
+            const match = creditFeature.match(/(\d+)\s+photo restoration credit/);
+            if (match) return parseInt(match[1]);
+        }
+        
+        // Fallback based on tier name/price mapping
+        const priceNum = typeof tier.price === 'number' ? tier.price : parseFloat(tier.price.toString().replace('$', ''));
+        if (priceNum === 2.99) return 2; // Single Pack (updated to 2 credits)
+        if (priceNum === 5.99) return 5; // Memories Pack
+        if (priceNum === 18.99) return 25; // Family Pack
+        if (priceNum === 49.99) return 100; // Archive Album Pack
+        
+        return 1; // Default fallback
+    };
+
     return (
-        <section id="pricing" className="py-24 bg-gray-100">
+        <section id="pricing" className="py-24 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold mb-4">Simple Credit Packages</h2>
                     <p className="text-gray-600 text-lg">Buy credits as you need them - no subscription required</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-                    {tiers.map((tier) => (
-                        <Card
-                            key={tier.name}
-                            className={`relative flex flex-col ${
-                                tier.popular ? 'border-primary-500 shadow-lg' : ''
-                            }`}
-                        >
-                            {tier.popular && (
-                                <div className="absolute top-0 right-0 -translate-y-1/2 px-3 py-1 bg-primary-500 text-white text-sm rounded-full">
-                                    Most Popular
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    {tiers.map((tier) => {
+                        const pricePerCredit = getPricePerCredit(tier);
+                        const creditCount = getCreditCount(tier);
+                        
+                        return (
+                            <div
+                                key={tier.name}
+                                className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full ${
+                                    tier.popular 
+                                        ? 'border-orange-500 shadow-lg scale-105' 
+                                        : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                {/* Badge */}
+                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                    {tier.popular ? (
+                                        <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500">
+                                            Most Popular
+                                        </span>
+                                    ) : (
+                                        <span className="px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap opacity-0 bg-transparent">
+                                            Most Popular
+                                        </span>
+                                    )}
                                 </div>
-                            )}
 
-                            <CardHeader>
-                                <CardTitle>{tier.name}</CardTitle>
-                                <CardDescription>{tier.description}</CardDescription>
-                            </CardHeader>
-
-                            <CardContent className="flex-grow flex flex-col">
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold">{PricingService.formatPrice(tier.price)}</span>
-                                    <span className="text-gray-600 ml-2">credits</span>
+                                {/* Plan Name */}
+                                <div className="text-center mb-4">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                        {tier.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 h-10 flex items-center justify-center">
+                                        {tier.description}
+                                    </p>
                                 </div>
 
-                                <ul className="space-y-3 mb-8 flex-grow">
+                                {/* Price */}
+                                <div className="text-center mb-6">
+                                    <div className="text-4xl font-bold text-gray-900 mb-1">
+                                        {PricingService.formatPrice(tier.price)}
+                                    </div>
+                                    <div className="text-sm text-gray-500 mb-2">
+                                        {creditCount} {creditCount === 1 ? 'restoration' : 'restorations'}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                        ${pricePerCredit.toFixed(2)} per photo
+                                    </div>
+                                </div>
+
+                                {/* Features */}
+                                <div className="space-y-3 mb-6 flex-grow">
                                     {tier.features.map((feature) => (
-                                        <li key={feature} className="flex items-center gap-2">
-                                            <Check className="h-5 w-5 text-green-500" />
-                                            <span className="text-gray-600">{feature}</span>
-                                        </li>
+                                        <div key={feature} className="flex items-center gap-3">
+                                            <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                                                <Check className="h-3 w-3 text-green-600" />
+                                            </div>
+                                            <span className="text-sm text-gray-600">{feature}</span>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
 
-                                {user ? (
-                                    <Button
-                                        onClick={handleCtaClick}
-                                        className={`w-full ${
-                                            tier.popular
-                                                ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                                : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                                        }`}
-                                        variant={tier.popular ? "default" : "secondary"}
-                                    >
-                                        Buy Credits
-                                    </Button>
-                                ) : (
-                                    <Link
-                                        href="/auth/register"
-                                        className={`w-full text-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                                            tier.popular
-                                                ? 'bg-primary-600 text-white hover:bg-primary-700'
-                                                : 'bg-gray-50 text-gray-900 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                        Get Started
-                                    </Link>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ))}
+                                {/* CTA Button */}
+                                <div className="mt-auto">
+                                    {user ? (
+                                        <button
+                                            onClick={handleCtaClick}
+                                            className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 text-sm ${
+                                                tier.popular
+                                                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                                            }`}
+                                        >
+                                            Get Started
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href="/auth/register"
+                                            className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 text-sm text-center block ${
+                                                tier.popular
+                                                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                                            }`}
+                                        >
+                                            Get Started
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
+                {/* Common Features */}
                 {commonFeatures.length > 0 && (
-                  <div className="text-center mt-4">
-                    <p className="text-gray-600">
-                      {commonFeatures.join(', ')}
-                    </p>
-                  </div>
+                    <div className="text-center">
+                        <p className="text-gray-600">
+                            {commonFeatures.join(', ').replace('AI-powered restoration', 'restoration in seconds')}
+                        </p>
+                    </div>
                 )}
             </div>
 

@@ -27,7 +27,7 @@ export default function Home() {
     {
       icon: Shield,
       title: 'HD Quality',
-      description: 'Professional-grade restoration up to 4K resolution',
+      description: 'Restore blurry or black & white photos to sharp, vibrant quality',
       color: 'text-blue-600'
     }
   ];

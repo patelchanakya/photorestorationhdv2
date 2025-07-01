@@ -19,7 +19,7 @@ class PricingService {
         this.tiers = names.map((name, index) => ({
             name,
             price: prices[index],
-            description: descriptions[index],
+            description: descriptions[index]?.replace(/^"|"$/g, '') || '', // Remove surrounding quotes
             features: features[index] || [],
             popular: name === popularTier
         }));

@@ -12,23 +12,23 @@ export default function UserStatsDisplay({ userId }: UserStatsDisplayProps) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchFirstRestorationDate = async () => {
+        const fetchFirstCreditDate = async () => {
             if (!userId) return;
 
             try {
                 const supabase = await createSPASassClient();
                 
-                // Query the saved_images table for the user's oldest image
+                // Query the user_credits table for when the user first got credits
                 const { data, error } = await supabase
                     .getSupabaseClient()
-                    .from('saved_images')
+                    .from('user_credits')
                     .select('created_at')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: true })
                     .limit(1);
 
                 if (error) {
-                    console.error('Error fetching first restoration date:', error);
+                    console.error('Error fetching first credit date:', error);
                     setLoading(false);
                     return;
                 }
@@ -45,17 +45,17 @@ export default function UserStatsDisplay({ userId }: UserStatsDisplayProps) {
                         setDaysSinceFirst(Math.max(1, daysDifference));
                     }
                 } else {
-                    // No saved images yet
+                    // No credits yet - user hasn't started using the service
                     setDaysSinceFirst(null);
                 }
             } catch (err) {
-                console.error('Error calculating days since first restoration:', err);
+                console.error('Error calculating days since first credit:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchFirstRestorationDate();
+        fetchFirstCreditDate();
     }, [userId]);
 
     if (loading) {

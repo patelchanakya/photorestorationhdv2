@@ -948,8 +948,8 @@ export default function FileManagementPage() {
                         <Card className="border-0 shadow-lg bg-white">
                             <CardContent className="text-center py-16">
                                 <FileIcon className="mx-auto h-16 w-16 text-gray-300 mb-6"/>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos uploaded today</h3>
-                                <p className="text-gray-500 mb-6">Upload a photo above to get started with AI restoration</p>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No images uploaded today</h3>
+                                <p className="text-gray-500 mb-6">Upload a photo above to get started with photo restoration</p>
                                 <p className="text-sm text-gray-400">Visit the <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>Gallery</Link> to see all your photos</p>
                             </CardContent>
                         </Card>
