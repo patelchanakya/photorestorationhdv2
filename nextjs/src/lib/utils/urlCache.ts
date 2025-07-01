@@ -24,21 +24,33 @@ export async function generateCachedImageUrl(
         return await apiCache.get(cacheKey, async () => {
             const supabase = await createSPASassClient();
             
+            
             if (bucket === 'restored-images') {
-                // For restored images, imageUrl is already the full path
-                const { data, error } = await supabase.shareRestoredImage(imageUrl, expiresIn);
-                if (error) throw error;
+                // For restored images, extract just the file path from full URL if needed
+                let filePath = imageUrl;
+                if (imageUrl.startsWith('http')) {
+                    // Extract path portion from full URL
+                    // e.g., "https://domain.supabase.co/storage/v1/object/public/restored-images/user123/file.png"
+                    // becomes "user123/file.png"
+                    const urlParts = imageUrl.split('/restored-images/');
+                    filePath = urlParts.length > 1 ? urlParts[1] : imageUrl;
+                }
+                const { data, error } = await supabase.shareRestoredImage(filePath, expiresIn);
+                if (error) {
+                    throw error;
+                }
                 return data.signedUrl;
             } else {
                 // For other buckets, extract filename from imageUrl if needed
                 const filename = imageUrl.includes('/') ? imageUrl.split('/').pop() || imageUrl : imageUrl;
                 const { data, error } = await supabase.shareFile(userId, filename, expiresIn, false, bucket);
-                if (error) throw error;
+                if (error) {
+                    throw error;
+                }
                 return data.signedUrl;
             }
         }, 900000); // 15 minute cache
     } catch (err) {
-        // Silent fallback - don't log errors for expected missing images
         return null;
     }
 }

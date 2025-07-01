@@ -87,10 +87,10 @@ export async function deleteSavedImage(imageId: string, userId: string): Promise
 
         const supabase = await createSSRClient();
         
-        // First verify ownership
+        // First verify ownership and get file paths
         const { data: image, error: fetchError } = await supabase
             .from('saved_images')
-            .select('id, user_id')
+            .select('id, user_id, original_url, edited_url')
             .eq('id', imageId)
             .eq('user_id', userId)
             .single();
@@ -99,7 +99,11 @@ export async function deleteSavedImage(imageId: string, userId: string): Promise
             throw new Error('Image not found or access denied');
         }
 
-        // Delete the image record
+        // Extract file paths from URLs
+        const originalFilePath = image.original_url ? extractFilePathFromUrl(image.original_url) : null;
+        const editedFilePath = image.edited_url ? extractFilePathFromUrl(image.edited_url) : null;
+
+        // Delete the image record first
         const { error: deleteError } = await supabase
             .from('saved_images')
             .delete()
@@ -111,10 +115,72 @@ export async function deleteSavedImage(imageId: string, userId: string): Promise
             throw deleteError;
         }
 
-        // TODO: Also delete the actual image files from storage if needed
+        // Delete the actual image files from storage
+        const deletionPromises = [];
+
+        // Delete original file from 'files' bucket
+        if (originalFilePath) {
+            deletionPromises.push(
+                supabase.storage
+                    .from('files')
+                    .remove([originalFilePath])
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('Error deleting original file:', error);
+                        }
+                    })
+            );
+        }
+
+        // Delete restored file from 'restored-images' bucket
+        if (editedFilePath) {
+            deletionPromises.push(
+                supabase.storage
+                    .from('restored-images')
+                    .remove([editedFilePath])
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('Error deleting restored file:', error);
+                        }
+                    })
+            );
+        }
+
+        // Execute all deletions in parallel
+        await Promise.all(deletionPromises);
         
     } catch (error) {
         console.error('Server action error:', error);
         throw new Error('Failed to delete saved image');
+    }
+}
+
+// Helper function to extract file path from Supabase storage URL
+function extractFilePathFromUrl(url: string): string | null {
+    try {
+        // Supabase storage URLs typically follow format:
+        // https://[project].supabase.co/storage/v1/object/public/[bucket]/[filepath]
+        // or signed URLs with additional parameters
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/');
+        
+        // Find the bucket name and extract everything after it
+        const publicIndex = pathParts.findIndex(part => part === 'public');
+        if (publicIndex !== -1 && publicIndex < pathParts.length - 2) {
+            // Skip 'public' and bucket name, join the rest
+            return pathParts.slice(publicIndex + 2).join('/');
+        }
+        
+        // Fallback: try to extract from object/public pattern
+        const objectIndex = pathParts.findIndex(part => part === 'object');
+        if (objectIndex !== -1 && objectIndex < pathParts.length - 3) {
+            // Skip 'object', 'public', and bucket name
+            return pathParts.slice(objectIndex + 3).join('/');
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error extracting file path from URL:', error);
+        return null;
     }
 }

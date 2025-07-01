@@ -63,14 +63,16 @@ export function useCachedImages(images: SavedImage[], userId: string | undefined
         if (!cached) {
             // Fallback to original image while loading
             const image = images.find(img => img.id === imageId);
-            return type === 'thumbnail' ? 
+            const fallbackUrl = type === 'thumbnail' ? 
                 (image?.thumbnail_url || image?.edited_url || '') : 
                 (image?.edited_url || '');
+            return fallbackUrl;
         }
         
-        return type === 'thumbnail' ? 
+        const finalUrl = type === 'thumbnail' ? 
             (cached.thumbnailUrl || cached.editedUrl || '') : 
             (cached.editedUrl || '');
+        return finalUrl;
     };
 
     return {

@@ -964,8 +964,17 @@ export default function FileManagementPage() {
                                     >
                                         {/* Image Preview */}
                                         <div 
-                                            className="relative aspect-square bg-gray-100 cursor-pointer"
+                                            className={`relative aspect-square bg-gray-100 ${
+                                                // Disable click during restoration
+                                                (associatedJob && (associatedJob.status === 'processing' || associatedJob.status === 'pending')) || restoringFiles.has(filename) 
+                                                    ? 'cursor-not-allowed' 
+                                                    : 'cursor-pointer'
+                                            }`}
                                             onClick={() => {
+                                                // Prevent modal from opening during restoration
+                                                if ((associatedJob && (associatedJob.status === 'processing' || associatedJob.status === 'pending')) || restoringFiles.has(filename)) {
+                                                    return;
+                                                }
                                                 if (modalUrl) {
                                                     setSelectedImageUrl(modalUrl);
                                                     setSelectedImageName(cleanName);
