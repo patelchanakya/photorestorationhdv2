@@ -5,6 +5,7 @@ import { Coins, Plus } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface ProminentCreditsDisplayProps {
     onBuyMore?: () => void;
@@ -89,51 +90,38 @@ export default function ProminentCreditsDisplay({
     const isLowCredits = displayCredits <= 5;
     
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm">
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-full ${
-                        isLowCredits ? 'bg-red-100' : 'bg-orange-100'
-                    }`}>
-                        <Coins className={`h-6 w-6 ${
-                            isLowCredits ? 'text-red-600' : 'text-orange-600'
-                        }`} />
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500 font-medium">Credits</p>
-                        <div className="flex items-center space-x-2">
-                            <AnimatedCounter
-                                value={displayCredits}
-                                className={`text-2xl font-bold ${
-                                    isPending ? 'opacity-75' : 'opacity-100'
-                                }`}
-                                isLowCredits={isLowCredits}
-                            />
-                            {isPending && (
-                                <div className="w-1 h-1 bg-orange-500 rounded-full animate-pulse ml-1"></div>
-                            )}
+        <ErrorBoundary>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-full ${
+                            isLowCredits ? 'bg-red-100' : 'bg-orange-100'
+                        }`}>
+                            <Coins className={`h-6 w-6 ${
+                                isLowCredits ? 'text-red-600' : 'text-orange-600'
+                            }`} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Credits</p>
+                            <div className="flex items-center space-x-2">
+                                <AnimatedCounter
+                                    value={displayCredits}
+                                    className={`text-2xl font-bold ${
+                                        isPending ? 'opacity-75' : 'opacity-100'
+                                    }`}
+                                    isLowCredits={isLowCredits}
+                                />
+                                {isPending && (
+                                    <div className="w-1 h-1 bg-orange-500 rounded-full animate-pulse ml-1"></div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                {showBuyButton && (
-                    onBuyMore ? (
-                        <Button 
-                            onClick={onBuyMore}
-                            size="sm" 
-                            className={`${
-                                isLowCredits 
-                                    ? 'bg-red-600 hover:bg-red-700' 
-                                    : 'bg-orange-600 hover:bg-orange-700'
-                            } text-white shadow-md`}
-                        >
-                            <Plus className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Buy More</span>
-                            <span className="sm:hidden">Buy</span>
-                        </Button>
-                    ) : (
-                        <Link href="/app/user-settings">
+                    
+                    {showBuyButton && (
+                        onBuyMore ? (
                             <Button 
+                                onClick={onBuyMore}
                                 size="sm" 
                                 className={`${
                                     isLowCredits 
@@ -145,11 +133,26 @@ export default function ProminentCreditsDisplay({
                                 <span className="hidden sm:inline">Buy More</span>
                                 <span className="sm:hidden">Buy</span>
                             </Button>
-                        </Link>
-                    )
-                )}
+                        ) : (
+                            <Link href="/app/user-settings">
+                                <Button 
+                                    size="sm" 
+                                    className={`${
+                                        isLowCredits 
+                                            ? 'bg-red-600 hover:bg-red-700' 
+                                            : 'bg-orange-600 hover:bg-orange-700'
+                                    } text-white shadow-md`}
+                                >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    <span className="hidden sm:inline">Buy More</span>
+                                    <span className="sm:hidden">Buy</span>
+                                </Button>
+                            </Link>
+                        )
+                    )}
+                </div>
+                
             </div>
-            
-        </div>
+        </ErrorBoundary>
     );
 }

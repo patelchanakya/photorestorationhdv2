@@ -68,12 +68,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             const cacheKey = createCacheKey('credits', userId);
             const result = await apiCache.get(cacheKey, () => getCredits(userId), 2000);
             
-            if (result.success && result.credits !== undefined) {
+            if (result?.success && result.credits !== undefined) {
                 setCredits(result.credits);
                 // Remove redundant optimistic update to prevent conflicts
                 // The optimistic state will naturally sync with the real credits state
             } else {
-                console.error('Error fetching credits:', result.error);
+                console.error('Error fetching credits:', result?.error || 'Unknown error');
             }
         } catch (error) {
             console.error('Credits fetch error:', error);
@@ -92,7 +92,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     updateOptimisticCredits({ type: 'deduct', amount });
                     
                     const result = await deductCredits(user.id, amount);
-                    if (result.success && result.credits !== undefined) {
+                    if (result?.success && result.credits !== undefined) {
                         // Invalidate credits cache since we have fresh data
                         const cacheKey = createCacheKey('credits', user.id);
                         apiCache.invalidate(cacheKey);
@@ -106,8 +106,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                         // Rollback optimistic update on failure
                         updateOptimisticCredits({ type: 'refund', amount });
                         // Only log non-insufficient credit errors to avoid console spam
-                        if (!result.error?.includes('You need') && !result.error?.includes('Insufficient')) {
-                            console.error('Error deducting credits:', result.error);
+                        if (!result?.error?.includes('You need') && !result?.error?.includes('Insufficient')) {
+                            console.error('Error deducting credits:', result?.error || 'Unknown error');
                         }
                         resolve(false);
                     }
@@ -131,7 +131,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     updateOptimisticCredits({ type: 'refund', amount });
                     
                     const result = await refundCredits(user.id, amount);
-                    if (result.success && result.credits !== undefined) {
+                    if (result?.success && result.credits !== undefined) {
                         // Invalidate credits cache since we have fresh data
                         const cacheKey = createCacheKey('credits', user.id);
                         apiCache.invalidate(cacheKey);
@@ -144,7 +144,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     } else {
                         // Rollback optimistic update on failure
                         updateOptimisticCredits({ type: 'deduct', amount });
-                        console.error('Error refunding credits:', result.error);
+                        console.error('Error refunding credits:', result?.error || 'Unknown error');
                         resolve(false);
                     }
                 } catch (error) {

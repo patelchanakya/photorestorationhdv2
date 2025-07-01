@@ -310,7 +310,7 @@ export default function FileManagementPage() {
     }, [user?.id, loadFiles, refreshJobs]);
 
     // Compute if jobs are active
-    const hasActiveJobs = useMemo(() => processingJobs.some(j => j.status === 'pending' || j.status === 'processing'), [processingJobs]);
+    const hasActiveJobs = useMemo(() => processingJobs?.some(j => j.status === 'pending' || j.status === 'processing') || false, [processingJobs]);
 
     // Exponential backoff polling: only when active jobs exist
     useEffect(() => {
