@@ -78,7 +78,6 @@ export default function FileManagementPage() {
     
     // Demo mode state for tour
     const [demoMode, setDemoMode] = useState(false);
-    const [demoFiles, setDemoFiles] = useState<FileObject[]>([]);
 
     // Track page view
     useEffect(() => {
@@ -197,40 +196,12 @@ export default function FileManagementPage() {
     }, [generatePreviewUrl, generateThumbnailUrl]);
 
     // Demo mode utilities
-    const createDemoFile = useCallback((): FileObject => {
-        return {
-            name: 'demo-vintage-photo.webp',
-            id: 'demo-file-id',
-            updated_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            last_accessed_at: new Date().toISOString(),
-            metadata: {
-                eTag: 'demo-etag',
-                size: 50000,
-                mimetype: 'image/webp',
-                cacheControl: 'max-age=3600',
-                lastModified: new Date().toISOString(),
-                contentLength: 50000,
-                httpStatusCode: 200
-            }
-        };
-    }, []);
-
     const activateDemoMode = useCallback(() => {
-        const demoFile = createDemoFile();
         setDemoMode(true);
-        setDemoFiles([demoFile]);
-        
-        // Set demo image URLs using public showcase images
-        setImageUrls({ [demoFile.name]: '/showcase/before1.webp' });
-        setThumbnails({ [demoFile.name]: '/showcase/before1.webp' });
-    }, [createDemoFile]);
+    }, []);
 
     const deactivateDemoMode = useCallback(() => {
         setDemoMode(false);
-        setDemoFiles([]);
-        setImageUrls({});
-        setThumbnails({});
     }, []);
 
     const loadFiles = useCallback(async () => {
@@ -1020,13 +991,50 @@ export default function FileManagementPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
-                            {[...files, ...(demoMode ? demoFiles : [])].map((file, index) => {
+                            
+                            {/* Demo photo card */}
+                            {demoMode && (
+                                <div className="relative group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                                    <div className="relative aspect-square bg-gray-100 cursor-pointer">
+                                        <Image
+                                            src="/showcase/before1.webp"
+                                            alt="Demo vintage photo"
+                                            fill
+                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                        />
+                                    </div>
+                                    
+                                    <div className="p-4">
+                                        <h3 className="font-medium text-gray-900 truncate" title="Demo Vintage Photo">
+                                            Demo Vintage Photo
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Demo for tour walkthrough
+                                        </p>
+                                        
+                                        <div className="mt-3 space-y-2">
+                                            <button
+                                                disabled
+                                                className="w-full px-4 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-50 text-sm font-medium flex items-center justify-center space-x-2"
+                                                data-tour="first-restore-button"
+                                                title="Demo file - Upload a real photo to restore"
+                                            >
+                                                <Wand2 className="h-4 w-4"/>
+                                                <span>Demo - Upload to Restore</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Real uploaded files */}
+                            {files.map((file, index) => {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
                                 const fullUrl = imageUrls[filename];
                                 const thumbnailUrl = thumbnails[filename];
                                 const associatedJob = processingJobs.find(job => job.image_path === `${user!.id}/${filename}`);
-                                const isDemoFile = demoMode && filename.includes('demo-');
 
                                 // Determine which image to show (restored result takes priority)
                                 let displayUrl: string | null = thumbnailUrl; // Use thumbnail for grid
@@ -1127,25 +1135,13 @@ export default function FileManagementPage() {
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            if (!isDemoFile) {
-                                                                handleRestorePhoto(filename);
-                                                            }
+                                                            handleRestorePhoto(filename);
                                                         }}
-                                                        disabled={isDemoFile || restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0}
-                                                        className={`w-full px-4 py-3 rounded-lg transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                                            isDemoFile 
-                                                                ? 'bg-gray-400 text-white hover:bg-gray-400' 
-                                                                : 'bg-orange-600 text-white hover:bg-orange-700 disabled:hover:bg-orange-600'
-                                                        }`}
-                                                        data-tour={index === 0 ? "first-restore-button" : undefined}
-                                                        title={isDemoFile ? "Demo file - Upload a real photo to restore" : undefined}
+                                                        disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0}
+                                                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-600"
+                                                        data-tour={index === 0 && !demoMode ? "first-restore-button" : undefined}
                                                     >
-                                                        {isDemoFile ? (
-                                                            <>
-                                                                <Wand2 className="h-4 w-4"/>
-                                                                <span>Demo - Upload to Restore</span>
-                                                            </>
-                                                        ) : restoringFiles.has(filename) ? (
+                                                        {restoringFiles.has(filename) ? (
                                                             <>
                                                                 <Loader2 className="h-4 w-4 animate-spin"/>
                                                                 <span>Starting Restoration...</span>
@@ -1238,7 +1234,6 @@ export default function FileManagementPage() {
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                if (isDemoFile) return;
                                                                 try {
                                                                     setError('');
                                                                     const supabase = await createSPASassClient();
@@ -1251,13 +1246,8 @@ export default function FileManagementPage() {
                                                                     console.error('Error deleting file:', err);
                                                                 }
                                                             }}
-                                                            disabled={isDemoFile}
-                                                            className={`flex-1 px-2 lg:px-3 py-2 border rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 ${
-                                                                isDemoFile 
-                                                                    ? 'border-gray-200 text-gray-400 cursor-not-allowed' 
-                                                                    : 'border-red-200 text-red-600 hover:bg-red-50'
-                                                            }`}
-                                                            title={isDemoFile ? "Demo file - cannot delete" : "Delete Photo"}
+                                                            className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
+                                                            title="Delete Photo"
                                                         >
                                                             <Trash2 className="h-4 w-4"/>
                                                             <span className="hidden @lg:inline">Delete</span>
@@ -1268,7 +1258,6 @@ export default function FileManagementPage() {
                                                     <button
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            if (isDemoFile) return;
                                                             try {
                                                                 setError('');
                                                                 const supabase = await createSPASassClient();
@@ -1281,13 +1270,8 @@ export default function FileManagementPage() {
                                                                 console.error('Error deleting file:', err);
                                                             }
                                                         }}
-                                                        disabled={isDemoFile}
-                                                        className={`w-full px-4 py-3 border rounded-lg transition-colors text-sm font-medium flex items-center justify-center space-x-2 ${
-                                                            isDemoFile 
-                                                                ? 'border-gray-200 text-gray-400 cursor-not-allowed' 
-                                                                : 'border-red-200 text-red-600 hover:bg-red-50'
-                                                        }`}
-                                                        title={isDemoFile ? "Demo file - cannot delete" : "Delete Photo"}
+                                                        className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                                                        title="Delete Photo"
                                                     >
                                                         <Trash2 className="h-4 w-4"/>
                                                         <span>Delete</span>

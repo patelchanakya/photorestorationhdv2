@@ -36,7 +36,7 @@ const HomePricing = () => {
 
     // Calculate price per credit and extract credit count
     const getPricePerCredit = (tier: { price: number; features: string[] }) => {
-        const price = typeof tier.price === 'number' ? tier.price : parseFloat(tier.price.toString().replace('$', ''));
+        const price = tier.price;
         const creditCount = getCreditCount(tier);
         return creditCount > 0 ? price / creditCount : 0;
     };
@@ -50,11 +50,10 @@ const HomePricing = () => {
         }
         
         // Fallback based on tier name/price mapping
-        const priceNum = typeof tier.price === 'number' ? tier.price : parseFloat(tier.price.toString().replace('$', ''));
-        if (priceNum === 2.99) return 2; // Single Pack (updated to 2 credits)
-        if (priceNum === 5.99) return 5; // Memories Pack
-        if (priceNum === 18.99) return 25; // Family Pack
-        if (priceNum === 49.99) return 100; // Archive Album Pack
+        if (tier.price === 2.99) return 2; // Single Pack (updated to 2 credits)
+        if (tier.price === 5.99) return 5; // Memories Pack
+        if (tier.price === 18.99) return 25; // Family Pack
+        if (tier.price === 49.99) return 100; // Archive Album Pack
         
         return 1; // Default fallback
     };
@@ -65,6 +64,17 @@ const HomePricing = () => {
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold mb-4">Simple Credit Packages</h2>
                     <p className="text-gray-600 text-lg">Buy credits as you need them - no subscription required</p>
+                    
+                    {/* Promotional Banner */}
+                    <div className="mt-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                            <p className="text-orange-800 font-semibold text-sm">
+                                Start for Free - Get 1 restoration when you sign up!
+                            </p>
+                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
