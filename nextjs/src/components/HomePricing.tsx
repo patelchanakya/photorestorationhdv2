@@ -50,7 +50,7 @@ const HomePricing = () => {
         }
         
         // Fallback based on tier name/price mapping
-        if (tier.price === 2.99) return 2; // Single Pack (updated to 2 credits)
+        if (tier.price === 2.99) return 2; // Duo Pack (updated to 2 credits)
         if (tier.price === 5.99) return 5; // Memories Pack
         if (tier.price === 18.99) return 25; // Family Pack
         if (tier.price === 49.99) return 100; // Archive Album Pack

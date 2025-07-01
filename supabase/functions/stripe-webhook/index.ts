@@ -16,7 +16,7 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPAB
 // Credit mapping based on your stripe-config.ts
 // Updated with actual Stripe price IDs from your Dashboard (TEST MODE)
 const CREDIT_MAPPING: { [key: string]: number } = {
-  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 2,   // Single Pack
+  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 2,   // Duo Pack
   'price_1RYMbzDHBXmKKCsnjXbOyxui': 5,   // Memories Pack
   'price_1RYMdJDHBXmKKCsn6BohuUcS': 25,  // Family Pack
   'price_1RYMeIDHBXmKKCsnLT3mXJGJ': 100, // Archive Album Pack
