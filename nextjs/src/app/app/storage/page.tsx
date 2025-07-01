@@ -448,7 +448,7 @@ export default function FileManagementPage() {
             await loadFiles();
             
             // Show upload success
-            setSuccess(`File uploaded successfully with thumbnail`);
+            setSuccess(`File uploaded successfully`);
             
             // Track successful upload
             if (posthog) {
