@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import CookieConsent from "@/components/Cookies";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { GlobalProvider } from '@/lib/context/GlobalContext';
@@ -32,6 +33,7 @@ export default function RootLayout({
           </GlobalProvider>
         </PostHogProvider>
         <Analytics />
+        <SpeedInsights />
         <CookieConsent />
         { gaID && (
           <GoogleAnalytics gaId={gaID}/>
