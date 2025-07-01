@@ -50,7 +50,7 @@ export async function generateCachedImageUrl(
                 return data.signedUrl;
             }
         }, 900000); // 15 minute cache
-    } catch (err) {
+    } catch {
         return null;
     }
 }

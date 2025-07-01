@@ -41,7 +41,7 @@ export function useCachedImages(images: SavedImage[], userId: string | undefined
                         editedUrl: cachedEditedUrl || image.edited_url,
                         thumbnailUrl: cachedThumbnailUrl || image.thumbnail_url || image.edited_url
                     };
-                } catch (err) {
+                } catch {
                     // Silent fallback - use original URLs
                     newCachedUrls[image.id] = {
                         editedUrl: image.edited_url,

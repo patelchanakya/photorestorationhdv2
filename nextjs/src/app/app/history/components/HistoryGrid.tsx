@@ -43,7 +43,7 @@ export function HistoryGrid({ images }: HistoryGridProps) {
     const [currentImages, setCurrentImages] = useState(images);
     
     // Use cached images hook for optimized loading
-    const { getCachedUrl, isLoading: urlsLoading } = useCachedImages(currentImages, user?.id);
+    const { getCachedUrl } = useCachedImages(currentImages, user?.id);
 
     // Update local images when prop changes
     useEffect(() => {
