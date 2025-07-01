@@ -15,10 +15,12 @@ interface PurchaseModalProps {
   onClose: () => void;
   /** Optional callback for future use when purchase completes successfully */
   onPurchaseSuccess?: () => void;
+  /** Optional redirect path after successful purchase. Defaults to /app/user-settings */
+  redirectPath?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurchaseSuccess: _onPurchaseSuccess }) => {
+const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurchaseSuccess: _onPurchaseSuccess, redirectPath = '/app/user-settings' }) => {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailCopied, setEmailCopied] = useState(false);
@@ -64,8 +66,8 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
           user_id: user.id,
           price_id: product.priceId,
           mode: product.mode,
-          success_url: `${window.location.origin}/app/user-settings?session_id={CHECKOUT_SESSION_ID}&success=true`,
-          cancel_url: `${window.location.origin}/app/user-settings?cancelled=true`,
+          success_url: `${window.location.origin}${redirectPath}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+          cancel_url: `${window.location.origin}${redirectPath}?cancelled=true`,
         }),
       });
 

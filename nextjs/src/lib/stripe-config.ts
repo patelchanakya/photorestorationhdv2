@@ -17,7 +17,7 @@ export const stripeProducts: StripeProduct[] = [
     description: 'Test our AI restoration on one special photo',
     mode: 'payment',
     price: '$2.99',
-    credits: 1,
+    credits: 2,
   },
   {
     id: 'prod_STJE0YWxUhWGWo',
@@ -50,7 +50,7 @@ export const stripeProducts: StripeProduct[] = [
 
 // Credit mapping for webhook processing
 export const CREDIT_MAPPING: { [key: string]: number } = {
-  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 1,   // Single Pack
+  'price_1RYMaEDHBXmKKCsnzZK4iqzv': 2,   // Single Pack
   'price_1RYMbzDHBXmKKCsnjXbOyxui': 5,   // Memories Pack
   'price_1RYMdJDHBXmKKCsn6BohuUcS': 25,  // Family Pack
   'price_1RYMeIDHBXmKKCsnLT3mXJGJ': 100, // Archive Album Pack

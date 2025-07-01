@@ -18,6 +18,7 @@ import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import CreditTestPanel from '@/components/CreditTestPanel';
 import { usePostHog } from 'posthog-js/react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 const PurchaseModal = dynamic(() => import('@/components/PurchaseModal'), {
@@ -50,6 +51,7 @@ const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 export default function FileManagementPage() {
     const { user, deductCreditsOptimistic, optimisticCredits } = useGlobal();
     const posthog = usePostHog();
+    const searchParams = useSearchParams();
     const [files, setFiles] = useState<FileObject[]>([]);
     const [processingJobs, setProcessingJobs] = useState<ProcessingJob[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -80,6 +82,42 @@ export default function FileManagementPage() {
             posthog.capture('storage_page_viewed');
         }
     }, [posthog]);
+
+    // Handle Stripe redirect parameters
+    useEffect(() => {
+        const sessionId = searchParams.get('session_id');
+        const successParam = searchParams.get('success');
+        const cancelledParam = searchParams.get('cancelled');
+
+        if (sessionId && successParam === 'true') {
+            setSuccess('Payment successful! Your credits have been added to your account. You can now restore your photos!');
+            
+            // Track successful purchase completion
+            if (posthog) {
+                posthog.capture('credit_purchase_completed', {
+                    session_id: sessionId,
+                    payment_method: 'stripe',
+                    page: 'storage'
+                });
+            }
+            
+            // Clear URL parameters
+            window.history.replaceState({}, '', '/app/storage');
+        } else if (cancelledParam === 'true') {
+            setError('Payment was cancelled. No charges were made.');
+            
+            // Track purchase cancellation
+            if (posthog) {
+                posthog.capture('credit_purchase_cancelled', {
+                    stage: 'stripe_checkout',
+                    page: 'storage'
+                });
+            }
+            
+            // Clear URL parameters
+            window.history.replaceState({}, '', '/app/storage');
+        }
+    }, [searchParams, posthog]);
 
     // Utility function to clean up filenames for display
     const cleanFilename = (filename: string) => {
@@ -1144,10 +1182,19 @@ export default function FileManagementPage() {
                                                         </button>
                                                         
                                                         <button
-                                                            onClick={(e) => {
+                                                            onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                setFileToDelete(filename);
-                                                                setShowDeleteDialog(true);
+                                                                try {
+                                                                    setError('');
+                                                                    const supabase = await createSPASassClient();
+                                                                    const { error } = await supabase.deleteFile(user!.id!, filename);
+                                                                    if (error) throw error;
+                                                                    await loadFiles();
+                                                                    setSuccess('File deleted successfully');
+                                                                } catch (err) {
+                                                                    setError('Failed to delete file');
+                                                                    console.error('Error deleting file:', err);
+                                                                }
                                                             }}
                                                             className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
                                                             title="Delete Photo"
@@ -1159,10 +1206,19 @@ export default function FileManagementPage() {
                                                 ) : (
                                                     // No restoration or restoration in progress - show full-width delete button to match restore button
                                                     <button
-                                                        onClick={(e) => {
+                                                        onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            setFileToDelete(filename);
-                                                            setShowDeleteDialog(true);
+                                                            try {
+                                                                setError('');
+                                                                const supabase = await createSPASassClient();
+                                                                const { error } = await supabase.deleteFile(user!.id!, filename);
+                                                                if (error) throw error;
+                                                                await loadFiles();
+                                                                setSuccess('File deleted successfully');
+                                                            } catch (err) {
+                                                                setError('Failed to delete file');
+                                                                console.error('Error deleting file:', err);
+                                                            }
                                                         }}
                                                         className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                                                         title="Delete Photo"
@@ -1316,6 +1372,7 @@ export default function FileManagementPage() {
                         onPurchaseSuccess={() => {
                             setShowPurchaseModal(false);
                         }}
+                        redirectPath="/app/storage"
                     />
                 </div>
             </div>
