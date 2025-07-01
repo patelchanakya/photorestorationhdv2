@@ -52,9 +52,12 @@ const tourSteps: TourStep[] = [
 interface HowItWorksTourProps {
     isOpen: boolean;
     onClose: () => void;
+    onActivateDemo?: () => void;
+    onDeactivateDemo?: () => void;
+    hasFiles?: boolean;
 }
 
-export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps) {
+export default function HowItWorksTour({ isOpen, onClose, onActivateDemo, onDeactivateDemo, hasFiles = false }: HowItWorksTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
     
     const currentTourStep = tourSteps[currentStep];
@@ -160,18 +163,31 @@ export default function HowItWorksTour({ isOpen, onClose }: HowItWorksTourProps)
         return () => clearTimeout(timer);
     }, [isOpen, currentStep, highlightElement, removeAllHighlights, updateFloatingReference]);
 
+    // Demo activation effect - activate demo when tour opens on empty storage
+    useEffect(() => {
+        if (isOpen && !hasFiles && onActivateDemo) {
+            onActivateDemo();
+        }
+    }, [isOpen, hasFiles, onActivateDemo]);
+
     // Floating UI handles resize and scroll automatically via autoUpdate
 
     const nextStep = () => {
         if (currentStep < tourSteps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
+            if (onDeactivateDemo) {
+                onDeactivateDemo();
+            }
             onClose();
         }
     };
 
     const skipTour = () => {
         removeAllHighlights();
+        if (onDeactivateDemo) {
+            onDeactivateDemo();
+        }
         onClose();
     };
 
