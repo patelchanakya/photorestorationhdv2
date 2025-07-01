@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Shield, Database, Clock } from 'lucide-react';
+import { Shield, Database, Clock, Facebook } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
 import HomePricing from "@/components/HomePricing";
 import FAQSection from '@/components/FAQSection';
@@ -72,7 +72,7 @@ export default function Home() {
                 </span> in seconds
               </h1>
               <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-                Transform damaged, faded, or low-quality photos into stunning HD images.
+                Transform damaged, faded, or low-quality photos into stunning HD images with professional restoration technology.
               </p>
               <div className="mt-10 flex gap-4 justify-center">
                 <StartRestoringButton variant="hero" />
@@ -87,10 +87,10 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Why Choose Our Restoration?
+                Why Choose Photo Restoration HD?
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Professional-grade restoration that brings your memories back to life
+                Professional-grade restoration that brings your precious memories back to life in seconds
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center">
@@ -183,10 +183,10 @@ export default function Home() {
         <section className="py-24 bg-primary-600">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-white">
-              Ready to Restore Your Photos?
+              Ready to Restore Your Precious Memories?
             </h2>
             <p className="mt-4 text-xl text-primary-100">
-              Join hundreds of users bringing their memories back to life
+              Join thousands of users who have already restored their treasured family photos
             </p>
             <StartRestoringButton variant="cta" className="mt-8" />
           </div>
@@ -200,11 +200,11 @@ export default function Home() {
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div>
-                <h4 className="text-sm font-semibold text-gray-900">Product</h4>
+                <h4 className="text-sm font-semibold text-gray-900">Photo Restoration</h4>
                 <ul className="mt-4 space-y-2">
                   <li>
-                    <Link href="#features" className="text-gray-600 hover:text-gray-900">
-                      Features
+                    <Link href="#gallery" className="text-gray-600 hover:text-gray-900">
+                      Examples
                     </Link>
                   </li>
                   <li>
@@ -212,15 +212,46 @@ export default function Home() {
                       Pricing
                     </Link>
                   </li>
+                  <li>
+                    <Link href="#faq" className="text-gray-600 hover:text-gray-900">
+                      FAQ
+                    </Link>
+                  </li>
                 </ul>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900">Resources</h4>
+                <h4 className="text-sm font-semibold text-gray-900">Support</h4>
                 <ul className="mt-4 space-y-2">
                   <li>
-                    <Link href="https://github.com/Razikus/supabase-nextjs-template" className="text-gray-600 hover:text-gray-900">
-                      Documentation
+                    <a 
+                      href="https://www.facebook.com/photorestorationhd" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      Contact Us
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="#benefits" className="text-gray-600 hover:text-gray-900">
+                      How It Works
                     </Link>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900">Follow Us</h4>
+                <ul className="mt-4 space-y-2">
+                  <li>
+                    <a 
+                      href="https://www.facebook.com/photorestorationhd" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
+                    >
+                      <Facebook className="w-4 h-4" />
+                      Facebook
+                    </a>
                   </li>
                 </ul>
               </div>
@@ -229,21 +260,26 @@ export default function Home() {
                 <ul className="mt-4 space-y-2">
                   <li>
                     <Link href="/legal/privacy" className="text-gray-600 hover:text-gray-900">
-                      Privacy
+                      Privacy Policy
                     </Link>
                   </li>
                   <li>
                     <Link href="/legal/terms" className="text-gray-600 hover:text-gray-900">
-                      Terms
+                      Terms of Service
                     </Link>
                   </li>
                 </ul>
               </div>
             </div>
             <div className="mt-8 pt-8 border-t border-gray-200">
-              <p className="text-center text-gray-600">
-                © {new Date().getFullYear()} {productName}. All rights reserved.
-              </p>
+              <div className="flex flex-col sm:flex-row justify-between items-center">
+                <p className="text-gray-600">
+                  © {new Date().getFullYear()} {productName}. All rights reserved.
+                </p>
+                <p className="text-gray-500 text-sm mt-2 sm:mt-0">
+                  Restore your precious memories with the best photo enhancement technology
+                </p>
+              </div>
             </div>
           </div>
         </footer>
