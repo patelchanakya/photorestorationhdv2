@@ -136,7 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             </div>
                             <span className="text-sm font-bold text-orange-600 tracking-tight whitespace-nowrap">
                                 <span className="hidden xs:inline">Photo Restoration HD</span>
-                                <span className="xs:hidden">PRH</span>
+                                <span className="xs:hidden">PRHD</span>
                             </span>
                         </Link>
                     </div>

@@ -10,7 +10,7 @@ import { WebVitals } from '@/components/WebVitals';
 
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_PRODUCTNAME,
-  description: "The best way to build your SaaS product.",
+  description: "Instant, cheap, fast photo restoration service.",
   icons: {
     icon: '/icon.png',
     apple: '/apple-icon.png',
