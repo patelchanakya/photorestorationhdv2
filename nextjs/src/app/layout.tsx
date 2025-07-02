@@ -11,6 +11,20 @@ import { WebVitals } from '@/components/WebVitals';
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_PRODUCTNAME,
   description: "The best way to build your SaaS product.",
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: process.env.NEXT_PUBLIC_PRODUCTNAME,
+  },
+  other: {
+    'msapplication-TileColor': '#f97316',
+    'msapplication-TileImage': '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
