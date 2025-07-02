@@ -77,7 +77,7 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
                   >
                     FAMILY50
                   </button>
-                  <span className="text-sm sm:text-base text-green-100">at checkout</span>
+                  <span className="text-sm sm:text-base text-green-100">at checkout - Valid till July 8</span>
                 </div>
               </div>
             </div>

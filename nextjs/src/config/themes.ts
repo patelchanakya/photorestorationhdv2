@@ -36,17 +36,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "Found my grandparents' wedding photos in the attic - they were severely damaged. The restoration was incredible, now they're beautifully displayed in our home.",
+        quote: "Found my grandparents' wedding photos in a box - water damaged and faded. Can't believe how good they look now!",
         author: "Emily R.",
         rating: 5
       },
       {
-        quote: "Our 1960s wedding photos were faded and torn. Now they look like they were taken yesterday. My children can finally see how beautiful their father looked on our wedding day.",
+        quote: "My 1960s wedding photos were barely visible. Now my kids can actually see what dad looked like back then.",
         author: "Margaret T.",
         rating: 5
       },
       {
-        quote: "Restored our wedding album photos for our 50th anniversary. The quality was amazing - better than the originals!",
+        quote: "Used this for our 50th anniversary slideshow. The photos came out great.",
         author: "Robert & Helen M.",
         rating: 5
       }
@@ -105,17 +105,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "When my father passed, we only had one damaged photo of him from his military service. The restoration brought back every detail - it was perfect for his memorial service.",
+        quote: "Had one old photo of dad from the army, pretty beat up. Fixed it up nice for the service.",
         author: "David K.",
         rating: 5
       },
       {
-        quote: "Needed photos restored quickly for my mother's obituary. The service was fast, respectful, and the quality was exceptional during a difficult time.",
+        quote: "Needed mom's photo fixed fast for the obituary. They got it done quick and it looked good.",
         author: "Susan L.",
         rating: 5
       },
       {
-        quote: "Found old family photos to display at grandma's celebration of life. The restored photos brought smiles and wonderful memories to everyone.",
+        quote: "Used some old family photos for grandma's memorial. Everyone loved seeing the clear pictures.",
         author: "Maria G.",
         rating: 5
       }
@@ -174,17 +174,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "Had a box of 1920s family photos that were severely faded. The restoration revealed details I never knew existed - incredible technology!",
+        quote: "Had some really old family photos from the 1920s that were super faded. You can actually see the details now.",
         author: "Thomas B.",
         rating: 5
       },
       {
-        quote: "My great-grandmother's portrait from 1895 was barely visible. Now it's a stunning centerpiece in our family room - the detail is amazing.",
+        quote: "Great-grandmother's old portrait was barely there. Now it's hanging in the living room and looks great.",
         author: "Catherine W.",
         rating: 5
       },
       {
-        quote: "Restored vintage photos from our family farm dating back to the 1930s. Now we can see the faces and memories clearly again.",
+        quote: "Fixed up some old farm photos from the 30s. Nice to see great-grandpa's face clearly again.",
         author: "John H.",
         rating: 5
       }
@@ -243,17 +243,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "Restored all my children's baby photos that were damaged in a flood. Now they look perfect again and the memories are preserved forever.",
+        quote: "Our baby photos got damaged in a flood. Got them fixed and they look good as new.",
         author: "Jennifer M.",
         rating: 5
       },
       {
-        quote: "Found old family photos in my mother's attic - some dating back 60 years. The restoration brought back so many wonderful memories.",
+        quote: "Found a bunch of old family photos in mom's attic. Some were 60 years old - brought back lots of memories.",
         author: "Michael R.",
         rating: 5
       },
       {
-        quote: "My daughter's first birthday photos were faded and torn. Now they're beautifully restored and displayed in her baby book.",
+        quote: "My daughter's first birthday photos were torn up. Now they're back in her baby book looking great.",
         author: "Amanda S.",
         rating: 5
       }
@@ -312,17 +312,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "Restored my grandfather's WWII photos for his 95th birthday. He was moved to tears seeing his old unit photos in perfect clarity again.",
+        quote: "Fixed up grandpa's old WWII photos for his 95th birthday. He got pretty emotional seeing his unit photos clear again.",
         author: "Steve P.",
         rating: 5
       },
       {
-        quote: "Had my father's Vietnam War photos restored for his memorial service. The quality was exceptional and honored his service beautifully.",
+        quote: "Got dad's Vietnam photos restored for his memorial. Came out really nice and honored his service well.",
         author: "Lisa K.",
         rating: 5
       },
       {
-        quote: "Found my uncle's Korean War service photos in terrible condition. The restoration brought back every detail of his time in service.",
+        quote: "Found uncle's Korean War photos in rough shape. Good to see them restored - brought back his service memories.",
         author: "Robert T.",
         rating: 5
       }
@@ -381,17 +381,17 @@ export const themeConfigs: Record<string, ThemePageConfig> = {
     ],
     testimonials: [
       {
-        quote: "Inherited a collection of 1800s daguerreotypes that were severely tarnished. The restoration revealed incredible detail while preserving their historical character.",
+        quote: "Got some old 1800s photos from my grandmother's estate. They were really tarnished but came out nice.",
         author: "Dr. Patricia H.",
         rating: 5
       },
       {
-        quote: "Local historical society needed glass plate negatives restored for a museum exhibit. The results exceeded our expectations - truly professional quality.",
+        quote: "Needed some glass plate photos fixed for our museum display. They did a good job on them.",
         author: "Richard M., Museum Curator",
         rating: 5
       },
       {
-        quote: "Found Civil War era photographs in my attic. The restoration brought out details I never imagined were there - absolutely stunning work.",
+        quote: "Found some Civil War photos in the attic. You can actually see the details now that they're restored.",
         author: "Elizabeth D.",
         rating: 5
       }
