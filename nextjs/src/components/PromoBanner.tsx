@@ -50,22 +50,26 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
       <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 animate-pulse"></div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3 sm:py-4">
+        {/*
+          Use a column layout on mobile to prevent horizontal overflow.
+          Switch back to a row layout from the small breakpoint (640 px) upwards.
+        */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-3 md:py-4">
           {/* Left side - Main message */}
-          <div className="flex items-center space-x-3 flex-1">
+          <div className="flex items-center gap-3 flex-1 flex-wrap break-words">
             <div className="flex-shrink-0">
               <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-300" />
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-y-1 md:gap-y-0 md:space-x-4">
                 <div className="flex items-center space-x-2">
                   <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
-                  <span className="text-lg sm:text-xl font-bold">Launch Special - 50% OFF!</span>
+                  <span className="text-lg md:text-xl font-bold">Launch Special - 50% OFF!</span>
                   <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
                 </div>
                 
-                <div className="flex items-center space-x-2 mt-1 sm:mt-0">
+                <div className="flex items-center space-x-2 mt-1 md:mt-0">
                   <span className="text-sm sm:text-base text-green-100">Use code</span>
                   <button 
                     onClick={copyPromoCode}
@@ -80,10 +84,11 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
           </div>
 
           {/* Right side - CTA and Close */}
-          <div className="flex items-center space-x-2 sm:space-x-4 ml-4">
+          <div className="flex items-center space-x-2 md:space-x-4 md:ml-4 w-full md:w-auto">
             <Button
               onClick={handleCtaClick}
-              className="bg-white text-green-600 hover:bg-green-50 font-semibold px-4 py-2 sm:px-6 text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              /* Full-width button on very small screens for better tap-target & to prevent overflow */
+              className="bg-white text-green-600 hover:bg-green-50 font-semibold px-4 py-2 md:px-6 text-sm md:text-base shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 w-full md:w-auto"
             >
               Claim Discount
             </Button>
