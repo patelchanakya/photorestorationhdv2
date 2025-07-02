@@ -7,6 +7,7 @@ import FAQSection from '@/components/FAQSection';
 import PhotoShowcase from '@/components/PhotoShowcase';
 import Logo from '@/components/Logo';
 import StartRestoringButton from '@/components/StartRestoringButton';
+import PromoBanner from '@/components/PromoBanner';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
@@ -59,6 +60,8 @@ export default function Home() {
             </div>
           </div>
         </nav>
+
+        <PromoBanner className="mt-16" />
 
         <section className="relative pt-32 pb-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

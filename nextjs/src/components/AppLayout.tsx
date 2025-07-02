@@ -13,6 +13,7 @@ import {
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
 import NavigationLoadingIndicator from './NavigationLoadingIndicator';
+import PromoBanner from './PromoBanner';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -189,6 +190,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         )}
                     </div>
                 </div>
+
+                <PromoBanner />
 
                 <main className="p-4">
                     {children}

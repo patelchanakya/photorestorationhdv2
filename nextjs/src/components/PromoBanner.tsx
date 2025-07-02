@@ -1,0 +1,106 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import { X, Gift, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface PromoBannerProps {
+  onCtaClick?: () => void;
+  className?: string;
+}
+
+export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const STORAGE_KEY = 'family50-banner-dismissed';
+
+  useEffect(() => {
+    // Check if banner was previously dismissed
+    const isDismissed = localStorage.getItem(STORAGE_KEY);
+    if (!isDismissed) {
+      setIsVisible(true);
+    }
+  }, []);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    localStorage.setItem(STORAGE_KEY, 'true');
+  };
+
+  const handleCtaClick = () => {
+    if (onCtaClick) {
+      onCtaClick();
+    } else {
+      // Default behavior - scroll to pricing or start restoring
+      const element = document.getElementById('pricing');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const copyPromoCode = () => {
+    navigator.clipboard.writeText('FAMILY50');
+    // Could add toast notification here
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className={`relative bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 text-white ${className}`}>
+      {/* Animated background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 animate-pulse"></div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-3 sm:py-4">
+          {/* Left side - Main message */}
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="flex-shrink-0">
+              <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-300" />
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
+                  <span className="text-lg sm:text-xl font-bold">Launch Special - 50% OFF!</span>
+                  <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
+                </div>
+                
+                <div className="flex items-center space-x-2 mt-1 sm:mt-0">
+                  <span className="text-sm sm:text-base text-green-100">Use code</span>
+                  <button 
+                    onClick={copyPromoCode}
+                    className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-mono font-bold tracking-wider hover:bg-white/30 transition-colors border border-white/30"
+                  >
+                    FAMILY50
+                  </button>
+                  <span className="text-sm sm:text-base text-green-100">at checkout</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right side - CTA and Close */}
+          <div className="flex items-center space-x-2 sm:space-x-4 ml-4">
+            <Button
+              onClick={handleCtaClick}
+              className="bg-white text-green-600 hover:bg-green-50 font-semibold px-4 py-2 sm:px-6 text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              Claim Discount
+            </Button>
+            
+            <button
+              onClick={handleDismiss}
+              className="text-white/80 hover:text-white transition-colors p-1"
+              aria-label="Dismiss banner"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom glow effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+    </div>
+  );
+}
