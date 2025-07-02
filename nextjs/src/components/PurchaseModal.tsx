@@ -221,24 +221,6 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  {/* Start for Free Ribbon */}
-                  <div className="absolute -top-2 -right-2 z-30">
-                    <div className="relative">
-                      <div 
-                        className="bg-gradient-to-br from-green-400 to-green-600 text-white text-[10px] font-bold px-8 py-1.5 transform rotate-45 origin-center shadow-lg"
-                        style={{
-                          minWidth: '140px',
-                          textAlign: 'center',
-                          transformOrigin: 'center',
-                          position: 'relative',
-                          top: '20px',
-                          right: '-25px'
-                        }}
-                      >
-                        START FREE!
-                      </div>
-                    </div>
-                  </div>
 
                 {/* Plan Name */}
                 <div className="text-center mb-4">
