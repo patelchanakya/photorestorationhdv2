@@ -35,20 +35,12 @@ export default function AuthAwareButtons({ variant = 'primary' }) {
                 href="/app/storage"
                 className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
             >
-                Go to Dashboard
+                Go to App
             </Link>
         ) : (
-            <>
-                <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
-                    Login
-                </Link>
-                <Link
-                    href="/auth/register"
-                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                    Start Restoring
-                </Link>
-            </>
+            <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
+                Login
+            </Link>
         );
     }
 
@@ -58,7 +50,7 @@ export default function AuthAwareButtons({ variant = 'primary' }) {
             href="/app/storage"
             className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
         >
-            Go to Dashboard
+            Go to App
             <ArrowRight className="ml-2 h-5 w-5" />
         </Link>
     ) : (
@@ -67,7 +59,7 @@ export default function AuthAwareButtons({ variant = 'primary' }) {
                 href="/auth/register"
                 className="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
             >
-                Start Restoring Photos
+                Start Now
                 <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
             <Link

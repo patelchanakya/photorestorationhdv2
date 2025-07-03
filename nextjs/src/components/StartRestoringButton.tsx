@@ -28,7 +28,7 @@ const StartRestoringButton: React.FC<StartRestoringButtonProps> = ({
   
   if (user) {
     // Authenticated user - go to dashboard
-    const buttonText = variant === 'hero' ? 'Go to Dashboard' : 'Start Restoring';
+    const buttonText = variant === 'hero' ? 'Go to App' : 'Start Restoring';
     const heroClasses = "bg-primary-600 text-white hover:bg-primary-700 text-lg shadow";
     const ctaClasses = "bg-white text-primary-600 hover:bg-primary-50";
     
@@ -43,7 +43,7 @@ const StartRestoringButton: React.FC<StartRestoringButtonProps> = ({
     );
   } else {
     // Unauthenticated user - go to register
-    const buttonText = 'Start Restoring Photos';
+    const buttonText = 'Start Now';
     const heroClasses = "bg-primary-600 text-white hover:bg-primary-700 text-lg shadow";
     const ctaClasses = "bg-white text-primary-600 hover:bg-primary-50";
     
