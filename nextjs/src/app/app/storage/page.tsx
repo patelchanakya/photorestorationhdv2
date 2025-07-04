@@ -1185,18 +1185,13 @@ export default function FileManagementPage() {
                                                 <p className="text-sm text-gray-500">
                                                     Uploaded {new Date(file.created_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
-                                                {/* Status Badge */}
-                                                {associatedJob && (
+                                                {/* Status Badge - Only show for completed, failed, or cancelled */}
+                                                {associatedJob && associatedJob.status !== 'pending' && associatedJob.status !== 'processing' && (
                                                     <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
-                                                        associatedJob.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                                                        associatedJob.status === 'processing' ? 'bg-orange-100 text-orange-700' :
                                                         associatedJob.status === 'completed' ? 'bg-orange-500 text-white' :
                                                         associatedJob.status === 'cancelled' ? 'bg-gray-100 text-gray-600' :
-                                                        'bg-gray-100 text-gray-600'
+                                                        'bg-red-100 text-red-700' // for failed status
                                                     }`}>
-                                                        {associatedJob.status === 'processing' && (
-                                                            <Loader2 className="h-3 w-3 animate-spin"/>
-                                                        )}
                                                         <span>{associatedJob.status === 'completed' ? 'restored' : associatedJob.status}</span>
                                                     </div>
                                                 )}
