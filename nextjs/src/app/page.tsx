@@ -58,8 +58,8 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-                Bring old photos <span className="relative inline-block">
-                  <span className="text-primary-600 z-10 relative">back to life</span>
+                Restore <span className="relative inline-block">
+                  <span className="text-primary-600 z-10 relative">any photo</span>
                   <svg className="absolute left-0 right-0 bottom-[-8px] w-full h-3 z-0" viewBox="0 0 200 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 10 Q100 2 190 10" stroke="#D35400" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
                   </svg>
@@ -84,7 +84,7 @@ export default function Home() {
                 Why Choose Photo Restoration HD?
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Professional-grade restoration that brings your precious memories back to life in seconds
+                Professional-grade restoration that brings your precious memories back to life in seconds - at a fraction of traditional restoration costs ($50-200 per photo)
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center">

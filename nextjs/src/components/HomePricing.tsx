@@ -55,7 +55,7 @@ const HomePricing = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold mb-4">Simple Credit Packages</h2>
-                    <p className="text-gray-600 text-lg">Buy credits as you need them - no subscription required</p>
+                    <p className="text-gray-600 text-lg">Professional restoration at 95% less than traditional services - no subscription required</p>
                     
                     {/* Promotional Banner
                     <div className="mt-6 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
@@ -100,17 +100,17 @@ const HomePricing = () => {
                                     <div className="absolute -top-2 -right-2 z-30">
                                         <div className="relative">
                                             <div 
-                                                className="bg-gradient-to-br from-green-400 to-green-600 text-white text-[10px] font-bold px-8 py-1.5 transform rotate-45 origin-center shadow-lg"
+                                                className="bg-gradient-to-br from-green-400 to-green-600 text-white text-[7.5px] font-bold px-8 py-1.5 transform rotate-45 origin-center shadow-lg"
                                                 style={{
-                                                    minWidth: '140px',
+                                                    minWidth: '160px',
                                                     textAlign: 'center',
                                                     transformOrigin: 'center',
                                                     position: 'relative',
                                                     top: '20px',
-                                                    right: '-25px'
+                                                    right: '-45px'
                                                 }}
                                             >
-                                                START FREE!
+                                                START FOR FREE!
                                             </div>
                                         </div>
                                     </div>

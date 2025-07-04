@@ -194,6 +194,31 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
           </Alert>
         )}
 
+        {/* Value Comparison Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Why Choose Digital Restoration?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-red-600 mb-2">Traditional Restoration</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• $50-200 per photo</li>
+                <li>• 2-4 weeks wait time</li>
+                <li>• Risk of damage</li>
+                <li>• Limited availability</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-green-600 mb-2">Our Digital Service</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Starting at $1.20 per photo</li>
+                <li>• Results in seconds</li>
+                <li>• 100% safe & secure</li>
+                <li>• Available 24/7</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stripeProducts.map((product) => {
             const isPopular = product.id === popularProduct.id;
