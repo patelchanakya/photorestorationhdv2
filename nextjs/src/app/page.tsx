@@ -7,7 +7,7 @@ import FAQSection from '@/components/FAQSection';
 import PhotoShowcase from '@/components/PhotoShowcase';
 import Logo from '@/components/Logo';
 import StartRestoringButton from '@/components/StartRestoringButton';
-import PromoBanner from '@/components/PromoBanner';
+// import PromoBanner from '@/components/PromoBanner';
 
 export default function Home() {
   const productName = process.env.NEXT_PUBLIC_PRODUCTNAME;
