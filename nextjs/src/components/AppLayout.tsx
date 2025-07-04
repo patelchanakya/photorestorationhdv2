@@ -191,7 +191,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </div>
 
-                <PromoBanner />
+                {/* <PromoBanner /> */}
 
                 <main className="p-4">
                     {children}

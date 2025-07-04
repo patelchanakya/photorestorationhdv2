@@ -52,7 +52,7 @@ export default function Home() {
           </div>
         </nav>
 
-        <PromoBanner className="mt-16" />
+        {/* <PromoBanner className="mt-16" /> */}
 
         <section className="relative pt-32 pb-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
