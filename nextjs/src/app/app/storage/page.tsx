@@ -7,7 +7,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X, HelpCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X, HelpCircle, MoreVertical, RefreshCw } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
@@ -621,33 +623,6 @@ export default function FileManagementPage() {
         }
     };
 
-    const handleViewRestoredImage = async (job: ProcessingJob) => {
-        try {
-            if (!job.result_url) return;
-            
-            // Track image view
-            if (posthog) {
-                posthog.capture('restored_image_viewed', {
-                    job_id: job.id,
-                    is_external_url: !job.result_url.includes('/storage/v1/object/')
-                });
-            }
-            
-            // result_url now always contains a complete URL (either our public URL or external Replicate URL)
-            window.open(job.result_url, '_blank');
-        } catch (err) {
-            console.error('Error viewing restored image:', err);
-            setError('Failed to view restored image');
-            
-            // Track view failure
-            if (posthog) {
-                posthog.capture('restored_image_view_failed', {
-                    job_id: job.id,
-                    error_message: err instanceof Error ? err.message : 'unknown_error'
-                });
-            }
-        }
-    };
 
     const handleDownloadRestoredImage = async (job: ProcessingJob) => {
         try {
@@ -875,11 +850,11 @@ export default function FileManagementPage() {
 
                     {/* Upload Section */}
                     <Card className="border-0 shadow-xl bg-white" data-tour="upload-area">
-                        <CardContent className="p-8">
+                        <CardContent className="p-6">
 
                     <div className="flex items-center justify-center w-full">
                         <label
-                            className={`relative w-full max-w-2xl flex flex-col items-center px-8 py-12 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
+                            className={`relative w-full max-w-2xl flex flex-col items-center px-6 py-6 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
                                 isDragging
                                     ? 'border-2 border-dashed border-orange-400 bg-orange-50 shadow-lg scale-105'
                                     : 'border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
@@ -890,38 +865,29 @@ export default function FileManagementPage() {
                             onDrop={handleDrop}
                         >
                             {/* Upload Icon */}
-                            <div className={`p-4 rounded-full transition-all duration-300 ${
+                            <div className={`p-3 rounded-full transition-all duration-300 ${
                                 isDragging
                                     ? 'bg-orange-100 text-orange-600'
                                     : 'bg-gray-100 text-gray-500 group-hover:bg-orange-100 group-hover:text-orange-600'
                             }`}>
-                                <Upload className="w-12 h-12"/>
+                                <Upload className="w-8 h-8"/>
                             </div>
                             
                             {/* Main Text */}
-                            <div className="text-center mt-6 space-y-2">
-                                <h3 className={`text-xl font-semibold transition-colors ${
+                            <div className="text-center mt-4">
+                                <h3 className={`text-lg font-semibold transition-colors ${
                                     isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
                                 }`}>
                                     {uploading
                                         ? 'Uploading your image...'
                                         : isDragging
                                             ? 'Drop your image here'
-                                            : 'Drop your image here'}
+                                            : 'Drop image here or click to browse'}
                                 </h3>
                                 
-                                <p className={`text-sm transition-colors ${
-                                    isDragging ? 'text-orange-600' : 'text-gray-500 group-hover:text-orange-600'
-                                }`}>
-                                    {!uploading && !isDragging && 'or click to browse your files'}
+                                <p className="text-xs text-gray-400 mt-2">
+                                    JPG, PNG • Max 50MB
                                 </p>
-                                
-                                {/* File format info */}
-                                <div className="pt-3">
-                                    <p className="text-xs text-gray-400">
-                                        Supports JPG, PNG, and other image formats • Max 50MB
-                                    </p>
-                                </div>
                             </div>
                             
                             {/* Loading indicator */}
@@ -1040,11 +1006,11 @@ export default function FileManagementPage() {
                                 return (
                                     <div
                                         key={filename}
-                                        className="@container bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
+                                        className="@container bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 group"
                                     >
                                         {/* Image Preview */}
                                         <div 
-                                            className={`relative aspect-square bg-gray-100 ${
+                                            className={`relative h-48 bg-gray-100 ${
                                                 // Disable click during restoration
                                                 (associatedJob && (associatedJob.status === 'processing' || associatedJob.status === 'pending')) || restoringFiles.has(filename) 
                                                     ? 'cursor-not-allowed' 
@@ -1069,8 +1035,8 @@ export default function FileManagementPage() {
                                                     fill
                                                     sizes="(max-width:768px) 100vw, 33vw"
                                                     priority={index < 3} // Priority for first 3 images
-                                                    className={`object-cover hover:scale-105 transition-all duration-200 ${
-                                                        associatedJob && (associatedJob.status === 'processing' || restoringFiles.has(filename)) ? 'blur-sm scale-105' : ''
+                                                    className={`object-contain transition-all duration-200 ${
+                                                        associatedJob && (associatedJob.status === 'processing' || restoringFiles.has(filename)) ? 'blur-sm' : ''
                                                     }`}
                                                 />
                                             ) : (
@@ -1091,20 +1057,119 @@ export default function FileManagementPage() {
                                                 </div>
                                             )}
                                             
-                                            {/* Status Badge */}
-                                            {associatedJob && (
-                                                <div className="absolute top-2 right-2">
-                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
-                                                        associatedJob.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        associatedJob.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                                        associatedJob.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                        associatedJob.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                                                        'bg-red-100 text-red-800'
-                                                    }`}>
-                                                        {associatedJob.status === 'processing' && (
-                                                            <Loader2 className="h-3 w-3 animate-spin"/>
-                                                        )}
-                                                        <span>{associatedJob.status}</span>
+                                            {/* Hover Actions Menu - Only show for completed restorations */}
+                                            {associatedJob && associatedJob.status === 'completed' && associatedJob.result_url && (
+                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="secondary"
+                                                                className="h-8 w-8 p-0 bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48">
+                                                            <DropdownMenuItem 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDownloadRestoredImage(associatedJob);
+                                                                }}
+                                                            >
+                                                                <Download className="h-4 w-4 mr-2" />
+                                                                Download
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleShareRestoredImage(associatedJob);
+                                                                }}
+                                                            >
+                                                                <Share2 className="h-4 w-4 mr-2" />
+                                                                Share
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem 
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        setError('');
+                                                                        const supabase = await createSPASassClient();
+                                                                        const { error } = await supabase.deleteFile(user!.id!, filename);
+                                                                        if (error) throw error;
+                                                                        await loadFiles();
+                                                                        setSuccess('File deleted successfully');
+                                                                    } catch (err) {
+                                                                        setError('Failed to delete file');
+                                                                        console.error('Error deleting file:', err);
+                                                                    }
+                                                                }}
+                                                                className="text-gray-600 focus:text-gray-700"
+                                                            >
+                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Overlay Actions for Newly Uploaded Images (Pre-Restoration) */}
+                                            {(!associatedJob || associatedJob.status === 'failed' || associatedJob.status === 'cancelled') && (
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <div className="flex gap-3">
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                try {
+                                                                    setError('');
+                                                                    const supabase = await createSPASassClient();
+                                                                    const { error } = await supabase.deleteFile(user!.id!, filename);
+                                                                    if (error) throw error;
+                                                                    await loadFiles();
+                                                                    setSuccess('File deleted successfully');
+                                                                } catch (err) {
+                                                                    setError('Failed to delete file');
+                                                                    console.error('Error deleting file:', err);
+                                                                }
+                                                            }}
+                                                            className="p-2 bg-white/90 backdrop-blur-sm text-gray-700 rounded-full hover:bg-white transition-all duration-200 shadow-sm hover:shadow-md"
+                                                            title="Delete Image"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                        
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Trigger file input for replacement
+                                                                const input = document.createElement('input');
+                                                                input.type = 'file';
+                                                                input.accept = 'image/*';
+                                                                input.onchange = async (event) => {
+                                                                    const file = (event.target as HTMLInputElement).files?.[0];
+                                                                    if (file) {
+                                                                        try {
+                                                                            setError('');
+                                                                            // Delete old file first
+                                                                            const supabase = await createSPASassClient();
+                                                                            await supabase.deleteFile(user!.id!, filename);
+                                                                            // Then upload new file using existing upload logic
+                                                                            await handleFileUpload(file);
+                                                                        } catch (err) {
+                                                                            setError('Failed to replace image');
+                                                                            console.error('Error replacing image:', err);
+                                                                        }
+                                                                    }
+                                                                };
+                                                                input.click();
+                                                            }}
+                                                            className="p-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                                            title="Replace Image"
+                                                        >
+                                                            <RefreshCw className="h-4 w-4" />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             )}
@@ -1116,9 +1181,26 @@ export default function FileManagementPage() {
                                             <h3 className="font-medium text-gray-900 truncate" title={cleanName}>
                                                 {cleanName}
                                             </h3>
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                Uploaded {new Date(file.created_at || '').toLocaleDateString()}
-                                            </p>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <p className="text-sm text-gray-500">
+                                                    Uploaded {new Date(file.created_at || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                                {/* Status Badge */}
+                                                {associatedJob && (
+                                                    <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
+                                                        associatedJob.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                                                        associatedJob.status === 'processing' ? 'bg-orange-100 text-orange-700' :
+                                                        associatedJob.status === 'completed' ? 'bg-orange-500 text-white' :
+                                                        associatedJob.status === 'cancelled' ? 'bg-gray-100 text-gray-600' :
+                                                        'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {associatedJob.status === 'processing' && (
+                                                            <Loader2 className="h-3 w-3 animate-spin"/>
+                                                        )}
+                                                        <span>{associatedJob.status === 'completed' ? 'restored' : associatedJob.status}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                             
                                             {/* Primary Action Button */}
                                             <div className="mt-3 space-y-2">
@@ -1130,7 +1212,7 @@ export default function FileManagementPage() {
                                                             handleRestorePhoto(filename);
                                                         }}
                                                         disabled={restoringFiles.has(filename) || (optimisticCredits ?? 0) <= 0}
-                                                        className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-600"
+                                                        className="w-full px-4 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 text-sm font-medium flex items-center justify-center space-x-2 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-500"
                                                         data-tour={index === 0 && !demoMode ? "first-restore-button" : undefined}
                                                     >
                                                         {restoringFiles.has(filename) ? (
@@ -1146,7 +1228,7 @@ export default function FileManagementPage() {
                                                         ) : (
                                                             <>
                                                                 <Wand2 className="h-4 w-4"/>
-                                                                <span>Restore</span>
+                                                                <span>Restore Image</span>
                                                                 <span className="text-xs bg-orange-500 px-2 py-0.5 rounded-full">1 credit</span>
                                                             </>
                                                         )}
@@ -1183,92 +1265,9 @@ export default function FileManagementPage() {
                                                         )}
                                                     </div>
                                                 ) : associatedJob && associatedJob.status === 'completed' && associatedJob.result_url ? (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleViewRestoredImage(associatedJob);
-                                                        }}
-                                                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
-                                                    >
-                                                        <CheckCircle className="h-4 w-4"/>
-                                                        <span>View Restored Photo</span>
-                                                    </button>
+                                                    null
                                                 ) : null}
                                                 
-                                                {/* Secondary Actions Row */}
-                                                {associatedJob && associatedJob.status === 'completed' && associatedJob.result_url ? (
-                                                    // Completed restoration - show download/share/delete for RESTORED image
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDownloadRestoredImage(associatedJob);
-                                                            }}
-                                                            className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
-                                                            title="Download Restored Photo"
-                                                        >
-                                                            <Download className="h-4 w-4"/>
-                                                            <span className="hidden @lg:inline">Download</span>
-                                                        </button>
-                                                        
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleShareRestoredImage(associatedJob);
-                                                            }}
-                                                            className="flex-1 px-2 lg:px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
-                                                            title="Share Restored Photo"
-                                                        >
-                                                            <Share2 className="h-4 w-4"/>
-                                                            <span className="hidden @lg:inline">Share</span>
-                                                        </button>
-                                                        
-                                                        <button
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                try {
-                                                                    setError('');
-                                                                    const supabase = await createSPASassClient();
-                                                                    const { error } = await supabase.deleteFile(user!.id!, filename);
-                                                                    if (error) throw error;
-                                                                    await loadFiles();
-                                                                    setSuccess('File deleted successfully');
-                                                                } catch (err) {
-                                                                    setError('Failed to delete file');
-                                                                    console.error('Error deleting file:', err);
-                                                                }
-                                                            }}
-                                                            className="flex-1 px-2 lg:px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center gap-1 lg:gap-2"
-                                                            title="Delete Photo"
-                                                        >
-                                                            <Trash2 className="h-4 w-4"/>
-                                                            <span className="hidden @lg:inline">Delete</span>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    // No restoration or restoration in progress - show full-width delete button to match restore button
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            try {
-                                                                setError('');
-                                                                const supabase = await createSPASassClient();
-                                                                const { error } = await supabase.deleteFile(user!.id!, filename);
-                                                                if (error) throw error;
-                                                                await loadFiles();
-                                                                setSuccess('File deleted successfully');
-                                                            } catch (err) {
-                                                                setError('Failed to delete file');
-                                                                console.error('Error deleting file:', err);
-                                                            }
-                                                        }}
-                                                        className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
-                                                        title="Delete Photo"
-                                                    >
-                                                        <Trash2 className="h-4 w-4"/>
-                                                        <span>Delete</span>
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1301,16 +1300,6 @@ export default function FileManagementPage() {
                                     <DialogTitle className="text-lg font-semibold">
                                         {selectedImageName}
                                     </DialogTitle>
-                                    {selectedImageFilename && (
-                                        <Link
-                                            href={`/app/history?highlight=${encodeURIComponent(selectedImageFilename)}`}
-                                            className="inline-flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
-                                            prefetch={false}
-                                        >
-                                            <ExternalLink className="h-4 w-4 mr-2"/>
-                                            Go to Gallery
-                                        </Link>
-                                    )}
                                 </div>
                             </DialogHeader>
                             <div className="p-6 pt-0">
@@ -1325,6 +1314,63 @@ export default function FileManagementPage() {
                                     />
                                 )}
                             </div>
+                            
+                            {/* Modal Action Buttons */}
+                            {selectedImageFilename && (
+                                <div className="px-6 pb-6 pt-0">
+                                    <div className="flex gap-3 justify-end border-t pt-4">
+                                        <button
+                                            onClick={() => {
+                                                const associatedJob = processingJobs.find(job => job.image_path === `${user!.id}/${selectedImageFilename}`);
+                                                if (associatedJob && associatedJob.status === 'completed') {
+                                                    handleDownloadRestoredImage(associatedJob);
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 text-sm font-medium flex items-center space-x-2 shadow-sm hover:shadow-md"
+                                        >
+                                            <Download className="h-4 w-4"/>
+                                            <span>Download</span>
+                                        </button>
+                                        
+                                        <button
+                                            onClick={() => {
+                                                const associatedJob = processingJobs.find(job => job.image_path === `${user!.id}/${selectedImageFilename}`);
+                                                if (associatedJob && associatedJob.status === 'completed') {
+                                                    handleShareRestoredImage(associatedJob);
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-medium flex items-center space-x-2 shadow-sm hover:shadow-md"
+                                        >
+                                            <Share2 className="h-4 w-4"/>
+                                            <span>Share</span>
+                                        </button>
+                                        
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setError('');
+                                                    const supabase = await createSPASassClient();
+                                                    const { error } = await supabase.deleteFile(user!.id!, selectedImageFilename);
+                                                    if (error) throw error;
+                                                    await loadFiles();
+                                                    setSuccess('File deleted successfully');
+                                                    // Close modal after delete
+                                                    setSelectedImageUrl(null);
+                                                    setSelectedImageName('');
+                                                    setSelectedImageFilename('');
+                                                } catch (err) {
+                                                    setError('Failed to delete file');
+                                                    console.error('Error deleting file:', err);
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-white border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-medium flex items-center space-x-2 shadow-sm hover:shadow-md"
+                                        >
+                                            <Trash2 className="h-4 w-4"/>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </DialogContent>
                     </Dialog>
 
