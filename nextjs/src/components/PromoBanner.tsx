@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DiscountModal from '@/components/DiscountModal';
 
 interface PromoBannerProps {
   onCtaClick?: () => void;
@@ -10,6 +11,10 @@ interface PromoBannerProps {
 
 export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isPoofing, setIsPoofing] = useState(false);
+  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, color: string, delay: number}>>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const STORAGE_KEY = 'family50-banner-dismissed';
 
   useEffect(() => {
@@ -25,15 +30,40 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
     localStorage.setItem(STORAGE_KEY, 'true');
   };
 
+  const createParticleBurst = () => {
+    if (!buttonRef.current) return;
+    
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const centerX = buttonRect.left + buttonRect.width / 2;
+    const centerY = buttonRect.top + buttonRect.height / 2;
+    
+    const colors = ['#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e'];
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: Date.now() + i,
+      x: centerX + (Math.random() - 0.5) * 100,
+      y: centerY + (Math.random() - 0.5) * 100,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      delay: i * 50
+    }));
+    
+    setParticles(newParticles);
+    
+    // Clear particles after animation
+    setTimeout(() => setParticles([]), 1200);
+  };
+
   const handleCtaClick = () => {
     if (onCtaClick) {
       onCtaClick();
     } else {
-      // Default behavior - scroll to pricing or start restoring
-      const element = document.getElementById('pricing');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+      // Trigger poof animation
+      setIsPoofing(true);
+      createParticleBurst();
+      
+      // Show modal after poof animation
+      setTimeout(() => {
+        setShowModal(true);
+      }, 400);
     }
   };
 
@@ -83,8 +113,12 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
           {/* Right side - CTA and Close */}
           <div className="flex items-center space-x-1 md:space-x-2 md:ml-2 flex-shrink-0">
             <Button
+              ref={buttonRef}
               onClick={handleCtaClick}
-              className="bg-white text-orange-600 hover:bg-orange-50 font-semibold px-2 py-0.5 md:px-3 md:py-1 text-xs md:text-sm shadow-sm hover:shadow-md transition-all duration-200 whitespace-nowrap"
+              className={`bg-white text-orange-600 hover:bg-orange-50 font-semibold px-2 py-0.5 md:px-3 md:py-1 text-xs md:text-sm shadow-sm hover:shadow-md transition-all duration-200 whitespace-nowrap ${
+                isPoofing ? 'poof-animation' : ''
+              }`}
+              disabled={isPoofing}
             >
               Claim Discount
             </Button>
@@ -100,6 +134,29 @@ export default function PromoBanner({ onCtaClick, className = "" }: PromoBannerP
         </div>
       </div>
 
+      {/* Particle Burst Effect */}
+      {particles.length > 0 && (
+        <div className="particle-burst">
+          {particles.map((particle) => (
+            <div
+              key={particle.id}
+              className="particle"
+              style={{
+                left: particle.x,
+                top: particle.y,
+                backgroundColor: particle.color,
+                animationDelay: `${particle.delay}ms`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Discount Modal */}
+      <DiscountModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+      />
     </div>
   );
 }
