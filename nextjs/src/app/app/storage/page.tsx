@@ -638,37 +638,31 @@ export default function FileManagementPage() {
                 });
             }
             
-            // Extract the file path from the public URL to create a signed URL for download
-            if (job.result_url.includes('/storage/v1/object/public/restored-images/')) {
-                // Our bucket - create signed URL for download
-                const pathPart = job.result_url.split('/storage/v1/object/public/restored-images/')[1];
-                
-                const supabase = await createSPASassClient();
-                const { data, error } = await supabase.shareRestoredImage(pathPart, 60, true); // 1 hour, for download
-                
-                if (error) throw error;
-                
-                window.open(data.signedUrl, '_blank');
-                
-                // Track successful download
-                if (posthog) {
-                    posthog.capture('restored_image_download_successful', {
-                        job_id: job.id,
-                        download_method: 'signed_url'
-                    });
-                }
-            } else {
-                // External URL - use directly
-                window.open(job.result_url, '_blank');
-                
-                // Track direct URL download
-                if (posthog) {
-                    posthog.capture('restored_image_download_successful', {
-                        job_id: job.id,
-                        download_method: 'direct_url'
-                    });
-                }
+            // Use blob download method for better reliability
+            const response = await fetch(job.result_url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
             }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `restored-${job.id}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // Track successful download
+            if (posthog) {
+                posthog.capture('restored_image_download_successful', {
+                    job_id: job.id,
+                    download_method: 'blob'
+                });
+            }
+            
         } catch (err) {
             console.error('Error downloading restored image:', err);
             setError('Failed to download restored image');
@@ -1260,7 +1254,15 @@ export default function FileManagementPage() {
                                                         )}
                                                     </div>
                                                 ) : associatedJob && associatedJob.status === 'completed' && associatedJob.result_url ? (
-                                                    null
+                                                    <div className="space-y-2">
+                                                        <Button
+                                                            onClick={() => handleDownloadRestoredImage(associatedJob)}
+                                                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                                        >
+                                                            <Download className="h-4 w-4 mr-2" />
+                                                            Download Restored Image
+                                                        </Button>
+                                                    </div>
                                                 ) : null}
                                                 
                                             </div>
