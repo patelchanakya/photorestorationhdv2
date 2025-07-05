@@ -441,6 +441,11 @@ export default function FileManagementPage() {
                 .from('thumbnails')
                 .upload(`${user.id}/${filename}`, thumbnail);
 
+            // Note: getFiles() is not cached - it makes direct Supabase calls
+            // Only invalidate image URL caches for the new file
+            apiCache.invalidate(createCacheKey('preview-url', user.id, filename));
+            apiCache.invalidate(createCacheKey('thumbnail-url', user.id, filename));
+
             await loadFiles();
             
             // Show upload success
