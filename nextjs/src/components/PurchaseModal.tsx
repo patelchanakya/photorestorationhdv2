@@ -195,25 +195,66 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
         )}
 
         {/* Value Comparison Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Why Choose Digital Restoration?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-red-600 mb-2">Traditional Restoration</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• $50-200 per photo</li>
-                <li>• 2-4 weeks wait time</li>
-                <li>• Risk of damage</li>
-                <li>• Limited availability</li>
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">Why Choose Digital Restoration?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Traditional Restoration Card */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-5">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-red-700">Traditional Restoration</h4>
+              </div>
+              <ul className="text-sm text-red-600 space-y-2">
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
+                  $30-200 per photo
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
+                  2-4 weeks wait time
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Risk of damage
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Limited availability
+                </li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-medium text-green-600 mb-2">Our Digital Service</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Starting at $1.20 per photo</li>
-                <li>• Results in seconds</li>
-                <li>• 100% safe & secure</li>
-                <li>• Available 24/7</li>
+
+            {/* Digital Service Card */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-green-700">Our Digital Service</h4>
+              </div>
+              <ul className="text-sm text-green-600 space-y-2">
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Up to 100x cheaper
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Results in seconds
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Private & secure
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
+                  Available 24/7
+                </li>
               </ul>
             </div>
           </div>
@@ -226,30 +267,26 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
             
             return (
               <div key={product.id} className="relative">
-                {/* Badge - Outside card container */}
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-50">
-                  {isPopular ? (
-                    <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500">
+                {/* Badge - Positioned at top of card */}
+                {isPopular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                    <span className="px-3 py-1 text-xs font-bold rounded-full text-white whitespace-nowrap bg-orange-500 shadow-sm">
                       POPULAR
                     </span>
-                  ) : (
-                    <span className="px-3 py-1 text-xs font-bold rounded-full whitespace-nowrap opacity-0 bg-transparent">
-                      POPULAR
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
                 
                 <div
-                  className={`relative bg-white rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl flex flex-col h-full overflow-hidden ${
+                  className={`relative bg-white rounded-lg border p-6 transition-all duration-200 hover:shadow-md flex flex-col h-full ${
                     isPopular 
-                      ? 'border-orange-500 shadow-lg scale-105' 
+                      ? 'border-orange-300 shadow-sm' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
 
                 {/* Plan Name */}
                 <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {product.name}
                   </h3>
                   <p className="text-sm text-gray-600 h-10 flex items-center justify-center">
@@ -259,7 +296,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
 
                 {/* Price */}
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-900 mb-1">
+                  <div className="text-3xl font-bold text-gray-900 mb-1">
                     {product.price}
                   </div>
                   <div className="text-sm text-gray-500 mb-2">
@@ -292,15 +329,15 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                   <Button
                     onClick={() => handlePurchase(product)}
                     disabled={loading === product.priceId}
-                    className={`w-full py-3 px-4 font-semibold transition-all duration-300 ${
+                    className={`w-full py-2.5 px-4 font-medium transition-colors ${
                       isPopular 
-                        ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                        : 'bg-gray-900 hover:bg-gray-800 text-white'
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                        : 'bg-gray-800 hover:bg-gray-900 text-white'
                     } disabled:bg-gray-400 disabled:cursor-not-allowed`}
                   >
                     {loading === product.priceId ? (
                       <>
-                        <Loader2 size={18} className="animate-spin mr-2" />
+                        <Loader2 size={16} className="animate-spin mr-2" />
                         Processing...
                       </>
                     ) : (
@@ -316,7 +353,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
 
         {/* Support & Trust Section */}
         <div className="mt-12 pt-8 border-t border-gray-200">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-6">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Need Help?</h3>
               <p className="text-gray-600 mb-4">Get priority support for any restoration issues</p>

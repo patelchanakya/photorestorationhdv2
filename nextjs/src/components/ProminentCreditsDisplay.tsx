@@ -91,67 +91,112 @@ export default function ProminentCreditsDisplay({
     
     return (
         <ErrorBoundary>
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm">
-                <div className="flex items-center justify-between gap-4">
+            <div className={`bg-white border rounded-lg p-4 sm:p-5 shadow-sm transition-shadow duration-200 hover:shadow-md max-w-sm ${
+                displayCredits === 0 
+                    ? 'border-red-200' 
+                    : isLowCredits 
+                    ? 'border-amber-200'
+                    : 'border-orange-200'
+            }`}>
+                <div className="space-y-4">
+                    {/* Credit Display */}
                     <div className="flex items-center space-x-3">
-                        <div className={`p-3 rounded-full ${
-                            isLowCredits ? 'bg-red-100' : 'bg-orange-100'
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            displayCredits === 0 
+                                ? 'bg-red-50' 
+                                : isLowCredits 
+                                ? 'bg-amber-50' 
+                                : 'bg-orange-50'
                         }`}>
-                            <Coins className={`h-6 w-6 ${
-                                isLowCredits ? 'text-red-600' : 'text-orange-600'
+                            <Coins className={`w-5 h-5 ${
+                                displayCredits === 0 
+                                    ? 'text-red-600' 
+                                    : isLowCredits 
+                                    ? 'text-amber-600' 
+                                    : 'text-orange-600'
                             }`} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Credits</p>
-                            <div className="flex items-center space-x-2">
+                        <div className="flex-1">
+                            <div className="flex items-baseline space-x-2">
                                 <AnimatedCounter
                                     value={displayCredits}
                                     className={`text-2xl font-bold ${
-                                        isPending ? 'opacity-75' : 'opacity-100'
-                                    }`}
+                                        displayCredits === 0 
+                                            ? 'text-red-700' 
+                                            : isLowCredits 
+                                            ? 'text-amber-700' 
+                                            : 'text-orange-700'
+                                    } ${isPending ? 'opacity-75' : 'opacity-100'}`}
                                     isLowCredits={isLowCredits}
                                 />
+                                <span className={`text-sm font-medium ${
+                                    displayCredits === 0 
+                                        ? 'text-red-600' 
+                                        : isLowCredits 
+                                        ? 'text-amber-600' 
+                                        : 'text-orange-600'
+                                }`}>
+                                    credit{displayCredits !== 1 ? 's' : ''}
+                                </span>
                                 {isPending && (
                                     <div className="w-1 h-1 bg-orange-500 rounded-full animate-pulse ml-1"></div>
                                 )}
                             </div>
+                            <p className={`text-xs mt-1 ${
+                                displayCredits === 0 
+                                    ? 'text-red-500' 
+                                    : isLowCredits 
+                                    ? 'text-amber-500' 
+                                    : 'text-orange-500'
+                            }`}>
+                                {displayCredits === 0 
+                                    ? 'Get credits to start restoring' 
+                                    : isLowCredits 
+                                    ? 'Running low on credits' 
+                                    : 'Ready to restore photos'
+                                }
+                            </p>
                         </div>
                     </div>
                     
+                    {/* Action Button */}
                     {showBuyButton && (
-                        onBuyMore ? (
-                            <Button 
-                                onClick={onBuyMore}
-                                size="sm" 
-                                className={`${
-                                    isLowCredits 
-                                        ? 'bg-red-600 hover:bg-red-700' 
-                                        : 'bg-orange-600 hover:bg-orange-700'
-                                } text-white shadow-md`}
-                            >
-                                <Plus className="h-4 w-4 mr-1" />
-                                <span className="hidden sm:inline">Buy More</span>
-                                <span className="sm:hidden">Buy</span>
-                            </Button>
-                        ) : (
-                            <Link href="/app/user-settings">
-                                <Button 
-                                    size="sm" 
-                                    className={`${
-                                        isLowCredits 
-                                            ? 'bg-red-600 hover:bg-red-700' 
-                                            : 'bg-orange-600 hover:bg-orange-700'
-                                    } text-white shadow-md`}
+                        <div className="pt-1">
+                            {onBuyMore ? (
+                                <Button
+                                    onClick={onBuyMore}
+                                    size="sm"
+                                    className={`w-full ${
+                                        displayCredits === 0
+                                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                                            : isLowCredits
+                                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                            : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                    }`}
                                 >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    <span className="hidden sm:inline">Buy More</span>
-                                    <span className="sm:hidden">Buy</span>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    {displayCredits === 0 ? 'Get Credits' : 'Add More'}
                                 </Button>
-                            </Link>
-                        )
+                            ) : (
+                                <Link href="/app/user-settings" className="block">
+                                    <Button 
+                                        size="sm" 
+                                        className={`w-full ${
+                                            displayCredits === 0
+                                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                                : isLowCredits
+                                                ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                                : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                        }`}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        {displayCredits === 0 ? 'Get Credits' : 'Add More'}
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
                     )}
                 </div>
-                
             </div>
         </ErrorBoundary>
     );
