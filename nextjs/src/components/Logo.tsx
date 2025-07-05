@@ -19,7 +19,7 @@ const Logo: React.FC<LogoProps> = ({ variant = 'nav' }) => {
       </div>
       
       {/* Text */}
-      <span className={`${textSize} font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent`}>
+      <span className={`${textSize} font-bold text-primary-600`}>
         Photo Restoration HD
       </span>
     </Link>
