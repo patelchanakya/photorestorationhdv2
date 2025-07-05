@@ -58,6 +58,8 @@ export default function FileManagementPage() {
     const [fileToDelete, setFileToDelete] = useState<string | null>(null);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+    const [showUploadError, setShowUploadError] = useState(false);
     const [restoringFiles, setRestoringFiles] = useState<Set<string>>(new Set());
     const [showConfetti, setShowConfetti] = useState(false);
     const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
@@ -442,7 +444,9 @@ export default function FileManagementPage() {
             await loadFiles();
             
             // Show upload success
-            setSuccess(`File uploaded successfully! Click restore below.`);
+            setSuccess(`File uploaded successfully! Click restore on image below.`);
+            setShowUploadSuccess(true);
+            setTimeout(() => setShowUploadSuccess(false), 3000);
             
             // Track successful upload
             if (posthog) {
@@ -458,6 +462,8 @@ export default function FileManagementPage() {
             }
         } catch (err) {
             setError('Failed to upload file');
+            setShowUploadError(true);
+            setTimeout(() => setShowUploadError(false), 3000);
             console.error('Error uploading file:', err);
             
             // Track upload failure
@@ -849,7 +855,11 @@ export default function FileManagementPage() {
                     <div className="flex items-center justify-center w-full">
                         <label
                             className={`relative w-full max-w-2xl flex flex-col items-center px-6 py-6 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
-                                isDragging
+                                showUploadError
+                                    ? 'border-2 border-dashed border-red-400 bg-red-50 shadow-lg scale-105'
+                                    : showUploadSuccess
+                                    ? 'border-2 border-dashed border-green-400 bg-green-50 shadow-lg scale-105'
+                                    : isDragging
                                     ? 'border-2 border-dashed border-orange-400 bg-orange-50 shadow-lg scale-105'
                                     : 'border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
                             }`}
@@ -860,7 +870,11 @@ export default function FileManagementPage() {
                         >
                             {/* Upload Icon */}
                             <div className={`p-3 rounded-full transition-all duration-300 ${
-                                isDragging
+                                showUploadError
+                                    ? 'bg-red-100 text-red-600'
+                                    : showUploadSuccess
+                                    ? 'bg-green-100 text-green-600'
+                                    : isDragging
                                     ? 'bg-orange-100 text-orange-600'
                                     : 'bg-gray-100 text-gray-500 group-hover:bg-orange-100 group-hover:text-orange-600'
                             }`}>
@@ -870,11 +884,15 @@ export default function FileManagementPage() {
                             {/* Main Text */}
                             <div className="text-center mt-4">
                                 <h3 className={`text-lg font-semibold transition-colors ${
-                                    isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
+                                    showUploadError ? 'text-red-700' : showUploadSuccess ? 'text-green-700' : isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
                                 }`}>
                                     {uploading
                                         ? 'Uploading your image...'
-                                        : isDragging
+                                        : showUploadError
+                                            ? 'Try again!'
+                                            : showUploadSuccess
+                                            ? 'Upload successful!'
+                                            : isDragging
                                             ? 'Drop your image here'
                                             : 'Drop image here or click to browse'}
                                 </h3>
