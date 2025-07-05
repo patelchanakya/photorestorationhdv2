@@ -914,7 +914,7 @@ export default function FileManagementPage() {
                                 <FileIcon className="mx-auto h-16 w-16 text-gray-300 mb-6"/>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No images uploaded today</h3>
                                 <p className="text-gray-500 mb-6">Upload a photo above to get started with photo restoration</p>
-                                <p className="text-sm text-gray-400">Visit the <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>Gallery</Link> to see all your photos</p>
+                                <p className="text-sm text-gray-400">Visit <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>All Restorations</Link> to see all your photos</p>
                             </CardContent>
                         </Card>
                     )}
@@ -932,12 +932,13 @@ export default function FileManagementPage() {
                                     </div>
                                     <Link 
                                         href="/app/history" 
-                                        className="inline-flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
+                                        className="inline-flex items-center px-3 py-2 text-xs sm:text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
                                         data-tour="gallery-link"
                                         prefetch={false}
                                     >
-                                        View Gallery
-                                        <ExternalLink className="ml-2 h-4 w-4" />
+                                        <span className="hidden sm:inline">View All Restorations</span>
+                                        <span className="sm:hidden">View All</span>
+                                        <ExternalLink className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
                                     </Link>
                                 </div>
                             </CardHeader>
@@ -1257,10 +1258,10 @@ export default function FileManagementPage() {
                                                     <div className="space-y-2">
                                                         <Button
                                                             onClick={() => handleDownloadRestoredImage(associatedJob)}
-                                                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                                            className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
                                                         >
                                                             <Download className="h-4 w-4 mr-2" />
-                                                            Download Restored Image
+                                                            Download
                                                         </Button>
                                                     </div>
                                                 ) : null}

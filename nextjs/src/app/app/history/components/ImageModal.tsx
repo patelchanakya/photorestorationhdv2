@@ -84,7 +84,7 @@ export function ImageModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="w-[95vw] sm:w-full max-w-sm sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0">
+            <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] p-0 overflow-hidden">
                 <DialogTitle className="sr-only">
                     Restored Photo: {image.prompt}
                 </DialogTitle>
@@ -95,9 +95,9 @@ export function ImageModal({
                     {/* Header */}
                     <div className="flex flex-col gap-3 p-3 sm:p-4 border-b bg-background">
                         {/* Title and meta info */}
-                        <div className="flex items-start space-x-3 min-w-0 pr-8">
+                        <div className="flex items-start space-x-3 min-w-0">
                             <div className="space-y-1 min-w-0 flex-1">
-                                <h3 className="font-medium line-clamp-2 break-words text-sm sm:text-base">{image.prompt}</h3>
+                                <h3 className="font-medium line-clamp-3 break-words text-sm sm:text-base pr-4">{image.prompt}</h3>
                                 <div className="flex items-center text-xs sm:text-sm text-muted-foreground flex-wrap gap-1">
                                     <Calendar className="h-3 w-3 flex-shrink-0" />
                                     <span className="truncate">
@@ -154,9 +154,9 @@ export function ImageModal({
                     </div>
                     
                     {/* Image Content */}
-                    <div className="flex-1 relative bg-muted/30 flex items-center justify-center p-2 sm:p-4">
+                    <div className="flex-1 min-h-0 relative bg-muted/30 flex items-center justify-center p-2 sm:p-4">
                         {displayUrl ? (
-                            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] max-w-4xl">
+                            <div className="relative w-full h-full max-w-4xl">
                                 <Image
                                     src={displayUrl}
                                     alt={image.prompt}
@@ -167,7 +167,7 @@ export function ImageModal({
                                 />
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center w-full h-[40vh] sm:h-[50vh] md:h-[60vh]">
+                            <div className="flex items-center justify-center w-full h-full">
                                 <div className="text-center px-4">
                                     <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📸</div>
                                     <p className="text-base sm:text-lg font-medium text-muted-foreground mb-2">Image Not Available</p>
