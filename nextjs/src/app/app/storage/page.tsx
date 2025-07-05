@@ -442,7 +442,7 @@ export default function FileManagementPage() {
             await loadFiles();
             
             // Show upload success
-            setSuccess(`File uploaded successfully`);
+            setSuccess(`File uploaded successfully! Click restore below.`);
             
             // Track successful upload
             if (posthog) {
