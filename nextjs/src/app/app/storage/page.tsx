@@ -21,20 +21,20 @@ import UserStatsDisplay from '@/components/UserStatsDisplay';
 import CreditTestPanel from '@/components/CreditTestPanel';
 import { usePostHog } from 'posthog-js/react';
 import { useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 
-const PurchaseModal = dynamic(() => import('@/components/PurchaseModal'), {
+const PurchaseModal = dynamicImport(() => import('@/components/PurchaseModal'), {
     loading: () => <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
         <span>Loading...</span>
     </div>
 });
 
-const HowItWorksTour = dynamic(() => import('@/components/HowItWorksTour'), {
+const HowItWorksTour = dynamicImport(() => import('@/components/HowItWorksTour'), {
     loading: () => null // No loading UI needed for tour
 });
 
-const Confetti = dynamic(() => import('@/components/Confetti'), {
+const Confetti = dynamicImport(() => import('@/components/Confetti'), {
     loading: () => null // No loading UI needed for confetti
 });
 
@@ -42,7 +42,16 @@ const Confetti = dynamic(() => import('@/components/Confetti'), {
 const POLLING_INTERVAL = parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || '1200');
 const POLLING_DEBUG = process.env.NEXT_PUBLIC_POLLING_DEBUG === 'true';
 
+// Force dynamic rendering to prevent caching issues
+export const dynamic = 'force-dynamic'
+
 export default function FileManagementPage() {
+    // Force dynamic rendering by reading headers
+    if (typeof window === 'undefined') {
+        // This ensures the page is always server-rendered
+        console.log('Server rendering storage page')
+    }
+    
     const { user, deductCreditsOptimistic, optimisticCredits } = useGlobal();
     const posthog = usePostHog();
     const searchParams = useSearchParams();
@@ -74,6 +83,7 @@ export default function FileManagementPage() {
     
     // Demo mode state for tour
     const [demoMode, setDemoMode] = useState(false);
+    
 
     // Track page view
     useEffect(() => {
@@ -210,20 +220,21 @@ export default function FileManagementPage() {
 
             if (error) throw error;
             
-            // Filter files to only show today's uploads and sort by creation date (newest first)
-            const today = new Date().toDateString();
-            const todayFiles = (data || []).filter(file => {
-                if (!file.created_at) return false;
-                const fileDate = new Date(file.created_at).toDateString();
-                return fileDate === today;
-            });
+            // DEBUG: Log file loading for troubleshooting
+            console.log('loadFiles: Raw data from Supabase:', data?.length || 0, 'files');
+            if (data && data.length > 0) {
+                console.log('loadFiles: Latest file:', data[0]);
+            }
             
-            const sortedFiles = todayFiles.sort((a, b) => {
+            // EMERGENCY FIX: Remove all date filtering to fix upload visibility issue
+            // Show all files, sorted by creation date (newest first)
+            const sortedFiles = (data || []).sort((a, b) => {
                 const dateA = new Date(a.created_at || '').getTime();
                 const dateB = new Date(b.created_at || '').getTime();
                 return dateB - dateA; // Newest first
             });
             
+            console.log('loadFiles: Sorted files for display:', sortedFiles.length);
             setFiles(sortedFiles);
             
             // Load image previews
@@ -446,7 +457,26 @@ export default function FileManagementPage() {
             apiCache.invalidate(createCacheKey('preview-url', user.id, filename));
             apiCache.invalidate(createCacheKey('thumbnail-url', user.id, filename));
 
+            // Add small delay to ensure Supabase storage is consistent
+            await new Promise(resolve => setTimeout(resolve, 500));
             await loadFiles();
+            
+            // Verify the uploaded file appears in the list by checking storage directly
+            const verifyClient = await createSPASassClient();
+            const { data: verifyFiles } = await verifyClient.getFiles(user.id);
+            console.log('Upload verification: Found', verifyFiles?.length || 0, 'files in storage');
+            console.log('Upload verification: Looking for filename:', filename);
+            
+            const uploadedFile = verifyFiles?.find(f => f.name === filename);
+            
+            if (!uploadedFile) {
+                console.warn('Upload verification FAILED: File not found in storage');
+                console.warn('Available files:', verifyFiles?.map(f => f.name));
+                setError('File uploaded but not visible. Please try refreshing the page.');
+                return;
+            } else {
+                console.log('Upload verification SUCCESS: File found in storage');
+            }
             
             // Show upload success
             setSuccess(`File uploaded successfully! Click restore on image below.`);
@@ -935,8 +965,18 @@ export default function FileManagementPage() {
                         <Card className="border-0 shadow-lg bg-white">
                             <CardContent className="text-center py-16">
                                 <FileIcon className="mx-auto h-16 w-16 text-gray-300 mb-6"/>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No images uploaded today</h3>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No images uploaded</h3>
                                 <p className="text-gray-500 mb-6">Upload a photo above to get started with photo restoration</p>
+                                <Button 
+                                    onClick={loadFiles} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="mb-4"
+                                    disabled={loading}
+                                >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Refresh Files
+                                </Button>
                                 <p className="text-sm text-gray-400">Visit <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>All Restorations</Link> to see all your photos</p>
                             </CardContent>
                         </Card>
@@ -948,9 +988,9 @@ export default function FileManagementPage() {
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle className="text-xl">Today&apos;s Photos</CardTitle>
+                                        <CardTitle className="text-xl">Your Photos</CardTitle>
                                         <CardDescription className="mt-1">
-                                            {demoMode ? 'Demo photo for tour walkthrough' : `${files.length} ${files.length === 1 ? 'photo' : 'photos'} uploaded today`}
+                                            {demoMode ? 'Demo photo for tour walkthrough' : `${files.length} ${files.length === 1 ? 'photo' : 'photos'} uploaded`}
                                         </CardDescription>
                                     </div>
                                     <Link 

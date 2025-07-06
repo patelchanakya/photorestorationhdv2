@@ -2,6 +2,46 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  
+  // Generate unique build ID for each deployment to prevent version skew
+  generateBuildId: async () => {
+    return process.env.VERCEL_GIT_COMMIT_SHA || 
+           process.env.GITHUB_SHA || 
+           Date.now().toString()
+  },
+  
+  // Configure proper cache headers to prevent stale content
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/app/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control', 
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ]
+  },
   images: {
     unoptimized: true,
     formats: ['image/webp', 'image/avif'],
@@ -97,6 +137,15 @@ const nextConfig: NextConfig = {
   },
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
+  
+  // Disable static optimization for dynamic pages
+  trailingSlash: false,
+  
+  // Ensure proper revalidation
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
 };
 
 export default nextConfig;
