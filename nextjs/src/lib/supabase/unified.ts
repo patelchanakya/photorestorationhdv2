@@ -67,7 +67,20 @@ export class SassClient {
 
 
     async getFiles(myId: string) {
-        return this.client.storage.from('files').list(myId)
+        // Force cache busting with timestamp
+        const timestamp = Date.now();
+        console.log(`[FILES DEBUG] getFiles called at ${timestamp} for user ${myId}`);
+        
+        const result = await this.client.storage.from('files').list(myId, {
+            sortBy: { column: 'created_at', order: 'desc' }
+        });
+        
+        console.log(`[FILES DEBUG] getFiles result:`, result.data?.length || 0, 'files found');
+        if (result.error) {
+            console.error(`[FILES DEBUG] getFiles error:`, result.error);
+        }
+        
+        return result;
     }
 
     async deleteFile(myId: string, filename: string) {

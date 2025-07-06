@@ -210,40 +210,41 @@ export default function FileManagementPage() {
         setDemoMode(false);
     }, []);
 
-    const loadFiles = useCallback(async () => {
+    const loadFiles = useCallback(async (forceRefresh = false) => {
         if (!user?.id) return;
         try {
             setLoading(true);
             setError('');
+            
+            console.log(`[STORAGE DEBUG] loadFiles called - force refresh: ${forceRefresh}`);
+            
             const supabase = await createSPASassClient();
             const { data, error } = await supabase.getFiles(user.id);
 
-            if (error) throw error;
-            
-            // DEBUG: Log file loading for troubleshooting
-            console.log('loadFiles: Raw data from Supabase:', data?.length || 0, 'files');
-            if (data && data.length > 0) {
-                console.log('loadFiles: Latest file:', data[0]);
+            if (error) {
+                console.error('[STORAGE DEBUG] getFiles error:', error);
+                throw error;
             }
             
-            // EMERGENCY FIX: Remove all date filtering to fix upload visibility issue
-            // Show all files, sorted by creation date (newest first)
-            const sortedFiles = (data || []).sort((a, b) => {
-                const dateA = new Date(a.created_at || '').getTime();
-                const dateB = new Date(b.created_at || '').getTime();
-                return dateB - dateA; // Newest first
-            });
+            console.log('[STORAGE DEBUG] Raw files data:', data?.length || 0, 'files');
+            console.log('[STORAGE DEBUG] Files data:', data);
             
-            console.log('loadFiles: Sorted files for display:', sortedFiles.length);
-            setFiles(sortedFiles);
+            // Simple: just use the data as-is, Supabase already sorts by created_at desc
+            const files = data || [];
+            
+            console.log('[STORAGE DEBUG] Setting files:', files.length);
+            setFiles(files);
             
             // Load image previews
-            if (sortedFiles.length > 0) {
-                await loadImagePreviews(sortedFiles);
+            if (files.length > 0) {
+                console.log('[STORAGE DEBUG] Loading image previews for', files.length, 'files');
+                await loadImagePreviews(files);
+            } else {
+                console.log('[STORAGE DEBUG] No files to load previews for');
             }
         } catch (err) {
             setError('Failed to load files');
-            console.error('Error loading files:', err);
+            console.error('[STORAGE DEBUG] Error loading files:', err);
         } finally {
             setLoading(false);
         }
@@ -252,9 +253,9 @@ export default function FileManagementPage() {
     const refreshJobs = useCallback(async () => {
         if (!user?.id) return;
         try {
-            // Use cache to reduce jitter/flicker (1.5s cache)
-            const cacheKey = createCacheKey('processing-jobs', user.id);
-            const jobs = await apiCache.get(cacheKey, () => getProcessingJobs(user.id));
+            // NO CACHE - always fetch fresh job data
+            console.log('[STORAGE DEBUG] refreshJobs called for user:', user.id);
+            const jobs = await getProcessingJobs(user.id);
             
             // Check for status changes and show notifications
             if (previousJobsRef.current.length > 0) {
@@ -262,9 +263,6 @@ export default function FileManagementPage() {
                     const previousJob = previousJobsRef.current.find(j => j.id === currentJob.id);
                     if (previousJob && previousJob.status !== currentJob.status) {
                         if (currentJob.status === 'completed') {
-                            // Invalidate cache for fresh data on completion
-                            apiCache.invalidate(cacheKey);
-                            
                             setSuccess('Photo restoration completed! Your restored image is ready.');
                             // Trigger confetti celebration
                             setShowConfetti(true);
@@ -283,9 +281,6 @@ export default function FileManagementPage() {
                                 });
                             }
                         } else if (currentJob.status === 'failed') {
-                            // Invalidate cache for fresh data on failure
-                            apiCache.invalidate(cacheKey);
-                            
                             setError(`Restoration failed: ${currentJob.error_message || 'Unknown error'}`);
                             
                             // Track restoration failure
@@ -968,7 +963,7 @@ export default function FileManagementPage() {
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No images uploaded</h3>
                                 <p className="text-gray-500 mb-6">Upload a photo above to get started with photo restoration</p>
                                 <Button 
-                                    onClick={loadFiles} 
+                                    onClick={() => loadFiles(true)} 
                                     variant="outline" 
                                     size="sm" 
                                     className="mb-4"
@@ -993,16 +988,32 @@ export default function FileManagementPage() {
                                             {demoMode ? 'Demo photo for tour walkthrough' : `${files.length} ${files.length === 1 ? 'photo' : 'photos'} uploaded`}
                                         </CardDescription>
                                     </div>
-                                    <Link 
-                                        href="/app/history" 
-                                        className="inline-flex items-center px-3 py-2 text-xs sm:text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
-                                        data-tour="gallery-link"
-                                        prefetch={false}
-                                    >
-                                        <span className="hidden sm:inline">View All Restorations</span>
-                                        <span className="sm:hidden">View All</span>
-                                        <ExternalLink className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                                    </Link>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            onClick={() => loadFiles(true)}
+                                            disabled={loading}
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs sm:text-sm"
+                                        >
+                                            {loading ? (
+                                                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                                            ) : (
+                                                <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                                            )}
+                                            <span className="ml-1 sm:ml-2">Refresh</span>
+                                        </Button>
+                                        <Link 
+                                            href="/app/history" 
+                                            className="inline-flex items-center px-3 py-2 text-xs sm:text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
+                                            data-tour="gallery-link"
+                                            prefetch={false}
+                                        >
+                                            <span className="hidden sm:inline">View All Restorations</span>
+                                            <span className="sm:hidden">View All</span>
+                                            <ExternalLink className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+                                        </Link>
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent>
