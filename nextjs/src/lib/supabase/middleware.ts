@@ -27,33 +27,28 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Skip auth checks for Stripe callback URLs to prevent session corruption
-    const isStripeCallback = request.nextUrl.searchParams.has('session_id') || 
-                            request.nextUrl.searchParams.has('cancelled') || 
-                            request.nextUrl.searchParams.has('success')
-    
-    if (isStripeCallback && request.nextUrl.pathname.startsWith('/app')) {
-        // For Stripe callbacks, just pass through without auth checks
-        return supabaseResponse
-    }
-
-    // Do not run code between createServerClient and
+    // IMPORTANT: Avoid writing any logic between createServerClient and
     // supabase.auth.getUser(). A simple mistake could make it very hard to debug
     // issues with users being randomly logged out.
 
-    // IMPORTANT: DO NOT REMOVE auth.getUser()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-    const {data: user} = await supabase.auth.getUser()
     if (
-        (!user || !user.user) && request.nextUrl.pathname.startsWith('/app')
+        !user &&
+        !request.nextUrl.pathname.startsWith('/auth') &&
+        !request.nextUrl.pathname.startsWith('/api/auth') &&
+        request.nextUrl.pathname.startsWith('/app')
     ) {
+        // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone()
         url.pathname = '/auth/login'
         return NextResponse.redirect(url)
     }
 
-    // IMPORTANT: You *must* return the supabaseResponse object as it is.
-    // If you're creating a new response object with NextResponse.next() make sure to:
+    // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
+    // creating a new response object with NextResponse.next() make sure to:
     // 1. Pass the request in it, like so:
     //    const myNewResponse = NextResponse.next({ request })
     // 2. Copy over the cookies, like so:

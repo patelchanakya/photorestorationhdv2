@@ -197,18 +197,82 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     // Fetch credits for this user
                     await fetchCredits(user.id);
+                } else {
+                    // Clear user state if no user found
+                    setUser(null);
+                    setCredits(null);
                 }
-                // If no user, that's fine - they're just not authenticated
-                // Leave user as null and continue
 
             } catch (error) {
                 console.error('Error loading data:', error);
+                // Clear user state on error
+                setUser(null);
+                setCredits(null);
             } finally {
                 setLoading(false);
             }
         }
 
         loadData();
+    }, [fetchCredits, posthog]);
+
+    // Add auth state change listener for real-time session updates
+    useEffect(() => {
+        let mounted = true;
+        
+        async function setupAuthListener() {
+            try {
+                const supabase = await createSPASassClient();
+                const client = supabase.getSupabaseClient();
+
+                const { data: { subscription } } = client.auth.onAuthStateChange(
+                    async (event, session) => {
+                        if (!mounted) return;
+
+                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                            if (session?.user) {
+                                const userData = {
+                                    email: session.user.email!,
+                                    id: session.user.id,
+                                    registered_at: new Date(session.user.created_at)
+                                };
+                                setUser(userData);
+                                
+                                // Identify user in PostHog for analytics
+                                if (posthog) {
+                                    posthog.identify(session.user.id, {
+                                        email: session.user.email,
+                                        registration_date: session.user.created_at,
+                                        user_id: session.user.id
+                                    });
+                                }
+                                
+                                // Fetch credits for this user
+                                await fetchCredits(session.user.id);
+                            }
+                        } else if (event === 'SIGNED_OUT') {
+                            setUser(null);
+                            setCredits(null);
+                            if (posthog) {
+                                posthog.reset();
+                            }
+                        }
+                    }
+                );
+
+                return () => {
+                    subscription.unsubscribe();
+                };
+            } catch (error) {
+                console.error('Error setting up auth listener:', error);
+            }
+        }
+
+        setupAuthListener();
+
+        return () => {
+            mounted = false;
+        };
     }, [fetchCredits, posthog]);
 
     // Update PostHog user properties when credits change
