@@ -14,8 +14,6 @@ import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
 import { getProcessingJobs, type ProcessingJob } from '@/app/actions/jobs';
-import { apiCache, createCacheKey } from '@/lib/utils/cache';
-import Compressor from 'compressorjs';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import UserStatsDisplay from '@/components/UserStatsDisplay';
 import CreditTestPanel from '@/components/CreditTestPanel';
@@ -74,7 +72,7 @@ export default function FileManagementPage() {
     const [cancellingJobs, setCancellingJobs] = useState<Set<string>>(new Set());
     const previousJobsRef = useRef<ProcessingJob[]>([]);
     const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
-    const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
+    // Removed thumbnails state - using original images for grid display
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedImageName, setSelectedImageName] = useState<string>('');
     const [selectedImageFilename, setSelectedImageFilename] = useState<string>('');
@@ -135,49 +133,23 @@ export default function FileManagementPage() {
         return nameOnly.replace(/_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\./, '.');
     };
 
-    // Generate preview URL for an image with caching
+    // Generate preview URL for an image - simplified, no caching
     const generatePreviewUrl = useCallback(async (filename: string) => {
         if (!user?.id) return null;
         try {
-            // Cache preview URLs for 15 minutes to reduce API calls
-            const cacheKey = createCacheKey('preview-url', user.id, filename);
-            return await apiCache.get(cacheKey, async () => {
-                const supabase = await createSPASassClient();
-                const { data, error } = await supabase.shareFile(user.id, filename, 21600); // 6 hours
-                if (error) throw error;
-                return data.signedUrl;
-            }, 900000); // 15 minute cache
+            const supabase = await createSPASassClient();
+            const { data, error } = await supabase.shareFile(user.id, filename, 21600); // 6 hours
+            if (error) throw error;
+            return data.signedUrl;
         } catch (err) {
             console.error('Error generating preview URL:', err);
             return null;
         }
     }, [user?.id]);
 
-    // Generate thumbnail URL from thumbnails bucket with graceful fallback
-    const generateThumbnailUrl = useCallback(async (filename: string) => {
-        if (!user?.id) return null;
-        try {
-            const cacheKey = createCacheKey('thumbnail-url', user.id, filename);
-            return await apiCache.get(cacheKey, async () => {
-                const supabase = await createSPASassClient();
-                const { data, error } = await supabase.shareFile(user.id, filename, 21600, false, 'thumbnails');
-                if (error) {
-                    // Silent fallback for missing thumbnails (expected for existing images)
-                    return null;
-                }
-                return data.signedUrl;
-            }, 900000);
-        } catch {
-            // Silent fallback - don't log errors for expected missing thumbnails
-            return null;
-        }
-    }, [user?.id]);
-
-
-    // Load image URLs for display with thumbnail fallback
+    // Load image URLs for display - simplified, no thumbnails
     const loadImagePreviews = useCallback(async (fileList: FileObject[]) => {
         const urls: Record<string, string> = {};
-        const thumbnails: Record<string, string> = {};
         
         // Process files in parallel for better performance
         await Promise.all(fileList.map(async (file) => {
@@ -187,19 +159,14 @@ export default function FileManagementPage() {
                 if (!originalUrl) return;
                 
                 urls[file.name] = originalUrl;
-                
-                // Try to get thumbnail, fallback to original if it doesn't exist
-                const thumbnailUrl = await generateThumbnailUrl(file.name).catch(() => null);
-                thumbnails[file.name] = thumbnailUrl || originalUrl;
             } catch (err) {
                 // If anything fails, skip this file (graceful degradation)
                 console.warn(`Failed to load URLs for ${file.name}:`, err);
             }
         }));
         
-        setImageUrls(urls); // Original URLs
-        setThumbnails(thumbnails); // Thumbnail URLs for grid (with fallback)
-    }, [generatePreviewUrl, generateThumbnailUrl]);
+        setImageUrls(urls); // Original URLs for both display and grid
+    }, [generatePreviewUrl]);
 
     // Demo mode utilities
     const activateDemoMode = useCallback(() => {
@@ -353,64 +320,6 @@ export default function FileManagementPage() {
     }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 
     // Dual compression function for optimal storage and display
-    const compressImageMultiSize = useCallback((file: File): Promise<{
-        original: File;
-        thumbnail: File;
-        stats: { originalSize: number; totalCompressedSize: number; compressionRatio: number; }
-    }> => {
-        return new Promise((resolve) => {
-            const originalSize = file.size;
-            const results = { original: null as File | null, thumbnail: null as File | null };
-            let completed = 0;
-
-            const checkComplete = () => {
-                completed++;
-                if (completed === 2 && results.original && results.thumbnail) {
-                    const totalCompressedSize = results.original.size + results.thumbnail.size;
-                    const compressionRatio = ((originalSize - totalCompressedSize) / originalSize) * 100;
-                    
-                    resolve({
-                        original: results.original,
-                        thumbnail: results.thumbnail,
-                        stats: { originalSize, totalCompressedSize, compressionRatio }
-                    });
-                }
-            };
-
-            // Original: High quality for AI processing and modal view
-            new Compressor(file, {
-                quality: 0.9, // High quality for AI
-                maxWidth: 2048,
-                maxHeight: 2048,
-                convertSize: 5000000,
-                success(compressedFile) {
-                    results.original = compressedFile as File;
-                    checkComplete();
-                },
-                error() {
-                    results.original = file; // Fallback to original
-                    checkComplete();
-                }
-            });
-
-            // Thumbnail: Small size for grid display
-            new Compressor(file, {
-                quality: 0.6,
-                maxWidth: 200,
-                maxHeight: 200,
-                convertSize: 500000,
-                success(compressedFile) {
-                    results.thumbnail = compressedFile as File;
-                    checkComplete();
-                },
-                error() {
-                    results.thumbnail = file; // Fallback to original
-                    checkComplete();
-                }
-            });
-        });
-    }, []);
-
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return;
         
@@ -418,39 +327,23 @@ export default function FileManagementPage() {
             setUploading(true);
             setError('');
 
-            // Generate original and thumbnail for optimal storage
-            const { original, thumbnail, stats } = await compressImageMultiSize(file);
-            
-            // Track upload attempt with compression stats
+            // Track upload attempt
             if (posthog) {
                 posthog.capture('photo_upload_attempted', {
                     file_type: file.type,
-                    original_size_mb: Math.round((stats.originalSize / 1024 / 1024) * 100) / 100,
-                    total_compressed_size_mb: Math.round((stats.totalCompressedSize / 1024 / 1024) * 100) / 100,
-                    compression_ratio: Math.round(stats.compressionRatio * 100) / 100,
-                    file_name_length: file.name.length,
-                    has_thumbnail: true
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    file_name_length: file.name.length
                 });
             }
 
             const supabase = await createSPASassClient();
             
-            // Upload original file
-            const { error: originalError, data } = await supabase.uploadFile(user.id, file.name, original);
+            // Upload original file directly - no compression, no thumbnails
+            const { error: originalError, data } = await supabase.uploadFile(user.id, file.name, file);
             if (originalError) throw originalError;
             
             const filename = data?.path?.split('/').pop();
             if (!filename) throw new Error('Failed to get filename from upload');
-            
-            // Upload thumbnail to thumbnails bucket
-            await supabase.getSupabaseClient().storage
-                .from('thumbnails')
-                .upload(`${user.id}/${filename}`, thumbnail);
-
-            // Note: getFiles() is not cached - it makes direct Supabase calls
-            // Only invalidate image URL caches for the new file
-            apiCache.invalidate(createCacheKey('preview-url', user.id, filename));
-            apiCache.invalidate(createCacheKey('thumbnail-url', user.id, filename));
 
             // Add small delay to ensure Supabase storage is consistent
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -482,11 +375,8 @@ export default function FileManagementPage() {
             if (posthog) {
                 posthog.capture('photo_upload_successful', {
                     file_type: file.type,
-                    original_size_mb: Math.round((stats.originalSize / 1024 / 1024) * 100) / 100,
-                    total_compressed_size_mb: Math.round((stats.totalCompressedSize / 1024 / 1024) * 100) / 100,
-                    compression_ratio: Math.round(stats.compressionRatio * 100) / 100,
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
                     file_name_length: file.name.length,
-                    has_thumbnail: true,
                     uploaded_filename: filename
                 });
             }
@@ -507,7 +397,7 @@ export default function FileManagementPage() {
         } finally {
             setUploading(false);
         }
-    }, [user?.id, loadFiles, posthog, compressImageMultiSize]);
+    }, [user?.id, loadFiles, posthog]);
 
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -583,6 +473,10 @@ export default function FileManagementPage() {
     };
 
     const handleRestorePhoto = async (filename: string) => {
+        console.log('🚀 [DEBUG] handleRestorePhoto called with filename:', filename);
+        console.log('🚀 [DEBUG] User state:', { userId: user?.id, hasUser: !!user });
+        console.log('🚀 [DEBUG] Credits state:', { optimisticCredits });
+        
         // Track restoration attempt
         if (posthog) {
             posthog.capture('photo_restoration_attempted', {
@@ -595,9 +489,13 @@ export default function FileManagementPage() {
             setRestoringFiles(prev => new Set([...prev, filename]));
             setError('');
 
+            console.log('🚀 [DEBUG] Starting credit deduction...');
             // Deduct credit optimistically for instant UI feedback
             const creditDeductionSuccess = await deductCreditsOptimistic(1);
+            console.log('🚀 [DEBUG] Credit deduction result:', creditDeductionSuccess);
+            
             if (!creditDeductionSuccess) {
+                console.log('❌ [DEBUG] Credit deduction failed - insufficient credits');
                 // Track insufficient credits
                 if (posthog) {
                     posthog.capture('photo_restoration_failed', {
@@ -607,6 +505,12 @@ export default function FileManagementPage() {
                 }
                 throw new Error('You don\'t have enough credits to restore this photo. Please purchase more credits to continue.');
             }
+
+            console.log('🚀 [DEBUG] Making API call to /api/restore-photo...');
+            console.log('🚀 [DEBUG] Request payload:', {
+                user_id: user!.id,
+                image_path: `${user!.id}/${filename}`
+            });
 
             const response = await fetch('/api/restore-photo', {
                 method: 'POST',
@@ -619,12 +523,18 @@ export default function FileManagementPage() {
                 }),
             });
 
+            console.log('🚀 [DEBUG] API response status:', response.status);
+            console.log('🚀 [DEBUG] API response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
+                console.log('❌ [DEBUG] API response not ok, reading error...');
                 const errorData = await response.json();
+                console.log('❌ [DEBUG] API error data:', errorData);
                 throw new Error(errorData.error || 'Failed to start restoration');
             }
 
             const result = await response.json();
+            console.log('✅ [DEBUG] API success result:', result);
             console.log('Restoration started:', result);
             
             // Track successful restoration start
@@ -1060,12 +970,11 @@ export default function FileManagementPage() {
                                 const filename = file.name;
                                 const cleanName = cleanFilename(filename);
                                 const fullUrl = imageUrls[filename];
-                                const thumbnailUrl = thumbnails[filename];
                                 const associatedJob = processingJobs.find(job => job.image_path === `${user!.id}/${filename}`);
 
                                 // Determine which image to show (restored result takes priority)
-                                let displayUrl: string | null = thumbnailUrl; // Use thumbnail for grid
-                                let modalUrl: string = fullUrl || displayUrl; // Use original for modal
+                                let displayUrl: string | null = fullUrl; // Use original for grid
+                                let modalUrl: string = fullUrl; // Use original for modal
                                 
                                 if (associatedJob && associatedJob.status === 'completed' && associatedJob.result_url) {
                                     displayUrl = associatedJob.result_url; // Show restored result if available

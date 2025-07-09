@@ -1,3 +1,5 @@
+// COMMENTED OUT - History page removed for simplification
+/*
 import { Suspense } from 'react';
 import { getSavedImages } from '@/app/actions/jobs';
 import { createSSRClient } from '@/lib/supabase/server';
@@ -43,6 +45,21 @@ export default function HistoryPage() {
             <Suspense fallback={<HistoryLoading />}>
                 <HistoryContent />
             </Suspense>
+        </div>
+    );
+}
+*/
+
+// Temporary simple component to avoid build errors
+export default function HistoryPage() {
+    return (
+        <div className="container mx-auto px-4 py-6">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold tracking-tight">Page Temporarily Disabled</h1>
+                <p className="text-muted-foreground mt-2">
+                    This page has been temporarily disabled for simplification. Use the main storage page instead.
+                </p>
+            </div>
         </div>
     );
 }

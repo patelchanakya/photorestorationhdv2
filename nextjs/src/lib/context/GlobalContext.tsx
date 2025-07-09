@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useOptimistic, u
 import { createSPASassClient } from '@/lib/supabase/client';
 import { getCredits, deductCredits, refundCredits } from '@/app/actions/credits';
 import { usePostHog } from 'posthog-js/react';
-import { apiCache, createCacheKey } from '@/lib/utils/cache';
+// Removed cache import - using direct API calls
 
 
 type User = {
@@ -64,14 +64,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     const fetchCredits = useCallback(async (userId: string) => {
         try {
             setCreditsLoading(true);
-            // Cache credits for 2 seconds to reduce redundant calls
-            const cacheKey = createCacheKey('credits', userId);
-            const result = await apiCache.get(cacheKey, () => getCredits(userId), 2000);
+            // Direct API call - no caching
+            const result = await getCredits(userId);
             
             if (result?.success && result.credits !== undefined) {
                 setCredits(result.credits);
-                // Remove redundant optimistic update to prevent conflicts
-                // The optimistic state will naturally sync with the real credits state
             } else {
                 console.error('Error fetching credits:', result?.error || 'Unknown error');
             }
@@ -93,10 +90,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await deductCredits(user.id, amount);
                     if (result?.success && result.credits !== undefined) {
-                        // Invalidate credits cache since we have fresh data
-                        const cacheKey = createCacheKey('credits', user.id);
-                        apiCache.invalidate(cacheKey);
-                        
                         // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
                         // Force optimistic state to match real state to prevent conflicts
@@ -132,10 +125,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     const result = await refundCredits(user.id, amount);
                     if (result?.success && result.credits !== undefined) {
-                        // Invalidate credits cache since we have fresh data
-                        const cacheKey = createCacheKey('credits', user.id);
-                        apiCache.invalidate(cacheKey);
-                        
                         // Update real credits state - this will sync with optimistic
                         setCredits(result.credits);
                         // Force optimistic state to match real state to prevent conflicts
