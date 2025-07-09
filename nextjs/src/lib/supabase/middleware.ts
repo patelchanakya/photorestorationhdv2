@@ -35,6 +35,15 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
+    // Log auth check for API routes that matter
+    if (request.nextUrl.pathname.startsWith('/api/restore-photo')) {
+        console.log(`🔐 [RESTORE-API] Auth check for ${request.nextUrl.pathname}:`, {
+            hasUser: !!user,
+            userId: user?.id,
+            timestamp: new Date().toISOString()
+        });
+    }
+
     if (
         !user &&
         !request.nextUrl.pathname.startsWith('/auth') &&
@@ -42,6 +51,7 @@ export async function updateSession(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/app')
     ) {
         // no user, potentially respond by redirecting the user to the login page
+        console.log(`🔐 [REDIRECT] Redirecting unauthenticated user from ${request.nextUrl.pathname} to login`);
         const url = request.nextUrl.clone()
         url.pathname = '/auth/login'
         return NextResponse.redirect(url)

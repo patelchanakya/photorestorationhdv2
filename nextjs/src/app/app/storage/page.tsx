@@ -473,15 +473,30 @@ export default function FileManagementPage() {
     };
 
     const handleRestorePhoto = async (filename: string) => {
-        console.log('🚀 [DEBUG] handleRestorePhoto called with filename:', filename);
-        console.log('🚀 [DEBUG] User state:', { userId: user?.id, hasUser: !!user });
-        console.log('🚀 [DEBUG] Credits state:', { optimisticCredits });
+        const requestId = Math.random().toString(36).substring(2, 15);
+        const timestamp = new Date().toISOString();
+        
+        console.log(`🚀 [${timestamp}] [${requestId}] handleRestorePhoto called with filename:`, filename);
+        console.log(`🚀 [${requestId}] User state:`, { 
+            userId: user?.id, 
+            hasUser: !!user,
+            email: user?.email,
+            userObjectKeys: user ? Object.keys(user) : []
+        });
+        console.log(`🚀 [${requestId}] Credits state:`, { optimisticCredits });
+        console.log(`🚀 [${requestId}] Browser info:`, {
+            userAgent: navigator.userAgent,
+            cookieEnabled: navigator.cookieEnabled,
+            onLine: navigator.onLine,
+            language: navigator.language
+        });
         
         // Track restoration attempt
         if (posthog) {
             posthog.capture('photo_restoration_attempted', {
                 filename_length: filename.length,
-                current_credits: optimisticCredits || 0
+                current_credits: optimisticCredits || 0,
+                request_id: requestId
             });
         }
         
@@ -489,67 +504,84 @@ export default function FileManagementPage() {
             setRestoringFiles(prev => new Set([...prev, filename]));
             setError('');
 
-            console.log('🚀 [DEBUG] Starting credit deduction...');
+            console.log(`🚀 [${requestId}] Starting credit deduction...`);
+            const creditStartTime = Date.now();
             // Deduct credit optimistically for instant UI feedback
             const creditDeductionSuccess = await deductCreditsOptimistic(1);
-            console.log('🚀 [DEBUG] Credit deduction result:', creditDeductionSuccess);
+            const creditEndTime = Date.now();
+            console.log(`🚀 [${requestId}] Credit deduction result:`, creditDeductionSuccess, `(took ${creditEndTime - creditStartTime}ms)`);
             
             if (!creditDeductionSuccess) {
-                console.log('❌ [DEBUG] Credit deduction failed - insufficient credits');
+                console.log(`❌ [${requestId}] Credit deduction failed - insufficient credits`);
                 // Track insufficient credits
                 if (posthog) {
                     posthog.capture('photo_restoration_failed', {
                         reason: 'insufficient_credits',
-                        current_credits: optimisticCredits || 0
+                        current_credits: optimisticCredits || 0,
+                        request_id: requestId
                     });
                 }
                 throw new Error('You don\'t have enough credits to restore this photo. Please purchase more credits to continue.');
             }
 
-            console.log('🚀 [DEBUG] Making API call to /api/restore-photo...');
-            console.log('🚀 [DEBUG] Request payload:', {
+            console.log(`🚀 [${requestId}] Making API call to /api/restore-photo...`);
+            const apiPayload = {
                 user_id: user!.id,
                 image_path: `${user!.id}/${filename}`
-            });
+            };
+            console.log(`🚀 [${requestId}] Request payload:`, apiPayload);
+            console.log(`🚀 [${requestId}] Current window.location:`, window.location.href);
+            console.log(`🚀 [${requestId}] Document cookies present:`, document.cookie ? 'Yes' : 'No');
 
+            const apiStartTime = Date.now();
             const response = await fetch('/api/restore-photo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    user_id: user!.id,
-                    image_path: `${user!.id}/${filename}`, // Construct full path: user_id/filename
-                }),
+                body: JSON.stringify(apiPayload),
             });
 
-            console.log('🚀 [DEBUG] API response status:', response.status);
-            console.log('🚀 [DEBUG] API response headers:', Object.fromEntries(response.headers.entries()));
+            const apiEndTime = Date.now();
+            console.log(`🚀 [${requestId}] API response status:`, response.status);
+            console.log(`🚀 [${requestId}] API response time:`, apiEndTime - apiStartTime, 'ms');
+            console.log(`🚀 [${requestId}] API response headers:`, Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
-                console.log('❌ [DEBUG] API response not ok, reading error...');
+                console.log(`❌ [${requestId}] API response not ok, reading error...`);
                 const errorData = await response.json();
-                console.log('❌ [DEBUG] API error data:', errorData);
+                console.log(`❌ [${requestId}] API error data:`, errorData);
+                console.log(`❌ [${requestId}] API error response full:`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: errorData
+                });
                 throw new Error(errorData.error || 'Failed to start restoration');
             }
 
             const result = await response.json();
-            console.log('✅ [DEBUG] API success result:', result);
-            console.log('Restoration started:', result);
+            console.log(`✅ [${requestId}] API success result:`, result);
+            console.log(`✅ [${requestId}] Restoration started:`, result);
             
             // Track successful restoration start
             if (posthog) {
                 posthog.capture('photo_restoration_started', {
                     filename_length: filename.length,
                     credits_after: (optimisticCredits || 0) - 1,
-                    job_id: result.job_id
+                    job_id: result.job_id,
+                    request_id: requestId
                 });
             }
             
             setSuccess('Photo restoration started! The result will appear automatically when ready.');
+            console.log(`🚀 [${requestId}] Refreshing jobs to load new job...`);
             await refreshJobs(); // Load the new job once, then polling takes over
+            console.log(`✅ [${requestId}] Jobs refreshed successfully`);
         } catch (err) {
-            console.error('Error starting restoration:', err);
+            console.error(`❌ [${requestId}] Error starting restoration:`, err);
+            console.error(`❌ [${requestId}] Error stack:`, err instanceof Error ? err.stack : 'No stack available');
+            console.error(`❌ [${requestId}] Error occurred at:`, new Date().toISOString());
             setError(err instanceof Error ? err.message : 'Failed to start photo restoration');
             
             // Track restoration failure
@@ -557,10 +589,12 @@ export default function FileManagementPage() {
                 posthog.capture('photo_restoration_failed', {
                     reason: 'api_error',
                     error_message: err instanceof Error ? err.message : 'unknown_error',
-                    current_credits: optimisticCredits || 0
+                    current_credits: optimisticCredits || 0,
+                    request_id: requestId
                 });
             }
         } finally {
+            console.log(`🚀 [${requestId}] Cleaning up restoring files state...`);
             setRestoringFiles(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(filename);
