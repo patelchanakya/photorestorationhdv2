@@ -74,12 +74,12 @@ export default function Home() {
 
   const testimonials = [
     {
-      quote: "Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn&apos;t believe how clear they turned out.",
+      quote: "Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn&#39;t believe how clear they turned out.",
       name: "Priya S.",
       initials: "PS"
     },
     {
-      quote: "I was amazed how it brought my grandma's wedding photo back to life – looks like it was taken yesterday!",
+      quote: "I was amazed how it brought my grandma&#39;s wedding photo back to life – looks like it was taken yesterday!",
       name: "Carlos R.",
       initials: "CR"
     },
@@ -94,7 +94,7 @@ export default function Home() {
       initials: "AD"
     },
     {
-      quote: "My kids had drawn all over my parents' old wedding photos with crayon. I thought they were ruined forever, but this brought them back perfectly!",
+      quote: "My kids had drawn all over my parents&#39; old wedding photos with crayon. I thought they were ruined forever, but this brought them back perfectly!",
       name: "Chen L.",
       initials: "CL"
     },
@@ -104,7 +104,7 @@ export default function Home() {
       initials: "MG"
     },
     {
-      quote: "I'm totally addicted to restoring photos now! Started with my own family pics, now I help people in Facebook groups all the time. It's so rewarding.",
+      quote: "I&#39;m totally addicted to restoring photos now! Started with my own family pics, now I help people in Facebook groups all the time. It&#39;s so rewarding.",
       name: "Jamal K.",
       initials: "JK"
     },
@@ -557,7 +557,7 @@ export default function Home() {
                 Loved by Families Worldwide
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Join thousands who&apos;ve rediscovered their family history through crystal-clear restorations
+                Join thousands who&#39;ve rediscovered their family history through crystal-clear restorations
               </p>
             </motion.div>
             {mounted ? (
@@ -625,7 +625,7 @@ export default function Home() {
             <h2 className="text-4xl font-bold mb-6">Ready to Revive Your Memories?</h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">Start with our free demo restoration today – no credit card required!</p>
             <motion.a href="#demo-upload" whileHover={{scale:1.05}} transition={{duration:0.3}} className="inline-block bg-white text-orange-600 font-bold py-4 px-8 rounded-full text-lg shadow-lg hover:shadow-xl">
-              Try Free Demo Now
+              Start for Free Now
             </motion.a>
           </div>
         </section>
