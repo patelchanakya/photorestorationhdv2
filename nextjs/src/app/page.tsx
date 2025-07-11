@@ -636,41 +636,56 @@ export default function Home() {
         </motion.section>
 
         {/* Footer with subtle animation */}
-        <footer className="py-12 bg-gray-900 text-gray-300">
+        <footer
+          className="py-16 text-gray-800 w-full"
+          style={{
+            background: 'linear-gradient(to top, #f97316 0%, #fb923c 40%, #ffedd5 80%, #ffffff 100%)',
+            minHeight: '220px',
+          }}
+        >
           <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
             className="container mx-auto px-4"
           >
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-5 gap-8">
               <div>
-                <Logo color="white" />
+                <Logo color="orange" />
                 <p className="mt-4 text-sm">Reviving memories, one photo at a time.</p>
               </div>
               <div>
-                <h4 className="font-semibold text-white mb-4">Company</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><Link href="/legal/terms-of-service" className="hover:text-orange-400">Terms</Link></li>
-                  <li><Link href="/legal/privacy-notice" className="hover:text-orange-400">Privacy</Link></li>
-                  <li><Link href="/legal/refund-policy" className="hover:text-orange-400">Refunds</Link></li>
+                  <li><Link href="/legal/terms-of-service" className="hover:text-orange-600">Terms</Link></li>
+                  <li><Link href="/legal/privacy-notice" className="hover:text-orange-600">Privacy</Link></li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-white mb-4">Support</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><Link href="#faq" className="hover:text-orange-400">FAQ</Link></li>
-                  <li><a href="mailto:support@example.com" className="hover:text-orange-400">Contact</a></li>
+                  <li><Link href="#faq" className="hover:text-orange-600">FAQ</Link></li>
+                  <li><a href="mailto:support@example.com" className="hover:text-orange-600">Contact</a></li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-white mb-4">Follow Us</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">Follow Us</h4>
                 <div className="flex space-x-4">
-                  <a href="#" className="hover:text-orange-400"><Facebook size={20} /></a>
+                  <a href="#" className="hover:text-orange-600"><Facebook size={20} /></a>
                 </div>
               </div>
+              <div>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/wedding" className="hover:text-orange-600">Wedding Photo Restoration</Link></li>
+                  <li><Link href="/funeral" className="hover:text-orange-600">Funeral Photo Restoration</Link></li>
+                  <li><Link href="/vintage" className="hover:text-orange-600">Vintage Photo Restoration</Link></li>
+                  <li><Link href="/family" className="hover:text-orange-600">Family Photo Restoration</Link></li>
+                  <li><Link href="/military" className="hover:text-orange-600">Military Photo Restoration</Link></li>
+                  <li><Link href="/antique" className="hover:text-orange-600">Antique Photo Restoration</Link></li>
+                </ul>
+              </div>
             </div>
-            <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+            <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm">
               © {new Date().getFullYear()} PhotoRestorationHD. All rights reserved.
             </div>
           </motion.div>

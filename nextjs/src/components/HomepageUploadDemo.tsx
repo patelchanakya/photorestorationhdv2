@@ -161,7 +161,7 @@ const HomepageUploadDemo: React.FC<HomepageUploadDemoProps> = ({ className = '' 
                 Drop your photo here to get started
               </h3>
               <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-                See instant AI restoration results in seconds
+                See instant restoration results in seconds
               </p>
               <p className="text-xs sm:text-sm text-gray-500">
                 Drag & drop or click to browse • 1 Free Photo 
