@@ -173,7 +173,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto mt-0 sm:mt-0 pt-16 sm:pt-0">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
             One-Time Purchase
