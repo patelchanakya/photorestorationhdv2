@@ -58,7 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             <div className="p-1.5 bg-orange-100 rounded-lg">
                                 <ImageIcon className="h-5 w-5 text-orange-600" />
                             </div>
-                            <span className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-orange-600 tracking-tight whitespace-nowrap">
+                            <span suppressHydrationWarning className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-orange-600 tracking-tight whitespace-nowrap">
                                 Photo Restoration HD
                             </span>
                         </Link>

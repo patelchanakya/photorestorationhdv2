@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import FakeProcessingAnimation from './FakeProcessingAnimation';
@@ -16,6 +16,12 @@ const HomepageUploadDemo: React.FC<HomepageUploadDemoProps> = ({ className = '' 
   const [showSignupOverlay, setShowSignupOverlay] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    console.log('isProcessing changed to', isProcessing);
+  }, [isProcessing]);
+
+  console.log('HomepageUploadDemo render');
 
   const handleFileSelect = useCallback((file: File) => {
     // Validate file type
@@ -92,6 +98,7 @@ const HomepageUploadDemo: React.FC<HomepageUploadDemoProps> = ({ className = '' 
   };
 
   const handleProcessingComplete = () => {
+    console.log('handleProcessingComplete called');
     setIsProcessing(false);
     setShowSignupOverlay(true);
   };

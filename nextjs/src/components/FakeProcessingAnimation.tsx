@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Eye, Palette, Focus } from 'lucide-react';
 
 interface FakeProcessingAnimationProps {
@@ -21,9 +21,8 @@ const FakeProcessingAnimation: React.FC<FakeProcessingAnimationProps> = ({
   filename = 'your photo',
   duration = 4000 // 4 seconds
 }) => {
-  const animationStarted = useRef(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
   const steps: ProcessingStep[] = useMemo(() => [
@@ -58,47 +57,29 @@ const FakeProcessingAnimation: React.FC<FakeProcessingAnimationProps> = ({
   ], []);
 
   useEffect(() => {
-    if (animationStarted.current) return;
-    animationStarted.current = true;
-    const startTime = Date.now();
-    let animationFrame: number;
+    setTimeout(() => {
+      setIsAnimating(true);
+    }, 0);
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progressPercent = Math.min((elapsed / duration) * 100, 100);
-      
-      setProgress(progressPercent);
+    let cumulativeTime = 0;
+    const timeouts: NodeJS.Timeout[] = [];
 
-      // Calculate current step based on progress
-      let cumulativePercent = 0;
-      let newCurrentStep = 0;
-      
-      for (let i = 0; i < steps.length; i++) {
-        cumulativePercent += steps[i].duration;
-        if (progressPercent <= cumulativePercent) {
-          newCurrentStep = i;
-          break;
-        }
+    steps.forEach((step, index) => {
+      if (index > 0) {
+        const timeout = setTimeout(() => setCurrentStep(index), cumulativeTime);
+        timeouts.push(timeout);
       }
-      
-      setCurrentStep(newCurrentStep);
+      cumulativeTime += (step.duration / 100) * duration;
+    });
 
-      if (progressPercent >= 100) {
-        setIsComplete(true);
-        setTimeout(() => {
-          onComplete();
-        }, 800);
-      } else {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(animate);
+    const completeTimeout = setTimeout(() => {
+      setIsComplete(true);
+      setTimeout(onComplete, 800);
+    }, duration);
+    timeouts.push(completeTimeout);
 
     return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
+      timeouts.forEach(clearTimeout);
     };
   }, [duration, onComplete, steps]);
 
@@ -127,12 +108,15 @@ const FakeProcessingAnimation: React.FC<FakeProcessingAnimationProps> = ({
       <div className="mb-2">
         <div className="bg-white/20 rounded-full h-2 overflow-hidden">
           <div 
-            className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
+            className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full transition-all ease-linear"
+            style={{ 
+              width: isAnimating ? '100%' : '0%',
+              transitionDuration: `${duration}ms`
+            }}
           />
         </div>
         <div className="text-xs text-white/80 mt-1">
-          {Math.round(progress)}% complete
+          {isComplete ? '100%' : 'Processing...'} complete
         </div>
       </div>
 
