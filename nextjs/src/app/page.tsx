@@ -74,12 +74,12 @@ export default function Home() {
 
   const testimonials = [
     {
-      quote: "Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn&#39;t believe how clear they turned out.",
+      quote: "Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn't believe how clear they turned out.",
       name: "Priya S.",
       initials: "PS"
     },
     {
-      quote: "I was amazed how it brought my grandma&#39;s wedding photo back to life – looks like it was taken yesterday!",
+      quote: "I was amazed how it brought my grandma's wedding photo back to life – looks like it was taken yesterday!",
       name: "Carlos R.",
       initials: "CR"
     },
@@ -94,7 +94,7 @@ export default function Home() {
       initials: "AD"
     },
     {
-      quote: "My kids had drawn all over my parents&#39; old wedding photos with crayon. I thought they were ruined forever, but this brought them back perfectly!",
+      quote: "My kids had drawn all over my parents' old wedding photos with crayon. I thought they were ruined forever, but this brought them back perfectly!",
       name: "Chen L.",
       initials: "CL"
     },
@@ -104,7 +104,7 @@ export default function Home() {
       initials: "MG"
     },
     {
-      quote: "I&#39;m totally addicted to restoring photos now! Started with my own family pics, now I help people in Facebook groups all the time. It&#39;s so rewarding.",
+      quote: "I'm totally addicted to restoring photos now! Started with my own family pics, now I help people in Facebook groups all the time. It's so rewarding.",
       name: "Jamal K.",
       initials: "JK"
     },
