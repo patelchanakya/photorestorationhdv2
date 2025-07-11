@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Facebook } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
@@ -158,6 +158,24 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [mounted, testimonials.length]);
 
+  const sliderRefs: React.RefObject<HTMLInputElement | null>[] = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null)
+  ];
+
+  // Helper to handle touch drag for a slider
+  function handleSliderTouch(index: number, setValue: (value: number) => void) {
+    return (e: React.TouchEvent<HTMLInputElement>) => {
+      if (!sliderRefs[index].current) return;
+      const rect = sliderRefs[index].current.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      let percent = (x / rect.width) * 100;
+      percent = Math.max(0, Math.min(100, percent));
+      setValue(Math.round(percent));
+    };
+  }
 
   return (
       <div className="min-h-screen">
@@ -347,6 +365,9 @@ export default function Home() {
                             max="100"
                             value={slider3Value}
                             onChange={(e) => setSlider3Value(parseInt(e.target.value))}
+                            ref={sliderRefs[2]}
+                            onTouchStart={e => e.stopPropagation()}
+                            onTouchMove={handleSliderTouch(2, setSlider3Value)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                           />
                         </div>
@@ -396,6 +417,9 @@ export default function Home() {
                             max="100"
                             value={slider4Value}
                             onChange={(e) => setSlider4Value(parseInt(e.target.value))}
+                            ref={sliderRefs[3]}
+                            onTouchStart={e => e.stopPropagation()}
+                            onTouchMove={handleSliderTouch(3, setSlider4Value)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                           />
                         </div>
@@ -445,6 +469,9 @@ export default function Home() {
                             max="100"
                             value={slider1Value}
                             onChange={(e) => setSlider1Value(parseInt(e.target.value))}
+                            ref={sliderRefs[0]}
+                            onTouchStart={e => e.stopPropagation()}
+                            onTouchMove={handleSliderTouch(0, setSlider1Value)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                           />
                         </div>
@@ -494,6 +521,9 @@ export default function Home() {
                             max="100"
                             value={slider2Value}
                             onChange={(e) => setSlider2Value(parseInt(e.target.value))}
+                            ref={sliderRefs[1]}
+                            onTouchStart={e => e.stopPropagation()}
+                            onTouchMove={handleSliderTouch(1, setSlider2Value)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing"
                           />
                         </div>
