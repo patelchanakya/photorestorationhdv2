@@ -288,11 +288,11 @@ export default function Home() {
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2 bg-white/60 px-3 py-1.5 rounded-full">
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-medium text-gray-700">10sec results</span>
+                        <span className="text-xs font-medium text-gray-700">Facial consistency</span>
                       </div>
                       <div className="flex items-center space-x-2 bg-white/60 px-3 py-1.5 rounded-full">
                         <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        <span className="text-xs font-medium text-gray-700">100% private</span>
+                        <span className="text-xs font-medium text-gray-700">Instant results</span>
                       </div>
                     </div>
                   </div>
