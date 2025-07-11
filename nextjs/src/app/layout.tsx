@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_PRODUCTNAME,
   description: "Instant, cheap, fast photo restoration service.",
   icons: {
-    icon: '/icon.png',
+    icon: '/favicon.ico',
     apple: '/apple-icon.png',
     shortcut: '/favicon.ico',
   },

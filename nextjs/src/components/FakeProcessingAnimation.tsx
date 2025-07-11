@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Sparkles, Eye, Palette, Focus } from 'lucide-react';
 
 interface FakeProcessingAnimationProps {
@@ -21,6 +21,7 @@ const FakeProcessingAnimation: React.FC<FakeProcessingAnimationProps> = ({
   filename = 'your photo',
   duration = 4000 // 4 seconds
 }) => {
+  const animationStarted = useRef(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -57,6 +58,8 @@ const FakeProcessingAnimation: React.FC<FakeProcessingAnimationProps> = ({
   ], []);
 
   useEffect(() => {
+    if (animationStarted.current) return;
+    animationStarted.current = true;
     const startTime = Date.now();
     let animationFrame: number;
 

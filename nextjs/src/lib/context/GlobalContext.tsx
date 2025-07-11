@@ -242,9 +242,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                         } else if (event === 'SIGNED_OUT') {
                             setUser(null);
                             setCredits(null);
-                            if (posthog) {
-                                posthog.reset();
-                            }
+                            // if (posthog) {
+                            //     posthog.reset();
+                            // } // Comment out reset to avoid flash error during logout
                         }
                     }
                 );

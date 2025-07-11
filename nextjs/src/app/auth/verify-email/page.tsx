@@ -80,7 +80,13 @@ export default function VerifyEmailPage() {
                                     Your demo photo is waiting!
                                 </p>
                                 <p className="text-blue-700">
-                                    {demoFileName ? `${demoFileName} will be` : 'Your photo will be'} automatically processed 
+                                    {demoFileName ? (
+                                      <>
+                                        <span className="underline decoration-dotted cursor-help inline-block max-w-[150px] sm:max-w-[200px] truncate" title={demoFileName}>
+                                          {demoFileName}
+                                        </span> will be
+                                      </>
+                                    ) : 'Your photo will be'} automatically processed 
                                     with your 1 free credit once you verify your email and sign in.
                                 </p>
                             </div>

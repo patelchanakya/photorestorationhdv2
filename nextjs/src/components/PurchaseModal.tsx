@@ -194,66 +194,76 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
           </Alert>
         )}
 
-        {/* Value Comparison Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">Why Choose Digital Restoration?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Value Comparison Section - Hidden on mobile */}
+        <div className="mb-8 hidden md:block">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Why Choose Digital Restoration?</h3>
+          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Traditional Restoration Card */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-5">
-              <div className="flex items-center mb-3">
-                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="relative bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl p-6 transform transition-all duration-300 hover:scale-105 shadow-lg">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-red-700">Traditional Restoration</h4>
+                <h4 className="font-bold text-red-800 text-lg">Traditional Restoration</h4>
               </div>
-              <ul className="text-sm text-red-600 space-y-2">
+              <ul className="text-red-700 space-y-3">
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
-                  $30-200 per photo
+                  <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span className="font-semibold">$30-200 per photo</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
-                  2-4 weeks wait time
+                  <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>2-4 weeks wait time</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Risk of damage
+                  <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>Risk of damage</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Limited availability
+                  <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>Limited availability</span>
                 </li>
               </ul>
             </div>
 
             {/* Digital Service Card */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-5">
-              <div className="flex items-center mb-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="relative bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 transform transition-all duration-300 hover:scale-105 shadow-lg">
+              <div className="absolute -top-3 -right-3 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-green-700">Our Digital Service</h4>
+                <h4 className="font-bold text-green-800 text-lg">Our Digital Service</h4>
               </div>
-              <ul className="text-sm text-green-600 space-y-2">
+              <ul className="text-green-700 space-y-3">
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Up to 100x cheaper
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span className="font-semibold">Up to 100x cheaper</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Results in seconds
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>Results in seconds</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Private & secure
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>Private & secure</span>
                 </li>
                 <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-3 flex-shrink-0"></span>
-                  Available 24/7
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                  <span>Available 24/7</span>
                 </li>
               </ul>
             </div>
@@ -277,7 +287,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                 )}
                 
                 <div
-                  className={`relative bg-white rounded-lg border p-6 transition-all duration-200 hover:shadow-md flex flex-col h-full ${
+                  className={`relative bg-white rounded-lg border p-4 transition-all duration-200 hover:shadow-md flex flex-col h-full ${
                     isPopular 
                       ? 'border-orange-300 shadow-sm' 
                       : 'border-gray-200 hover:border-gray-300'
@@ -285,39 +295,38 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                 >
 
                 {/* Plan Name */}
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-center mb-3">
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-600 h-10 flex items-center justify-center">
+                  <p className="text-xs text-gray-600 h-8 flex items-center justify-center">
                     {product.description}
                   </p>
                 </div>
 
                 {/* Price */}
-                <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-gray-900 mb-1">
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
                     {product.price}
                   </div>
-                  <div className="text-sm text-gray-500 mb-2">
-                    {product.credits} {product.credits === 1 ? 'restoration' : 'restorations'}
+                  <div className="text-xs text-gray-500 mb-1">
+                    {product.credits} photo {product.credits === 1 ? 'restoration' : 'restorations'}
                   </div>
                   <div className="text-xs text-gray-400">
                     ${pricePerCredit.toFixed(2)} per photo
                   </div>
                 </div>
 
-                {/* Features */}
-                <div className="space-y-3 mb-6 flex-grow">
+                {/* Features - Simplified for mobile */}
+                <div className="space-y-2 mb-4 flex-grow">
                   {[
-                    'Priority support',
-                    'HD quality restoration', 
-                    'Instant processing',
-                    'Download & keep forever'
+                    'HD quality',
+                    'Instant results', 
+                    'Keep forever'
                   ].map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center text-sm text-gray-700">
-                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                        <Check size={12} className="text-green-600" />
+                    <div key={featureIndex} className="flex items-center text-xs text-gray-700">
+                      <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                        <Check size={10} className="text-green-600" />
                       </div>
                       <span>{feature}</span>
                     </div>
@@ -329,7 +338,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                   <Button
                     onClick={() => handlePurchase(product)}
                     disabled={loading === product.priceId}
-                    className={`w-full py-2.5 px-4 font-medium transition-colors ${
+                    className={`w-full py-2 px-3 text-sm font-medium transition-colors ${
                       isPopular 
                         ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                         : 'bg-gray-800 hover:bg-gray-900 text-white'
@@ -337,7 +346,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onPurcha
                   >
                     {loading === product.priceId ? (
                       <>
-                        <Loader2 size={16} className="animate-spin mr-2" />
+                        <Loader2 size={14} className="animate-spin mr-1" />
                         Processing...
                       </>
                     ) : (

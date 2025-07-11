@@ -5,7 +5,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { getPurchaseHistory } from '@/app/actions/credits';
-import { Key, User, CheckCircle, CreditCard, History } from 'lucide-react';
+import { Key, User, CheckCircle, CreditCard, History, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import ProminentCreditsDisplay from '@/components/ProminentCreditsDisplay';
 import dynamic from 'next/dynamic';
 
@@ -135,6 +136,13 @@ function UserSettingsContent() {
 
     return (
         <div className="space-y-6 p-6">
+            <div className="mb-6">
+                <Link href="/app/storage" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Back to Home
+                </Link>
+            </div>
+            
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">User Settings</h1>
                 <p className="text-muted-foreground">

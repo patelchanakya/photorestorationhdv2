@@ -83,9 +83,16 @@ const SignupOverlay: React.FC<SignupOverlayProps> = ({
           <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 text-left">
             <h3 className="font-semibold text-gray-900 mb-2">What you get:</h3>
             <ul className="space-y-1 text-sm text-gray-700">
-              <li className="flex items-center">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2" />
-                Your restored {demoFileName || 'photo'} in HD quality
+              <li className="flex items-start">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2 mt-2 flex-shrink-0" />
+                <span className="flex flex-col">
+                  <span>
+                    Your restored file: <span className="font-medium text-gray-900" title={demoFileName || 'photo'}>
+                      {demoFileName ? (demoFileName.length > 20 ? `${demoFileName.substring(0, 17)}...` : demoFileName) : 'photo'}
+                    </span>
+                  </span>
+                  <span>in HD quality</span>
+                </span>
               </li>
               <li className="flex items-start">
                 <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-2 mt-1.5 flex-shrink-0" />

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, ExternalLink, X, HelpCircle, MoreVertical, RefreshCw } from 'lucide-react';
+import { Upload, Download, Share2, Trash2, Loader2, FileIcon, AlertCircle, CheckCircle, Copy, Wand2, X, HelpCircle, MoreVertical, RefreshCw } from 'lucide-react';
 import { createSPASassClient } from '@/lib/supabase/client';
 import { FileObject } from '@supabase/storage-js';
 
@@ -421,6 +420,9 @@ export default function FileManagementPage() {
             setUploading(true);
             setError('');
 
+            // Track upload attempt with logging
+            console.log('📤 Starting file upload:', file.name);
+
             // Track upload attempt
             if (posthog) {
                 posthog.capture('photo_upload_attempted', {
@@ -465,6 +467,9 @@ export default function FileManagementPage() {
             setShowUploadSuccess(true);
             setTimeout(() => setShowUploadSuccess(false), 3000);
             
+            // Track successful upload with logging
+            console.log('✅ File uploaded successfully:', filename);
+
             // Track successful upload
             if (posthog) {
                 posthog.capture('photo_upload_successful', {
@@ -477,12 +482,12 @@ export default function FileManagementPage() {
 
             return filename; // Return the filename on success
         } catch (err) {
+            console.error('❌ Error uploading file:', err);
             setError('Failed to upload file');
             setShowUploadError(true);
             setTimeout(() => setShowUploadError(false), 3000);
-            console.error('Error uploading file:', err);
             
-            // Track upload failure
+            // Additional error logging
             if (posthog) {
                 posthog.capture('photo_upload_failed', {
                     file_type: file.type,
@@ -495,6 +500,9 @@ export default function FileManagementPage() {
             setUploading(false);
         }
     }, [user?.id, loadFiles, posthog]);
+
+    // Track if demo has been processed to prevent double runs in StrictMode
+    const didProcessDemo = useRef(false);
 
     // Handle demo file processing from homepage signup
     useEffect(() => {
@@ -547,8 +555,11 @@ export default function FileManagementPage() {
 
                     setDemoProcessed(true);  // Mark as processed
 
+                    // Log success
+                    console.log('🎬 Demo restoration started successfully');
+
                 } catch (error) {
-                    console.error('Error processing demo file:', error);
+                    console.error('❌ Error processing demo file:', error);
                     setError('Failed to process your demo photo. Please try uploading it manually from the upload area.');
                 } finally {
                     setUploading(false);
@@ -558,6 +569,14 @@ export default function FileManagementPage() {
 
         // Only run if user is loaded and we haven't processed demo file yet
         if (user?.id && !loading && !demoProcessed) {
+
+            if (didProcessDemo.current) {
+                console.log('🎬 Skipping duplicate demo process attempt');
+                return;
+            }
+
+            didProcessDemo.current = true;
+
             processDemoFile();
         }
     }, [user?.id, loading, handleFileUpload, handleRestorePhoto, demoProcessed]);
@@ -1025,16 +1044,6 @@ export default function FileManagementPage() {
                                             )}
                                             <span className="ml-1 sm:ml-2">Refresh</span>
                                         </Button>
-                                        <Link 
-                                            href="/app/history" 
-                                            className="inline-flex items-center px-3 py-2 text-xs sm:text-sm bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors font-medium"
-                                            data-tour="gallery-link"
-                                            prefetch={false}
-                                        >
-                                            <span className="hidden sm:inline">View All Restorations</span>
-                                            <span className="sm:hidden">View All</span>
-                                            <ExternalLink className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-                                        </Link>
                                     </div>
                                 </div>
                             </CardHeader>

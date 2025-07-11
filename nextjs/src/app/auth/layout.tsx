@@ -50,16 +50,16 @@ export default function AuthLayout({
                 </div>
             </div>
 
-            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-primary-800">
-                <div className="w-full flex items-center justify-center p-12">
-                    <div className="space-y-6 max-w-lg">
+            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 overflow-y-auto">
+                <div className="w-full flex items-center justify-center p-8">
+                    <div className="space-y-4 max-w-lg">
                         <h3 className="text-white text-2xl font-bold mb-8">
                             Cherished Around the World
                         </h3>
                         {testimonials.map((testimonial, index) => (
                             <div
                                 key={index}
-                                className="relative bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 shadow-xl"
+                                className="relative bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 shadow-xl"
                             >
                                 <div className="flex items-start space-x-4">
                                     <div className="flex-shrink-0">
@@ -68,7 +68,7 @@ export default function AuthLayout({
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-white/90 mb-2 font-light leading-relaxed">
+                                        <p className="text-sm text-white/90 mb-2 font-light leading-relaxed break-words">
                                             &#34;{testimonial.quote}&#34;
                                         </p>
                                         <div className="mt-3">

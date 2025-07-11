@@ -164,7 +164,7 @@ const HomepageUploadDemo: React.FC<HomepageUploadDemoProps> = ({ className = '' 
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs text-gray-400">
               <span>JPG, PNG, WEBP</span>
               <span className="hidden sm:inline">•</span>
-              <span>Processed in less than 10 seconds</span>
+              <span className="whitespace-nowrap">Works on mobile</span>
               <span className="hidden sm:inline">•</span>
               <span>No subscription required</span>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Facebook } from 'lucide-react';
 import AuthAwareButtons from '@/components/AuthAwareButtons';
@@ -42,70 +42,84 @@ export default function Home() {
   const steps = [
     {
       icon: '📤',
-      title: 'Upload Your Photo',
-      description: 'Simply drag and drop your old or damaged photo into our intuitive uploader.'
+      title: 'Upload Your Memory',
+      description: 'Bring us your water-damaged wedding photos, torn childhood pictures, or faded family portraits.'
     },
     {
       icon: '🔍',
-      title: 'AI Analysis',
-      description: 'Our advanced AI analyzes damage, colors, and details in seconds.'
+      title: 'We Find Every Detail',
+      description: 'Our AI spots every crack, stain, and faded area that needs attention in your precious photo.'
     },
     {
       icon: '🛠️',
-      title: 'Smart Restoration',
-      description: 'Intelligent algorithms repair scratches, restore colors, and enhance clarity.'
+      title: 'Repair the Damage',
+      description: 'Remove scratches, fix tears, eliminate water stains, and restore missing pieces like magic.'
     },
     {
       icon: '🎨',
-      title: 'Color Enhancement',
-      description: 'Bring faded photos back to life with natural, vibrant colors.'
+      title: 'Bring Back the Colors',
+      description: 'Restore those vibrant wedding dress whites, rich skin tones, and beautiful background details.'
     },
     {
       icon: '🔎',
-      title: 'Detail Sharpening',
-      description: 'Upscale to HD while preserving authentic details and textures.'
+      title: 'Make It Crystal Clear',
+      description: 'Transform blurry or small photos into sharp, high-resolution images perfect for printing.'
     },
     {
       icon: '📥',
-      title: 'Download & Share',
-      description: 'Get your restored photo ready to print or share with family.'
+      title: 'Share Your Story',
+      description: 'Print for frames, share at family reunions, or surprise relatives with restored memories.'
     }
   ];
 
   const testimonials = [
     {
       quote: "Finally got around to scanning all those old family photos. The restoration was incredible, my mom couldn&apos;t believe how clear they turned out.",
-      name: "Sarah M.",
-      initials: "SM"
+      name: "Priya S.",
+      initials: "PS"
     },
     {
-      quote: "I was amazed how it brought my grandma&apos;s wedding photo back to life – looks like it was taken yesterday!",
-      name: "Mike R.",
-      initials: "MR"
+      quote: "I was amazed how it brought my grandma's wedding photo back to life – looks like it was taken yesterday!",
+      name: "Carlos R.",
+      initials: "CR"
     },
     {
       quote: "Found a box of old Polaroids in the attic. Turned the best ones into canvas prints for the living room, they look fantastic.",
-      name: "Lisa T.",
-      initials: "LT"
+      name: "Rosalie T.",
+      initials: "RT"
     },
     {
       quote: "This app saved my wedding photos from water damage. Amazing results!",
-      name: "John D.",
-      initials: "JD"
+      name: "Ahmed D.",
+      initials: "AD"
     },
     {
-      quote: "Turned my grandfather&apos;s war photos into treasures for my kids.",
-      name: "Emily S.",
-      initials: "ES"
+      quote: "My kids had drawn all over my parents' old wedding photos with crayon. I thought they were ruined forever, but this brought them back perfectly!",
+      name: "Chen L.",
+      initials: "CL"
+    },
+    {
+      quote: "When dad passed, we only had one good photo for the funeral service, but it was so faded. This made it beautiful again for everyone to remember him by.",
+      name: "Maya G.",
+      initials: "MG"
+    },
+    {
+      quote: "I'm totally addicted to restoring photos now! Started with my own family pics, now I help people in Facebook groups all the time. It's so rewarding.",
+      name: "Jamal K.",
+      initials: "JK"
+    },
+    {
+      quote: "Been doing photo restoration as a hobby for years. This tool does in minutes what used to take me hours in Photoshop!",
+      name: "Fatima W.",
+      initials: "FW"
     },
     {
       quote: "Super easy to use, and the HD upscaling is incredible!",
-      name: "Robert L.",
-      initials: "RL"
+      name: "Diego L.",
+      initials: "DL"
     }
   ];
 
-  const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -125,10 +139,24 @@ export default function Home() {
 
   const visibleCount = isMobile ? 1 : 3;
   const slideWidth = 100 / visibleCount;
-  const maxSlides = testimonials.length - visibleCount;
+  const slides = [...testimonials, ...testimonials];  // Duplicate for infinite loop
+  const [current, setCurrent] = useState(0);
 
-  const handleNext = () => setCurrent((prev) => (prev + 1 > maxSlides ? 0 : prev + 1));
-  const handlePrev = () => setCurrent((prev) => (prev - 1 < 0 ? maxSlides : prev - 1));
+  // Auto-rotate every 5 seconds
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setInterval(() => {
+      setCurrent((prev) => {
+        const next = prev + 1;
+        if (next === testimonials.length) {
+          return 0;  // Reset for loop
+        }
+        return next;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [mounted, testimonials.length]);
 
 
   return (
@@ -166,38 +194,91 @@ export default function Home() {
               `,
               backgroundSize: '40px 40px'
             }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
           >
             {/* Subtle CSS grid background, no image needed */}
+            {/* Animated orange radial gradient overlay for warmth */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 0.18, scale: 1 }}
+              transition={{ duration: 1.5, delay: 0.3, ease: 'easeOut' }}
+              style={{
+                background: 'radial-gradient(circle at 60% 40%, #ff7a1a 0%, transparent 70%)',
+                zIndex: 1,
+                filter: 'blur(8px)'
+              }}
+            />
+            {/* Animated floating orange shadow blob */}
+            <motion.div
+              className="absolute left-1/4 top-1/3 w-96 h-96 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, #ff7a1a66 0%, transparent 80%)',
+                filter: 'blur(48px)',
+                zIndex: 2
+              }}
+              initial={{ y: 0, opacity: 0.18 }}
+              animate={{ y: [0, 30, 0], opacity: [0.18, 0.22, 0.18] }}
+              transition={{ duration: 8, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+            />
           </motion.div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Left side - Content */}
               <div className="text-center lg:text-left">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-                  Restore <span className="text-orange-600">Old or Damaged Photos</span><br /> in HD
-                </h1>
-                <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl lg:max-w-none">
+                <motion.h1
+                  className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
+                >
+                  <span className="inline-block animate-float">
+                    Restore <span className="text-orange-600">Old or Damaged Photos</span><br /> in HD
+                  </span>
+                </motion.h1>
+                <motion.p
+                  className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl lg:max-w-none"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+                >
                   Transform damaged, faded, or low-quality photos into stunning HD images with professional AI restoration technology.
-                </p>
+                </motion.p>
                 
-                {/* Social Proof */}
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex -space-x-1">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white"></div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
-                      <div className="w-6 h-6 bg-purple-500 rounded-full border-2 border-white"></div>
+                {/* Enhanced Social Proof */}
+                <motion.div 
+                  className="mt-8 p-4 bg-gradient-to-r from-orange-50/80 to-blue-50/80 backdrop-blur-sm rounded-2xl border border-orange-100/50"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 0.8, ease: 'easeOut' }}
+                >
+                  <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-6">
+                    <div className="flex items-center space-x-3">
+                      <a 
+                        href="https://www.facebook.com/photorestorationhd/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                      >
+                        <Facebook className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm text-gray-700">Find us in Facebook groups</span>
+                      </a>
                     </div>
-                    <span>Thousands of happy families</span>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2 bg-white/60 px-3 py-1.5 rounded-full">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium text-gray-700">10sec results</span>
+                      </div>
+                      <div className="flex items-center space-x-2 bg-white/60 px-3 py-1.5 rounded-full">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span className="text-xs font-medium text-gray-700">100% private</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="hidden sm:block w-1 h-1 bg-gray-300 rounded-full"></div>
-                  <span>⚡ Instant results</span>
-                  <div className="hidden sm:block w-1 h-1 bg-gray-300 rounded-full"></div>
-                  <span>🔒 Your photos stay private</span>
-                </div>
+                </motion.div>
 
                 {/* CTA for users with accounts or as fallback */}
                 <div className="mt-16">
@@ -271,8 +352,8 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="text-center">
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">Historic Moment</h3>
-                        <p className="text-xs sm:text-sm text-gray-600">Scratches and tears repaired</p>
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">Family Memory</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">Color and detail enhanced</p>
                       </div>
                     </div>
                   </div>
@@ -321,7 +402,7 @@ export default function Home() {
                       </div>
                       <div className="text-center">
                         <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">Classic Memory</h3>
-                        <p className="text-xs sm:text-sm text-gray-600">Age damage removed</p>
+                        <p className="text-xs sm:text-sm text-gray-600">Scratches and tears repaired</p>
                       </div>
                     </div>
                   </div>
@@ -418,8 +499,8 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="text-center">
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">Family Memory</h3>
-                        <p className="text-xs sm:text-sm text-gray-600">Color and detail enhanced</p>
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">Historic Moment</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">Age damage removed</p>
                       </div>
                     </div>
                   </div>
@@ -480,7 +561,7 @@ export default function Home() {
               </p>
             </motion.div>
             {mounted ? (
-              <div className="relative">
+              <div className="relative overflow-hidden">
                 <motion.div 
                   className="overflow-hidden"
                   variants={containerVariants}
@@ -493,48 +574,37 @@ export default function Home() {
                     animate={{ x: `-${current * slideWidth}%` }}
                     transition={{ ease: 'easeOut', duration: 0.5 }}
                   >
-                    {testimonials.map((testimonial, index) => (
+                    {slides.map((testimonial, index) => (
                       <motion.div 
                         key={index}
                         variants={testimonialVariants}
-                        className={`flex-shrink-0 px-2 ${isMobile ? 'w-full' : 'w-1/3'}`}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                        className={`flex-shrink-0 px-4 ${isMobile ? 'w-full' : 'w-1/3'}`}
                       >
-                        <div className="text-center bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
-                          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-2xl">
+                        <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border border-orange-100 hover:border-orange-200 h-full">
+                          <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-semibold text-xl shadow-sm">
                             {testimonial.initials}
                           </div>
-                          <div className="flex justify-center mb-6">
+                          <div className="flex justify-center mb-4">
                             <div className="flex space-x-1">
                               {[...Array(5)].map((_, i) => (
-                                <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                <svg key={i} className="w-5 h-5 text-orange-400 fill-current" viewBox="0 0 20 20">
                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3 .921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784 .57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81 .588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                               ))}
                             </div>
                           </div>
-                          <blockquote className="text-gray-700 italic mb-6 text-lg leading-relaxed">
+                          <blockquote className="text-gray-700 text-base leading-relaxed mb-4 font-light italic">
                             {testimonial.quote}
                           </blockquote>
-                          <div className="text-gray-500 font-medium">— {testimonial.name}</div>
+                          <div className="text-orange-600 font-medium text-sm text-center">— {testimonial.name}</div>
                         </div>
                       </motion.div>
                     ))}
                   </motion.div>
                 </motion.div>
-                <div className="flex justify-center mt-6 space-x-4">
-                  <button 
-                    onClick={handlePrev}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors"
-                  >
-                    Prev
-                  </button>
-                  <button 
-                    onClick={handleNext}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
               </div>
             ) : null}
           </div>
