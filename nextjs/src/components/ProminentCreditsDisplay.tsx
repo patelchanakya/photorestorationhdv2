@@ -175,7 +175,7 @@ export default function ProminentCreditsDisplay({
                                     }`}
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
-                                    {displayCredits === 0 ? 'Get Credits' : 'Add More'}
+                                    {displayCredits === 0 ? 'Get Credits' : 'Buy Credits'}
                                 </Button>
                             ) : (
                                 <Link href="/app/user-settings" className="block">
@@ -190,7 +190,7 @@ export default function ProminentCreditsDisplay({
                                         }`}
                                     >
                                         <Plus className="w-4 h-4 mr-2" />
-                                        {displayCredits === 0 ? 'Get Credits' : 'Add More'}
+                                        {displayCredits === 0 ? 'Get Credits' : 'Buy Credits'}
                                     </Button>
                                 </Link>
                             )}

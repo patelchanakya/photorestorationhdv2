@@ -44,10 +44,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
 
+    // Static navigation array to prevent hydration mismatches
     const navigation = [
         { name: 'Create', href: '/app/storage', icon: Upload },
         { name: 'User Settings', href: '/app/user-settings', icon: User },
-    ];
+    ] as const;
 
     const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 

@@ -61,14 +61,6 @@ const faqs = [
 export default function FAQSection() {
   return (
     <section id="faq" className="max-w-[85rem] container mx-auto px-4 md:px-6 2xl:max-w-[1400px] py-24 lg:py-32">
-      {/* Title */}
-      <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-        <h2 className="text-2xl font-bold md:text-4xl md:leading-tight">
-          Frequently Asked Questions
-        </h2>
-      </div>
-      {/* End Title */}
-
       <div className="max-w-2xl mx-auto">
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (

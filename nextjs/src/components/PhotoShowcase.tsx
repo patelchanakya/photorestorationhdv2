@@ -1,7 +1,3 @@
-
-
-
-
 "use client";
 import React, { useState } from 'react';
 import Image from 'next/image';
@@ -14,8 +10,6 @@ interface ShowcaseExample {
 }
 
 const PhotoShowcase: React.FC = () => {
-  const [activeSliders, setActiveSliders] = useState<Record<string, number>>({});
-
   const examples: ShowcaseExample[] = [
     {
       id: 'example1',
@@ -30,6 +24,14 @@ const PhotoShowcase: React.FC = () => {
       afterImage: '/showcase/after2.webp',
     }
   ];
+
+  const [activeSliders, setActiveSliders] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = {};
+    examples.forEach(example => {
+      initial[example.id] = 50;
+    });
+    return initial;
+  });
 
   const handleSliderChange = (exampleId: string, value: number) => {
     setActiveSliders(prev => ({ ...prev, [exampleId]: value }));
@@ -47,17 +49,14 @@ const PhotoShowcase: React.FC = () => {
               </svg>
             </span>
           </h2>
-          <p className="mt-4 text-xl text-gray-600">
-            Real results from real photos. Drag the slider to reveal the restoration magic.
-          </p>
         </div>
 
-        {/* Desktop Grid */}
-        <div className="hidden lg:grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {/* Desktop Grid - Fixed to show images */}
+        <div className="hidden lg:grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto justify-items-center">
           {examples.map((example, index) => {
             const sliderValue = activeSliders[example.id] || 50;
             return (
-              <div key={example.id} className="group">
+              <div key={example.id} className="group w-full max-w-md">
                 <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-4 transform hover:scale-[1.02]">
                   <div className="mb-4 relative overflow-hidden rounded-lg aspect-square">
                     {/* Before/After Slider */}
@@ -85,7 +84,7 @@ const PhotoShowcase: React.FC = () => {
                       </div>
                       {/* Slider Line */}
                       <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+                        className="absolute top-0 bottom-0 w-0.5 bg-orange-500 shadow-lg"
                         style={{ left: `${sliderValue}%` }}
                       />
                       {/* Slider Control */}
@@ -99,23 +98,21 @@ const PhotoShowcase: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 text-center">
-                    {example.title}
-                  </h3>
+                  {/* Removed title: <h3 className="text-lg font-semibold text-gray-900 text-center">{example.title}</h3> */}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Mobile Carousel */}
+        {/* Mobile Carousel - Fixed to show images */}
         <div className="lg:hidden">
-          <div className="flex overflow-x-auto space-x-6 pb-6 snap-x snap-mandatory">
+          <div className="flex overflow-x-auto space-x-6 pb-6 snap-x snap-mandatory justify-center">
             {examples.map((example, index) => {
               const sliderValue = activeSliders[example.id] || 50;
               return (
                 <div key={example.id} className="flex-shrink-0 w-80 snap-center">
-                  <div className="bg-white rounded-2xl shadow-lg p-4">
+                  <div className="bg-white rounded-2xl shadow-lg p-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
                     <div className="mb-4 relative overflow-hidden rounded-lg aspect-square">
                       {/* Before/After Slider */}
                       <div className="relative w-full h-full">
@@ -142,7 +139,7 @@ const PhotoShowcase: React.FC = () => {
                         </div>
                         {/* Slider Line */}
                         <div 
-                          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
+                          className="absolute top-0 bottom-0 w-0.5 bg-orange-500 shadow-lg"
                           style={{ left: `${sliderValue}%` }}
                         />
                         {/* Slider Control */}
@@ -156,9 +153,7 @@ const PhotoShowcase: React.FC = () => {
                         />
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 text-center">
-                      {example.title}
-                    </h3>
+                    {/* Removed title: <h3 className="text-lg font-semibold text-gray-900 text-center">{example.title}</h3> */}
                   </div>
                 </div>
               );

@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import PricingService from "@/lib/pricing";
 import { useGlobal } from '@/lib/context/GlobalContext';
 import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 
 const PurchaseModal = dynamic(() => import('@/components/PurchaseModal'), {
     loading: () => <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
@@ -50,6 +51,11 @@ const HomePricing = () => {
         return 1; // Default fallback
     };
 
+    const tierVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
         <section id="pricing" className="py-24 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,7 +81,7 @@ const HomePricing = () => {
                         const creditCount = getCreditCount(tier);
                         
                         return (
-                            <div key={tier.name} className="relative">
+                            <motion.div variants={tierVariants} initial="hidden" whileInView="visible" transition={{duration:0.5}} key={tier.name} className="relative">
                                 {/* Badge - Outside card container */}
                                 <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-50">
                                     {tier.popular ? (
@@ -177,7 +183,7 @@ const HomePricing = () => {
                                     )}
                                 </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         );
                     })}
                 </div>

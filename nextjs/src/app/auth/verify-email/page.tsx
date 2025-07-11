@@ -2,7 +2,7 @@
 
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {createSPASassClient} from "@/lib/supabase/client";
 
 export default function VerifyEmailPage() {
@@ -10,6 +10,19 @@ export default function VerifyEmailPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [cameFromDemo, setCameFromDemo] = useState(false);
+    const [demoFileName, setDemoFileName] = useState<string | null>(null);
+
+    // Check if user came from homepage demo
+    useEffect(() => {
+        const signedUpFromDemo = localStorage.getItem('signed_up_from_demo');
+        const demoFileName = localStorage.getItem('demo_file_name');
+        
+        if (signedUpFromDemo) {
+            setCameFromDemo(true);
+            setDemoFileName(demoFileName);
+        }
+    }, []);
 
     const resendVerificationEmail = async () => {
         if (!email) {
@@ -46,13 +59,34 @@ export default function VerifyEmailPage() {
                 </div>
 
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Check your email
+                    {cameFromDemo ? 'Almost there! Check your email' : 'Check your email'}
                 </h2>
 
-                <p className="text-gray-600 mb-8">
+                <p className="text-gray-600 mb-4">
                     We&#39;ve sent you an email with a verification link.
                     Please check your inbox and click the link to verify your account.
                 </p>
+
+                {cameFromDemo && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-blue-600 text-sm">📸</span>
+                                </div>
+                            </div>
+                            <div className="text-sm">
+                                <p className="font-medium text-blue-900 mb-1">
+                                    Your demo photo is waiting!
+                                </p>
+                                <p className="text-blue-700">
+                                    {demoFileName ? `${demoFileName} will be` : 'Your photo will be'} automatically processed 
+                                    with your 1 free credit once you verify your email and sign in.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="space-y-4">
                     <p className="text-sm text-gray-500">

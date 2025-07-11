@@ -82,6 +82,10 @@ export default function FileManagementPage() {
     // Demo mode state for tour
     const [demoMode, setDemoMode] = useState(false);
     
+    // Track if demo file has been processed to prevent duplicates
+    const [demoProcessed, setDemoProcessed] = useState(false);
+    
+    const [demoFilename, setDemoFilename] = useState<string | null>(null);
 
     // Track page view
     useEffect(() => {
@@ -235,6 +239,14 @@ export default function FileManagementPage() {
                             setShowConfetti(true);
                             setTimeout(() => setShowConfetti(false), 3000); // Hide after 3 seconds
                             
+                            // If this is the demo job, auto-open modal
+                            if (demoFilename && currentJob.image_path && currentJob.image_path.endsWith(demoFilename) && currentJob.result_url) {
+                                setSelectedImageUrl(currentJob.result_url);
+                                setSelectedImageName(cleanFilename(demoFilename));
+                                setSelectedImageFilename(demoFilename);
+                                setDemoFilename(null); // Clear after opening
+                            }
+                            
                             // Track successful restoration completion
                             if (posthog) {
                                 const processingTime = currentJob.completed_at && currentJob.created_at 
@@ -268,211 +280,10 @@ export default function FileManagementPage() {
         } catch (err) {
             console.error('Error loading processing jobs:', err);
         }
-    }, [user?.id, posthog]);
+    }, [user?.id, posthog, demoFilename]);
 
 
-    useEffect(() => {
-        if (user?.id) {
-            loadFiles();
-            refreshJobs();
-        }
-    }, [user?.id, loadFiles, refreshJobs]);
-
-    // Compute if jobs are active
-    const hasActiveJobs = useMemo(() => processingJobs?.some(j => j.status === 'pending' || j.status === 'processing') || false, [processingJobs]);
-
-    // Exponential backoff polling: only when active jobs exist
-    useEffect(() => {
-        if (!user?.id) return;
-
-        if (!hasActiveJobs) {
-            if (POLLING_DEBUG) console.log('No active jobs, no polling needed');
-            return;
-        }
-
-        const activeJobCount = processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
-        if (POLLING_DEBUG) console.log(`Starting exponential backoff polling for ${activeJobCount} active jobs`);
-
-        let pollCount = 0;
-        let timeoutId: NodeJS.Timeout;
-
-        const scheduleNextPoll = () => {
-            // Exponential backoff: 2s → 3s → 4s → 5s → max 5s
-            const intervals = [2000, 3000, 4000, 5000];
-            const interval = intervals[Math.min(pollCount, intervals.length - 1)];
-            
-            if (POLLING_DEBUG) console.log(`Scheduling poll #${pollCount + 1} in ${interval}ms`);
-            
-            timeoutId = setTimeout(() => {
-                if (POLLING_DEBUG) console.log(`Polling for job updates (attempt #${pollCount + 1})...`);
-                refreshJobs();
-                pollCount++;
-                scheduleNextPoll();
-            }, interval);
-        };
-
-        scheduleNextPoll();
-
-        return () => {
-            if (POLLING_DEBUG) console.log('Stopping exponential backoff polling - cleanup');
-            clearTimeout(timeoutId);
-        };
-    }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
-
-    // Dual compression function for optimal storage and display
-    const handleFileUpload = useCallback(async (file: File) => {
-        if (!user?.id) return;
-        
-        try {
-            setUploading(true);
-            setError('');
-
-            // Track upload attempt
-            if (posthog) {
-                posthog.capture('photo_upload_attempted', {
-                    file_type: file.type,
-                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
-                    file_name_length: file.name.length
-                });
-            }
-
-            const supabase = await createSPASassClient();
-            
-            // Upload original file directly - no compression, no thumbnails
-            const { error: originalError, data } = await supabase.uploadFile(user.id, file.name, file);
-            if (originalError) throw originalError;
-            
-            const filename = data?.path?.split('/').pop();
-            if (!filename) throw new Error('Failed to get filename from upload');
-
-            // Add small delay to ensure Supabase storage is consistent
-            await new Promise(resolve => setTimeout(resolve, 500));
-            await loadFiles();
-            
-            // Verify the uploaded file appears in the list by checking storage directly
-            const verifyClient = await createSPASassClient();
-            const { data: verifyFiles } = await verifyClient.getFiles(user.id);
-            console.log('Upload verification: Found', verifyFiles?.length || 0, 'files in storage');
-            console.log('Upload verification: Looking for filename:', filename);
-            
-            const uploadedFile = verifyFiles?.find(f => f.name === filename);
-            
-            if (!uploadedFile) {
-                console.warn('Upload verification FAILED: File not found in storage');
-                console.warn('Available files:', verifyFiles?.map(f => f.name));
-                setError('File uploaded but not visible. Please try refreshing the page.');
-                return;
-            } else {
-                console.log('Upload verification SUCCESS: File found in storage');
-            }
-            
-            // Show upload success
-            setSuccess(`File uploaded successfully! Click restore on image below.`);
-            setShowUploadSuccess(true);
-            setTimeout(() => setShowUploadSuccess(false), 3000);
-            
-            // Track successful upload
-            if (posthog) {
-                posthog.capture('photo_upload_successful', {
-                    file_type: file.type,
-                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
-                    file_name_length: file.name.length,
-                    uploaded_filename: filename
-                });
-            }
-        } catch (err) {
-            setError('Failed to upload file');
-            setShowUploadError(true);
-            setTimeout(() => setShowUploadError(false), 3000);
-            console.error('Error uploading file:', err);
-            
-            // Track upload failure
-            if (posthog) {
-                posthog.capture('photo_upload_failed', {
-                    file_type: file.type,
-                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
-                    error_message: err instanceof Error ? err.message : 'unknown_error'
-                });
-            }
-        } finally {
-            setUploading(false);
-        }
-    }, [user?.id, loadFiles, posthog]);
-
-
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const fileList = event.target.files;
-        if (!fileList || fileList.length === 0) return;
-        handleFileUpload(fileList[0]);
-        event.target.value = '';
-    };
-
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            handleFileUpload(files[0]);
-        }
-    }, [handleFileUpload]);
-
-
-    const handleDragEnter = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-    }, []);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, []);
-
-
-
-
-    const handleDelete = async () => {
-        if (!fileToDelete) return;
-
-        try {
-            setError('');
-            const supabase = await createSPASassClient();
-            const { error } = await supabase.deleteFile(user!.id!, fileToDelete);
-
-            if (error) throw error;
-
-            await loadFiles();
-            setSuccess('File deleted successfully');
-        } catch (err) {
-            setError('Failed to delete file');
-            console.error('Error deleting file:', err);
-        } finally {
-            setShowDeleteDialog(false);
-            setFileToDelete(null);
-        }
-    };
-
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setShowCopiedMessage(true);
-            setTimeout(() => setShowCopiedMessage(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
-            setError('Failed to copy to clipboard');
-        }
-    };
-
-    const handleRestorePhoto = async (filename: string) => {
+    const handleRestorePhoto = useCallback(async (filename: string) => {
         const requestId = Math.random().toString(36).substring(2, 15);
         const timestamp = new Date().toISOString();
         
@@ -601,8 +412,276 @@ export default function FileManagementPage() {
                 return newSet;
             });
         }
+    }, [user, posthog, optimisticCredits, deductCreditsOptimistic, refreshJobs, setRestoringFiles, setError, setSuccess]);
+
+    const handleFileUpload = useCallback(async (file: File) => {
+        if (!user?.id) return null;
+        
+        try {
+            setUploading(true);
+            setError('');
+
+            // Track upload attempt
+            if (posthog) {
+                posthog.capture('photo_upload_attempted', {
+                    file_type: file.type,
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    file_name_length: file.name.length
+                });
+            }
+
+            const supabase = await createSPASassClient();
+            
+            // Upload original file directly - no compression, no thumbnails
+            const { error: originalError, data } = await supabase.uploadFile(user.id, file.name, file);
+            if (originalError) throw originalError;
+            
+            const filename = data?.path?.split('/').pop();
+            if (!filename) throw new Error('Failed to get filename from upload');
+
+            // Add small delay to ensure Supabase storage is consistent
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadFiles();
+            
+            // Verify the uploaded file appears in the list by checking storage directly
+            const verifyClient = await createSPASassClient();
+            const { data: verifyFiles } = await verifyClient.getFiles(user.id);
+            console.log('Upload verification: Found', verifyFiles?.length || 0, 'files in storage');
+            console.log('Upload verification: Looking for filename:', filename);
+            
+            const uploadedFile = verifyFiles?.find(f => f.name === filename);
+            
+            if (!uploadedFile) {
+                console.warn('Upload verification FAILED: File not found in storage');
+                console.warn('Available files:', verifyFiles?.map(f => f.name));
+                setError('File uploaded but not visible. Please try refreshing the page.');
+                return null; // Return null on failure
+            } else {
+                console.log('Upload verification SUCCESS: File found in storage');
+            }
+            
+            // Show upload success
+            setSuccess(`File uploaded successfully! Click restore on image below.`);
+            setShowUploadSuccess(true);
+            setTimeout(() => setShowUploadSuccess(false), 3000);
+            
+            // Track successful upload
+            if (posthog) {
+                posthog.capture('photo_upload_successful', {
+                    file_type: file.type,
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    file_name_length: file.name.length,
+                    uploaded_filename: filename
+                });
+            }
+
+            return filename; // Return the filename on success
+        } catch (err) {
+            setError('Failed to upload file');
+            setShowUploadError(true);
+            setTimeout(() => setShowUploadError(false), 3000);
+            console.error('Error uploading file:', err);
+            
+            // Track upload failure
+            if (posthog) {
+                posthog.capture('photo_upload_failed', {
+                    file_type: file.type,
+                    original_size_mb: Math.round((file.size / 1024 / 1024) * 100) / 100,
+                    error_message: err instanceof Error ? err.message : 'unknown_error'
+                });
+            }
+            return null; // Return null on failure
+        } finally {
+            setUploading(false);
+        }
+    }, [user?.id, loadFiles, posthog]);
+
+    // Handle demo file processing from homepage signup
+    useEffect(() => {
+        const processDemoFile = async () => {
+            // Guard: prevent duplicate processing
+            if (demoProcessed) {
+                console.log('🎬 Demo file already processed, skipping');
+                return;
+            }
+
+            // Check if user signed up from demo
+            const signedUpFromDemo = localStorage.getItem('signed_up_from_demo');
+            const demoFileData = localStorage.getItem('demo_file_data');
+            const demoFileName = localStorage.getItem('demo_file_name');
+            const demoFileType = localStorage.getItem('demo_file_type');
+
+            if (signedUpFromDemo && demoFileData && demoFileName && demoFileType && user?.id) {
+                try {
+                    console.log('🎬 Starting demo file processing');
+                    setUploading(true);
+                    setError('');
+
+                    // Convert back to blob
+                    const byteString = atob(demoFileData.split(',')[1]);
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([ab], { type: demoFileType });
+                    const file = new File([blob], demoFileName, { type: demoFileType });
+
+                    // Upload and get filename
+                    const uploadedFilename = await handleFileUpload(file);
+                    if (!uploadedFilename) {
+                        throw new Error('Upload failed');
+                    }
+
+                    setDemoFilename(uploadedFilename);
+                    setSuccess('Demo file uploaded successfully! Starting restoration...');
+
+                    // Auto-trigger restoration
+                    await handleRestorePhoto(uploadedFilename);
+
+                    // Clean up localStorage
+                    localStorage.removeItem('signed_up_from_demo');
+                    localStorage.removeItem('demo_file_data');
+                    localStorage.removeItem('demo_file_name');
+                    localStorage.removeItem('demo_file_type');
+
+                    setDemoProcessed(true);  // Mark as processed
+
+                } catch (error) {
+                    console.error('Error processing demo file:', error);
+                    setError('Failed to process your demo photo. Please try uploading it manually from the upload area.');
+                } finally {
+                    setUploading(false);
+                }
+            }
+        };
+
+        // Only run if user is loaded and we haven't processed demo file yet
+        if (user?.id && !loading && !demoProcessed) {
+            processDemoFile();
+        }
+    }, [user?.id, loading, handleFileUpload, handleRestorePhoto, demoProcessed]);
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const fileList = event.target.files;
+        if (!fileList || fileList.length === 0) return;
+        handleFileUpload(fileList[0]);
+        event.target.value = '';
     };
 
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    }, [handleFileUpload]);
+
+
+    const handleDragEnter = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+
+
+
+    const handleDelete = async () => {
+        if (!fileToDelete) return;
+
+        try {
+            setError('');
+            const supabase = await createSPASassClient();
+            const { error } = await supabase.deleteFile(user!.id!, fileToDelete);
+
+            if (error) throw error;
+
+            await loadFiles();
+            setSuccess('File deleted successfully');
+        } catch (err) {
+            setError('Failed to delete file');
+            console.error('Error deleting file:', err);
+        } finally {
+            setShowDeleteDialog(false);
+            setFileToDelete(null);
+        }
+    };
+
+    const copyToClipboard = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setShowCopiedMessage(true);
+            setTimeout(() => setShowCopiedMessage(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            setError('Failed to copy to clipboard');
+        }
+    };
+
+
+    useEffect(() => {
+        if (user?.id) {
+            loadFiles();
+            refreshJobs();
+        }
+    }, [user?.id, loadFiles, refreshJobs]);
+
+    // Compute if jobs are active
+    const hasActiveJobs = useMemo(() => processingJobs?.some(j => j.status === 'pending' || j.status === 'processing') || false, [processingJobs]);
+
+    // Exponential backoff polling: only when active jobs exist
+    useEffect(() => {
+        if (!user?.id) return;
+
+        if (!hasActiveJobs) {
+            if (POLLING_DEBUG) console.log('No active jobs, no polling needed');
+            return;
+        }
+
+        const activeJobCount = processingJobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+        if (POLLING_DEBUG) console.log(`Starting exponential backoff polling for ${activeJobCount} active jobs`);
+
+        let pollCount = 0;
+        let timeoutId: NodeJS.Timeout;
+
+        const scheduleNextPoll = () => {
+            // Exponential backoff: 2s → 3s → 4s → 5s → max 5s
+            const intervals = [2000, 3000, 4000, 5000];
+            const interval = intervals[Math.min(pollCount, intervals.length - 1)];
+            
+            if (POLLING_DEBUG) console.log(`Scheduling poll #${pollCount + 1} in ${interval}ms`);
+            
+            timeoutId = setTimeout(() => {
+                if (POLLING_DEBUG) console.log(`Polling for job updates (attempt #${pollCount + 1})...`);
+                refreshJobs();
+                pollCount++;
+                scheduleNextPoll();
+            }, interval);
+        };
+
+        scheduleNextPoll();
+
+        return () => {
+            if (POLLING_DEBUG) console.log('Stopping exponential backoff polling - cleanup');
+            clearTimeout(timeoutId);
+        };
+    }, [hasActiveJobs, processingJobs, user?.id, refreshJobs]);
 
     const handleDownloadRestoredImage = async (job: ProcessingJob) => {
         try {
@@ -802,11 +881,11 @@ export default function FileManagementPage() {
 
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
 
             <CreditTestPanel />
 
-                <div className="space-y-8">
+                <div className="space-y-4 sm:space-y-8">
                     {/* Alerts */}
                     {error && (
                         <Alert variant="destructive">
@@ -824,26 +903,25 @@ export default function FileManagementPage() {
 
                     {/* Upload Section */}
                     <Card className="border-0 shadow-xl bg-white" data-tour="upload-area">
-                        <CardContent className="p-6">
-
-                    <div className="flex items-center justify-center w-full">
-                        <label
-                            className={`relative w-full max-w-2xl flex flex-col items-center px-6 py-6 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
-                                showUploadError
-                                    ? 'border-2 border-dashed border-red-400 bg-red-50 shadow-lg scale-105'
-                                    : showUploadSuccess
-                                    ? 'border-2 border-dashed border-green-400 bg-green-50 shadow-lg scale-105'
-                                    : isDragging
-                                    ? 'border-2 border-dashed border-orange-400 bg-orange-50 shadow-lg scale-105'
-                                    : 'border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
-                            }`}
-                            onDragEnter={handleDragEnter}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                        >
+                        <CardContent className="p-4 sm:p-6">
+                            <div className="w-full">
+                                <label
+                                    className={`relative w-full flex flex-col items-center px-4 sm:px-6 py-6 sm:py-8 bg-white rounded-xl cursor-pointer transition-all duration-300 ease-in-out group ${
+                                        showUploadError
+                                            ? 'border-2 border-dashed border-red-400 bg-red-50 shadow-lg scale-105'
+                                            : showUploadSuccess
+                                            ? 'border-2 border-dashed border-green-400 bg-green-50 shadow-lg scale-105'
+                                            : isDragging
+                                            ? 'border-2 border-dashed border-orange-400 bg-orange-50 shadow-lg scale-105'
+                                            : 'border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 hover:shadow-md'
+                                    }`}
+                                    onDragEnter={handleDragEnter}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                >
                             {/* Upload Icon */}
-                            <div className={`p-3 rounded-full transition-all duration-300 ${
+                            <div className={`p-3 sm:p-4 rounded-full transition-all duration-300 ${
                                 showUploadError
                                     ? 'bg-red-100 text-red-600'
                                     : showUploadSuccess
@@ -852,49 +930,49 @@ export default function FileManagementPage() {
                                     ? 'bg-orange-100 text-orange-600'
                                     : 'bg-gray-100 text-gray-500 group-hover:bg-orange-100 group-hover:text-orange-600'
                             }`}>
-                                <Upload className="w-8 h-8"/>
+                                <Upload className="w-6 h-6 sm:w-8 sm:h-8"/>
                             </div>
                             
-                            {/* Main Text */}
-                            <div className="text-center mt-4">
-                                <h3 className={`text-lg font-semibold transition-colors ${
-                                    showUploadError ? 'text-red-700' : showUploadSuccess ? 'text-green-700' : isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
-                                }`}>
-                                    {uploading
-                                        ? 'Uploading your image...'
-                                        : showUploadError
-                                            ? 'Try again!'
-                                            : showUploadSuccess
-                                            ? 'Upload successful!'
-                                            : isDragging
-                                            ? 'Drop your image here'
-                                            : 'Drop image here or click to browse'}
-                                </h3>
-                                
-                                <p className="text-xs text-gray-400 mt-2">
-                                    JPG, PNG • Max 50MB
-                                </p>
-                            </div>
-                            
-                            {/* Loading indicator */}
-                            {uploading && (
-                                <div className="mt-4">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
-                                        <span className="text-sm text-orange-600">Processing...</span>
+                                    {/* Main Text */}
+                                    <div className="text-center mt-4">
+                                        <h3 className={`text-base sm:text-lg font-semibold transition-colors ${
+                                            showUploadError ? 'text-red-700' : showUploadSuccess ? 'text-green-700' : isDragging ? 'text-orange-700' : 'text-gray-700 group-hover:text-orange-700'
+                                        }`}>
+                                            {uploading
+                                                ? 'Uploading your image...'
+                                                : showUploadError
+                                                    ? 'Try again!'
+                                                    : showUploadSuccess
+                                                    ? 'Upload successful!'
+                                                    : isDragging
+                                                    ? 'Drop your image here'
+                                                    : 'Drop image here or click to browse'}
+                                        </h3>
+                                        
+                                        <p className="text-xs text-gray-400 mt-2">
+                                            JPG, PNG • Max 50MB
+                                        </p>
                                     </div>
-                                </div>
-                            )}
-                            
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={handleInputChange}
-                                disabled={uploading}
-                                accept="image/*"
-                            />
-                        </label>
-                        </div>
+                                    
+                                    {/* Loading indicator */}
+                                    {uploading && (
+                                        <div className="mt-4">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                                                <span className="text-sm text-orange-600">Processing...</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={handleInputChange}
+                                        disabled={uploading}
+                                        accept="image/*"
+                                    />
+                                </label>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -916,7 +994,7 @@ export default function FileManagementPage() {
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Refresh Files
                                 </Button>
-                                <p className="text-sm text-gray-400">Visit <Link href="/app/history" className="text-orange-600 hover:text-orange-700 font-medium" prefetch={false}>All Restorations</Link> to see all your photos</p>
+                                <p className="text-sm text-gray-400">Uploaded photos will appear below</p>
                             </CardContent>
                         </Card>
                     )}
@@ -1018,7 +1096,7 @@ export default function FileManagementPage() {
                                 return (
                                     <div
                                         key={filename}
-                                        className="@container bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 group"
+                                        className={`@container bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 group ${filename === demoFilename ? 'border-2 border-orange-500 shadow-lg' : ''}`}
                                     >
                                         {/* Image Preview */}
                                         <div 

@@ -3,9 +3,10 @@ import Link from 'next/link';
 
 interface LogoProps {
   variant?: 'nav' | 'large';
+  color?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ variant = 'nav' }) => {
+const Logo: React.FC<LogoProps> = ({ variant = 'nav', color = 'primary-600' }) => {
   const size = variant === 'large' ? 'w-12 h-12' : 'w-8 h-8';
   const textSize = variant === 'large' ? 'text-3xl' : 'text-xl';
   
@@ -19,7 +20,7 @@ const Logo: React.FC<LogoProps> = ({ variant = 'nav' }) => {
       </div>
       
       {/* Text */}
-      <span className={`${textSize} font-bold text-primary-600`}>
+      <span className={`${textSize} font-bold text-${color}`}>
         Photo Restoration HD
       </span>
     </Link>
