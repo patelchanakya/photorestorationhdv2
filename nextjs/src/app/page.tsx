@@ -124,12 +124,21 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const handleMount = () => {
+      setTimeout(() => setMounted(true), 0);
+    };
+    
+    handleMount();
   }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)');
-    setIsMobile(mediaQuery.matches);
+    
+    const handleMediaQueryChange = () => {
+      setTimeout(() => setIsMobile(mediaQuery.matches), 0);
+    };
+    
+    handleMediaQueryChange();
 
     const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mediaQuery.addEventListener('change', handleChange);
@@ -299,8 +308,22 @@ export default function Home() {
                 </motion.div>
 
                 {/* CTA for users with accounts or as fallback */}
-                <div className="mt-16">
+                <div className="mt-16 flex flex-col sm:flex-row items-center lg:items-center lg:justify-start gap-4">
                   <StartRestoringButton variant="hero" className="w-auto" />
+                  <a 
+                    href="https://apple.co/3J3jl2t" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-block hover:opacity-90 transition-opacity"
+                  >
+                    <Image 
+                      src="/app-store-badge.svg" 
+                      alt="Download on the App Store"
+                      width={120}
+                      height={40}
+                      className="h-[48px] w-auto"
+                    />
+                  </a>
                 </div>
               </div>
 
