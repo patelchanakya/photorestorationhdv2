@@ -49,7 +49,7 @@ export default function FileManagementPage() {
         console.log('Server rendering storage page')
     }
     
-    const { user, deductCreditsOptimistic, optimisticCredits } = useGlobal();
+    const { user, deductCreditsOptimistic, optimisticCredits, refetchCredits } = useGlobal();
     const posthog = usePostHog();
     const searchParams = useSearchParams();
     const [files, setFiles] = useState<FileObject[]>([]);
@@ -314,7 +314,13 @@ export default function FileManagementPage() {
             setRestoringFiles(prev => new Set([...prev, filename]));
             setError('');
 
-            console.log(`🚀 [${requestId}] Starting credit deduction...`);
+            console.log(`🚀 [${requestId}] Starting credit refresh and deduction...`);
+            
+            // Force refresh credits from database to prevent stale cache issues
+            console.log(`🔄 [${requestId}] Refreshing credits from database before deduction...`);
+            await refetchCredits();
+            console.log(`🔄 [${requestId}] Credits refreshed, current optimistic balance:`, optimisticCredits);
+            
             const creditStartTime = Date.now();
             // Deduct credit optimistically for instant UI feedback
             const creditDeductionSuccess = await deductCreditsOptimistic(1);
@@ -411,7 +417,7 @@ export default function FileManagementPage() {
                 return newSet;
             });
         }
-    }, [user, posthog, optimisticCredits, deductCreditsOptimistic, refreshJobs, setRestoringFiles, setError, setSuccess]);
+    }, [user, posthog, optimisticCredits, deductCreditsOptimistic, refreshJobs, setRestoringFiles, setError, setSuccess, refetchCredits]);
 
     const handleFileUpload = useCallback(async (file: File) => {
         if (!user?.id) return null;

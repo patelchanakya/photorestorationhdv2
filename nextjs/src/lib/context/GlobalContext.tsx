@@ -63,11 +63,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
     const fetchCredits = useCallback(async (userId: string) => {
         try {
+            console.log('🔄 GlobalContext: Fetching credits for user:', userId);
             setCreditsLoading(true);
             // Direct API call - no caching
             const result = await getCredits(userId);
             
             if (result?.success && result.credits !== undefined) {
+                console.log('🔄 GlobalContext: Successfully fetched credits:', result.credits, 'for user:', userId);
                 setCredits(result.credits);
             } else {
                 console.error('Error fetching credits:', result?.error || 'Unknown error');
@@ -186,6 +188,27 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
                     
                     // Fetch credits for this user
                     await fetchCredits(user.id);
+
+                    // Set up auth state listener for auto credit sync
+                    const { data: { subscription } } = client.auth.onAuthStateChange(async (event, session) => {
+                        console.log('🔄 GlobalContext: Auth state changed:', event, session?.user?.id);
+                        
+                        if (event === 'TOKEN_REFRESHED' && session?.user?.id) {
+                            console.log('🔄 GlobalContext: Token refreshed, syncing credits for user:', session.user.id);
+                            await fetchCredits(session.user.id);
+                        }
+                        
+                        if (event === 'SIGNED_IN' && session?.user?.id) {
+                            console.log('🔄 GlobalContext: User signed in, syncing credits for user:', session.user.id);
+                            await fetchCredits(session.user.id);
+                        }
+                    });
+
+                    // Return cleanup function for the subscription
+                    return () => {
+                        console.log('🔄 GlobalContext: Cleaning up auth state subscription');
+                        subscription.unsubscribe();
+                    };
                 } else {
                     // Clear user state if no user found
                     setUser(null);
@@ -204,6 +227,27 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
         loadData();
     }, [fetchCredits, posthog]);
+
+    // Add visibility change listener for tab focus credit sync
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                console.log('🔄 GlobalContext: Tab became visible, syncing credits for user:', user.id);
+                await fetchCredits(user.id);
+                console.log('🔄 GlobalContext: Credits synced after tab focus');
+            }
+        };
+
+        console.log('🔄 GlobalContext: Setting up visibility change listener for user:', user.id);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            console.log('🔄 GlobalContext: Cleaning up visibility change listener');
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [user?.id, fetchCredits]);
 
     // Add auth state change listener for real-time session updates
     useEffect(() => {
